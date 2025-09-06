@@ -5,33 +5,41 @@ import { Bell } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { notifications as serverNotifications, Notification } from '@/lib/data';
+import { notifications as initialNotifications, Notification } from '@/lib/data';
 import { Separator } from './ui/separator';
 
 const NOTIFICATION_READ_STATE_KEY = 'read_notifications';
 
 const NotificationBell = () => {
-  const [currentNotifications, setCurrentNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [isOpen, setIsOpen] = useState(false);
-  
+
   useEffect(() => {
-    // When the component mounts or the popover is opened, we sync with the latest data.
-    // In a real app, this would be an API fetch. Here, we re-import from our "data" source.
+    // This effect ensures state is in sync with our mock data source
     const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
-    const updatedNotifications = serverNotifications.map(n => ({
+    const updatedNotifications = initialNotifications.map(n => ({
       ...n,
       read: readIds.includes(n.id),
-    }));
-    setCurrentNotifications(updatedNotifications.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-  }, [isOpen]); // Re-run when popover is opened to get the latest notifications
+    })).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setNotifications(updatedNotifications);
+  }, [isOpen]); 
 
-  const unreadCount = currentNotifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAllAsRead = () => {
-    const allIds = currentNotifications.map(n => n.id);
+    const allIds = notifications.map(n => n.id);
     localStorage.setItem(NOTIFICATION_READ_STATE_KEY, JSON.stringify(allIds));
-    setCurrentNotifications(currentNotifications.map(n => ({ ...n, read: true })));
+    setNotifications(notifications.map(n => ({ ...n, read: true })));
   };
+
+  const markOneAsRead = (id: string) => {
+    const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
+    if (!readIds.includes(id)) {
+        readIds.push(id);
+        localStorage.setItem(NOTIFICATION_READ_STATE_KEY, JSON.stringify(readIds));
+    }
+    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+  }
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -60,11 +68,12 @@ const NotificationBell = () => {
         </div>
         <Separator />
         <div className="p-2 max-h-80 overflow-y-auto">
-          {currentNotifications.length > 0 ? (
-            currentNotifications.map((notification) => (
-              <div key={notification.id} className={`mb-1 p-2 rounded-lg ${!notification.read ? 'bg-primary/5' : ''}`}>
+          {notifications.length > 0 ? (
+            notifications.map((notification) => (
+              <div key={notification.id} className={`mb-1 p-2 rounded-lg cursor-pointer hover:bg-secondary/50`} onClick={() => markOneAsRead(notification.id)}>
                 <div className="grid grid-cols-[25px_1fr] items-start">
-                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-primary" style={{ opacity: notification.read ? 0 : 1}} />
+                    {!notification.read && <span className="flex h-2 w-2 translate-y-1 rounded-full bg-primary" />}
+                    {notification.read && <span/>}
                     <div className="space-y-1">
                       <p className="text-sm font-medium leading-none">{notification.title}</p>
                       <p className="text-sm text-muted-foreground">{notification.description}</p>

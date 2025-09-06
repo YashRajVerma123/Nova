@@ -1,7 +1,7 @@
 'use server';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { addPost, authors, Post } from '@/lib/data';
+import { addPost as addPostToData, authors, Post } from '@/lib/data';
 
 const formSchema = z.object({
   title: z.string(),
@@ -16,10 +16,10 @@ const formSchema = z.object({
 function createSlug(title: string) {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // remove non-alphanumeric characters
+      .replace(/[^a-z0-9\s-]/g, '') 
       .trim()
-      .replace(/\s+/g, '-') // replace spaces with hyphens
-      .replace(/-+/g, '-'); // remove consecutive hyphens
+      .replace(/\s+/g, '-') 
+      .replace(/-+/g, '-'); 
 }
 
 export async function addPostAction(values: z.infer<typeof formSchema>) {
@@ -43,9 +43,8 @@ export async function addPostAction(values: z.infer<typeof formSchema>) {
         comments: [],
     };
   
-    addPost(newPost);
+    addPostToData(newPost);
   
-    // Revalidate paths to show the new post immediately
     revalidatePath('/');
     revalidatePath('/posts');
     revalidatePath(`/posts/${newPost.slug}`);

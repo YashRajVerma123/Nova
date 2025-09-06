@@ -22,16 +22,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 
 const getInitials = (name: string) => {
     const names = name.split(' ');
-    if (names.length > 1 && names[0] && names[1]) {
-      return `${names[0][0]}${names[1][0]}`;
-    }
-    return name ? name.substring(0, 2) : '';
+    return names.length > 1 && names[0] && names[1] ? `${names[0][0]}${names[1][0]}` : name.substring(0, 2);
 };
 
 interface CommentFormProps {
@@ -46,7 +42,8 @@ interface CommentFormProps {
 const CommentForm = ({ user, onSubmit, onCancel, initialContent = '', placeholder, isReply = false }: CommentFormProps) => {
     const [content, setContent] = useState(initialContent);
 
-    const handleSubmit = () => {
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
         if (content.trim() && user) {
             onSubmit(content.trim());
             setContent('');
@@ -55,7 +52,7 @@ const CommentForm = ({ user, onSubmit, onCancel, initialContent = '', placeholde
     };
 
     return (
-        <div className={`flex items-start gap-2 ${isReply ? 'mt-4 ml-8' : 'mb-8'}`}>
+        <form onSubmit={handleSubmit} className={`flex items-start gap-2 ${isReply ? 'mt-4 ml-8' : 'mb-8'}`}>
              <Avatar className={isReply ? 'h-8 w-8' : 'h-10 w-10'}>
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
@@ -65,19 +62,20 @@ const CommentForm = ({ user, onSubmit, onCancel, initialContent = '', placeholde
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder={placeholder}
-                    className="pr-10"
+                    className="pr-20"
                     rows={isReply ? 2 : 3}
+                    required
                 />
-                <div className={`absolute right-2 top-2 flex ${isReply ? 'flex-col gap-1' : 'flex-row'}`}>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSubmit} disabled={!content.trim()}>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+                    {onCancel && (
+                     <Button size="icon" variant="ghost" type="button" className="h-7 w-7 text-xs" onClick={onCancel}>X</Button>
+                    )}
+                    <Button size="icon" variant="ghost" type="submit" className="h-7 w-7" disabled={!content.trim()}>
                         <Send className="h-4 w-4"/>
                     </Button>
-                    {onCancel && (
-                     <Button size="icon" variant="ghost" className="h-7 w-7 text-xs" onClick={onCancel}>X</Button>
-                    )}
                 </div>
             </div>
-        </div>
+        </form>
     );
 };
 
@@ -91,7 +89,7 @@ interface CommentItemProps {
     onDeleteComment: (commentId: string) => void;
     onUpdateReply: (commentId: string, replyId: string, content: string) => void;
     onDeleteReply: (commentId: string, replyId: string) => void;
-    onLikeComment: (commentId: string, isLiked: boolean) => void;
+    onLikeComment: (commentId: string) => void;
     isReply?: boolean;
     parentCommentId?: string;
 }
@@ -100,23 +98,19 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
     const [isReplying, setIsReplying] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [liked, setLiked] = useState(false);
-    const [likeCount, setLikeCount] = useState(comment.likes);
+    const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    
     const canEdit = user?.id === comment.author.id;
     const canDelete = canEdit || isAdmin;
 
     useEffect(() => {
         const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
-        if (likedComments[comment.id]) {
-            setLiked(true);
-        }
-        setLikeCount(comment.likes);
-    }, [comment.id, comment.likes]);
+        setLiked(!!likedComments[comment.id]);
+    }, [comment.id]);
     
     const handleLikeClick = () => {
-        const newLikedState = !liked;
-        setLiked(newLikedState);
-        setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
-        onLikeComment(comment.id, newLikedState);
+        setLiked(!liked);
+        onLikeComment(comment.id);
     };
 
     const handleUpdateSubmit = (content: string) => {
@@ -134,122 +128,119 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
         } else {
             onDeleteComment(comment.id);
         }
+        setDeleteDialogOpen(false);
     };
     
     return (
-        <div>
-            <div className="flex items-start gap-4">
-                <Avatar className={isReply ? 'h-8 w-8' : 'h-10 w-10'}>
-                    <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
-                    <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-sm">{comment.author.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                              {new Date(comment.createdAt).toLocaleDateString()}
-                          </p>
-                       </div>
-                       {(canEdit || canDelete) && !isEditing && (
-                         <DropdownMenu>
-                           <DropdownMenuTrigger asChild>
-                             <Button variant="ghost" size="icon" className="h-6 w-6">
-                                <MoreHorizontal className="h-4 w-4" />
-                             </Button>
-                           </DropdownMenuTrigger>
-                           <DropdownMenuContent align="end">
-                            {canEdit && <DropdownMenuItem onSelect={() => setIsEditing(true)}><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>}
-                            {canDelete && 
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete this {isReply ? 'reply' : 'comment'}.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                             }
-                           </DropdownMenuContent>
-                         </DropdownMenu>
-                       )}
-                    </div>
-                    {isEditing ? (
-                        <CommentForm 
-                          user={user!}
-                          initialContent={comment.content}
-                          onSubmit={handleUpdateSubmit}
-                          onCancel={() => setIsEditing(false)}
-                          placeholder="Edit your comment..."
-                          isReply
-                        />
-                    ) : (
-                      <p className="text-sm text-foreground/90 whitespace-pre-wrap">{comment.content}</p>
-                    )}
-                    
-                    {!isEditing && (
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                        <button className="flex items-center gap-1 hover:text-primary group" onClick={handleLikeClick}>
-                            <Heart className={`h-3 w-3 transition-colors group-hover:fill-red-500 group-hover:text-red-500 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
-                            <span>{likeCount}</span>
-                        </button>
-                        {user && (
-                        <button className="flex items-center gap-1 hover:text-primary" onClick={() => setIsReplying(!isReplying)}>
-                            <MessageSquare className="h-3 w-3"/>
-                            <span>Reply</span>
-                        </button>
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <div>
+                <div className="flex items-start gap-4">
+                    <Avatar className={isReply ? 'h-8 w-8' : 'h-10 w-10'}>
+                        <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
+                        <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                           <div className="flex items-center gap-2 mb-1">
+                              <p className="font-semibold text-sm">{comment.author.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                  {new Date(comment.createdAt).toLocaleDateString()}
+                              </p>
+                           </div>
+                           {(canEdit || canDelete) && !isEditing && (
+                             <DropdownMenu>
+                               <DropdownMenuTrigger asChild>
+                                 <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                 </Button>
+                               </DropdownMenuTrigger>
+                               <DropdownMenuContent align="end">
+                                {canEdit && <DropdownMenuItem onSelect={() => setIsEditing(true)}><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>}
+                                {canDelete && 
+                                    <DropdownMenuItem onSelect={() => setDeleteDialogOpen(true)} className="text-red-500 focus:text-red-500">
+                                      <Trash2 className="mr-2 h-4 w-4" />Delete
+                                    </DropdownMenuItem>
+                                 }
+                               </DropdownMenuContent>
+                             </DropdownMenu>
+                           )}
+                        </div>
+                        {isEditing && user ? (
+                            <CommentForm 
+                              user={user}
+                              initialContent={comment.content}
+                              onSubmit={handleUpdateSubmit}
+                              onCancel={() => setIsEditing(false)}
+                              placeholder="Edit your comment..."
+                              isReply
+                            />
+                        ) : (
+                          <p className="text-sm text-foreground/90 whitespace-pre-wrap">{comment.content}</p>
+                        )}
+                        
+                        {!isEditing && (
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                            <button className="flex items-center gap-1 hover:text-primary group" onClick={handleLikeClick}>
+                                <Heart className={`h-3 w-3 transition-colors group-hover:fill-red-500 group-hover:text-red-500 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
+                                <span>{comment.likes}</span>
+                            </button>
+                            {user && (
+                            <button className="flex items-center gap-1 hover:text-primary" onClick={() => setIsReplying(!isReplying)}>
+                                <MessageSquare className="h-3 w-3"/>
+                                <span>Reply</span>
+                            </button>
+                            )}
+                        </div>
                         )}
                     </div>
-                    )}
                 </div>
+                {isReplying && user && (
+                     <CommentForm 
+                        user={user} 
+                        onSubmit={(content) => {
+                            onAddReply(comment.id, content)
+                            setIsReplying(false);
+                        }}
+                        onCancel={() => setIsReplying(false)}
+                        placeholder="Write a reply..."
+                        isReply
+                     />
+                )}
+                {comment.replies && comment.replies.length > 0 && (
+                    <div className="mt-4 space-y-4 pl-6 border-l border-border/50">
+                        {comment.replies.map(reply => (
+                             <CommentItem 
+                                key={reply.id} 
+                                comment={reply} 
+                                user={user}
+                                isAdmin={isAdmin}
+                                onAddReply={onAddReply} 
+                                onUpdateComment={onUpdateComment}
+                                onDeleteComment={onDeleteComment}
+                                onUpdateReply={onUpdateReply}
+                                onDeleteReply={onDeleteReply}
+                                onLikeComment={onLikeComment}
+                                isReply
+                                parentCommentId={comment.id}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
-            {isReplying && user && (
-                 <CommentForm 
-                    user={user} 
-                    onSubmit={(content) => {
-                        if (isReply) {
-                          // If this is already a reply, we are adding a reply to the parent comment
-                          onAddReply(parentCommentId!, content);
-                        } else {
-                          onAddReply(comment.id, content)
-                        }
-                        setIsReplying(false);
-                    }}
-                    onCancel={() => setIsReplying(false)}
-                    placeholder="Write a reply..."
-                    isReply
-                 />
-            )}
-            {comment.replies && comment.replies.length > 0 && (
-                <div className="mt-4 space-y-4 pl-6 border-l border-border/50">
-                    {comment.replies.map(reply => (
-                         <CommentItem 
-                            key={reply.id} 
-                            comment={reply} 
-                            user={user}
-                            isAdmin={isAdmin}
-                            onAddReply={onAddReply} 
-                            onUpdateComment={()=>{}}
-                            onDeleteComment={()=>{}}
-                            onUpdateReply={onUpdateReply}
-                            onDeleteReply={onDeleteReply}
-                            onLikeComment={onLikeComment}
-                            isReply
-                            parentCommentId={comment.id}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
+
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete this {isReply ? 'reply' : 'comment'}.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 };
 
@@ -264,7 +255,7 @@ interface CommentSectionProps {
   onDeleteComment: (commentId: string) => void;
   onUpdateReply: (commentId: string, replyId: string, content: string) => void;
   onDeleteReply: (commentId: string, replyId: string) => void;
-  onLikeComment: (commentId: string, isLiked: boolean) => void;
+  onLikeComment: (commentId: string) => void;
 }
 
 const CommentSection = (props: CommentSectionProps) => {
@@ -308,5 +299,3 @@ const CommentSection = (props: CommentSectionProps) => {
 }
 
 export default CommentSection;
-
-    

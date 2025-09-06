@@ -2,7 +2,7 @@
 'use client';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { posts, Post, Comment } from '@/lib/data';
+import { posts as initialPosts, Post, Comment } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Heart, MessageCircle, Share2 } from 'lucide-react';
@@ -20,42 +20,30 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const router = useRouter();
   const { toast } = useToast();
   
-  // Find the post data once, directly during render. This is the correct pattern.
-  const post = posts.find(p => p.slug === params.slug);
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
 
-  // If the post is not found after the initial render, show a 404 page.
-  if (!post) {
-      notFound();
-  }
+  const post = useMemo(() => posts.find(p => p.slug === params.slug), [posts, params.slug]);
 
-  const [comments, setComments] = useState<Comment[]>(post.comments);
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(post?.comments.reduce((acc, c) => acc + c.likes, 0) + 15 || 0);
 
-  // useEffect is now only for client-side interactions after the component has mounted.
   useEffect(() => {
-    // Set initial likes from localStorage
+    if (!post) return;
+
     const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
     if (likedPosts[post.slug]) {
       setLiked(true);
     }
-    // Set initial like count (mocked)
     setLikeCount(post.comments.reduce((acc, c) => acc + c.likes, 0) + 15);
-  }, [post.slug, post.comments]);
-  
-  const relatedPosts = useMemo(() => {
-    return posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   }, [post]);
 
-  const getInitials = (name: string) => {
-    const names = name.split(' ');
-    if (names.length > 1) {
-      return `${names[0][0]}${names[1][0]}`;
-    }
-    return names[0].substring(0, 2);
-  };
-  
+  const updatePostState = (updatedPost: Post) => {
+    const newPosts = posts.map(p => p.slug === updatedPost.slug ? updatedPost : p);
+    setPosts(newPosts);
+  }
+
   const handleLike = () => {
+    if (!post) return;
     const newLikedState = !liked;
     setLiked(newLikedState);
     setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
@@ -68,12 +56,9 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     }
     localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
   };
-  
-  const handleCommentClick = () => {
-    document.getElementById('comment-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const handleShare = async () => {
+    if (!post) return;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -81,8 +66,9 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
           text: post.description,
           url: window.location.href,
         });
+        toast({ title: 'Post shared successfully!' });
       } catch (error) {
-        console.error('Error sharing:', error);
+        // Silently ignore share cancellation
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
@@ -90,14 +76,18 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     }
   };
 
+  const handleCommentClick = () => {
+    document.getElementById('comment-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+  
   const handleAddComment = async (content: string) => {
-    if (!user) {
+    if (!user || !post) {
         toast({ title: 'Please sign in to comment.', variant: 'destructive' });
         return;
     }
     try {
-      const newComments = await addComment(post.slug, content, user.id);
-      setComments(newComments);
+      const updatedPost = await addComment(post.slug, content, user.id);
+      updatePostState(updatedPost);
       toast({ title: 'Comment posted!' });
     } catch (e) {
       toast({ title: 'Failed to post comment.', description: (e as Error).message, variant: 'destructive' });
@@ -105,13 +95,13 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleAddReply = async (parentCommentId: string, content: string) => {
-    if (!user) {
+    if (!user || !post) {
        toast({ title: 'Please sign in to reply.', variant: 'destructive' });
        return;
     }
     try {
-        const newComments = await addReply(post.slug, parentCommentId, content, user.id);
-        setComments(newComments);
+        const updatedPost = await addReply(post.slug, parentCommentId, content, user.id);
+        updatePostState(updatedPost);
         toast({ title: 'Reply posted!' });
     } catch (e) {
         toast({ title: 'Failed to post reply.', description: (e as Error).message, variant: 'destructive' });
@@ -119,9 +109,10 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleUpdateComment = async (commentId: string, newContent: string) => {
+    if (!post) return;
     try {
-        const newComments = await updateComment(post.slug, commentId, newContent);
-        setComments(newComments);
+        const updatedPost = await updateComment(post.slug, commentId, newContent);
+        updatePostState(updatedPost);
         toast({ title: 'Comment updated!' });
     } catch(e) {
         toast({ title: 'Failed to update comment.', description: (e as Error).message, variant: 'destructive' });
@@ -129,9 +120,10 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleDeleteComment = async (commentId: string) => {
+    if (!post) return;
     try {
-        const newComments = await deleteComment(post.slug, commentId);
-        setComments(newComments);
+        const updatedPost = await deleteComment(post.slug, commentId);
+        updatePostState(updatedPost);
         toast({ title: 'Comment deleted.' });
     } catch (e) {
         toast({ title: 'Failed to delete comment.', description: (e as Error).message, variant: 'destructive' });
@@ -139,9 +131,10 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
   
   const handleUpdateReply = async (commentId: string, replyId: string, newContent: string) => {
+    if (!post) return;
     try {
-        const newComments = await updateReply(post.slug, commentId, replyId, newContent);
-        setComments(newComments);
+        const updatedPost = await updateReply(post.slug, commentId, replyId, newContent);
+        updatePostState(updatedPost);
         toast({ title: 'Reply updated!' });
     } catch (e) {
         toast({ title: 'Failed to update reply.', description: (e as Error).message, variant: 'destructive' });
@@ -149,19 +142,21 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleDeleteReply = async (commentId: string, replyId: string) => {
+    if (!post) return;
     try {
-        const newComments = await deleteReply(post.slug, commentId, replyId);
-        setComments(newComments);
+        const updatedPost = await deleteReply(post.slug, commentId, replyId);
+        updatePostState(updatedPost);
         toast({ title: 'Reply deleted.' });
     } catch (e) {
         toast({ title: 'Failed to delete reply.', description: (e as Error).message, variant: 'destructive' });
     }
   };
 
-
-  const handleLikeComment = useCallback((commentId: string, isLiked: boolean) => {
-    // This is a client-side only like for now
+  const handleLikeComment = useCallback((commentId: string) => {
+    if (!post) return;
     const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
+    const isLiked = !likedComments[commentId];
+    
     if (isLiked) {
         likedComments[commentId] = true;
     } else {
@@ -170,29 +165,33 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     localStorage.setItem('likedComments', JSON.stringify(likedComments));
 
     const updateLikes = (comments: Comment[]): Comment[] => {
-        return comments.map(comment => {
-            let newLikes = comment.likes;
-            if (comment.id === commentId) {
-                // This logic is simplified; a real app would prevent double-liking
-                newLikes = isLiked ? comment.likes + 1 : Math.max(0, comment.likes - 1);
-            }
-            return {
-                ...comment,
-                likes: newLikes,
-                replies: comment.replies ? updateLikes(comment.replies) : [],
-            };
-        });
+        return comments.map(comment => ({
+            ...comment,
+            likes: comment.id === commentId ? (isLiked ? comment.likes + 1 : Math.max(0, comment.likes - 1)) : comment.likes,
+            replies: comment.replies ? updateLikes(comment.replies) : [],
+        }));
     };
-    setComments(prev => updateLikes(prev));
-  }, []);
+    
+    const updatedPost = {...post, comments: updateLikes(post.comments)};
+    updatePostState(updatedPost);
+  }, [post]);
 
+
+  if (!post) {
+      return notFound();
+  }
+
+  const relatedPosts = posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
+  
+  const getInitials = (name: string) => {
+    const names = name.split(' ');
+    return names.length > 1 ? `${names[0][0]}${names[1][0]}` : name.substring(0, 2);
+  };
+  
   const handleTagClick = (tag: string) => {
     router.push(`/posts?q=${encodeURIComponent(tag)}`);
   };
   
-  // Since post is guaranteed to exist here, we don't need a loading state.
-  // If it didn't exist, notFound() would have been called.
-
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -268,7 +267,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
               </Button>
                <Button variant="outline" size="sm" onClick={handleCommentClick}>
                 <MessageCircle className="h-4 w-4 mr-2" />
-                <span>{comments.length}</span>
+                <span>{post.comments.length}</span>
               </Button>
             </div>
             <Button variant="outline" size="sm" onClick={handleShare}>
@@ -276,13 +275,12 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
               Share
             </Button>
           </div>
-
         </article>
 
         <Separator className="my-12" />
 
         <CommentSection 
-            comments={comments} 
+            comments={post.comments} 
             user={user}
             isAdmin={isAdmin}
             onAddComment={handleAddComment}
@@ -313,5 +311,3 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 };
 
 export default PostPage;
-
-    
