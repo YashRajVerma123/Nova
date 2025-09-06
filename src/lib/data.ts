@@ -135,7 +135,8 @@ export let posts: Post[] = [
     `,
     coverImage: 'https://picsum.photos/1200/800?random=5',
     author: authors['john-smith'],
-    publishedAt: '2024-07-24T12:00:00Z',
+    publishedAt: '2024-07-24T12:00:00Z'
+    ,
     tags: ['Ocean', 'Science', 'Exploration'],
     readTime: 9,
     featured: false,
