@@ -1,3 +1,4 @@
+
 'use client';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -16,35 +17,34 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user } = useAuth();
   const router = useRouter();
 
-  // Find post directly. This is the correct way for this component.
-  const post = posts.find(p => p.slug === params.slug);
-
+  const [post, setPost] = useState<Post | undefined>(undefined);
   const [comments, setComments] = useState<Comment[]>([]);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
-  // Initialize state from post data and local storage
+  // This useEffect correctly handles finding the post based on params
+  // and setting all related state, avoiding the Next.js warning.
   useEffect(() => {
-    if (post) {
-      setComments(post.comments);
-      setLikeCount(post.comments.reduce((acc, c) => acc + c.likes, 0) + 15); // mock likes
+    const currentPost = posts.find(p => p.slug === params.slug);
+    if (currentPost) {
+      setPost(currentPost);
+      setComments(currentPost.comments);
+      setLikeCount(currentPost.comments.reduce((acc, c) => acc + c.likes, 0) + 15); // mock likes
       
-      // Check local storage for post like status
       const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
-      if (likedPosts[post.slug]) {
+      if (likedPosts[currentPost.slug]) {
         setLiked(true);
       }
+    } else {
+        // If post not found after client-side check, trigger notFound
+        notFound();
     }
-  }, [post]);
+  }, [params.slug]);
   
   const relatedPosts = useMemo(() => {
     if (!post) return [];
     return posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   }, [post]);
-
-  if (!post) {
-    return notFound();
-  }
 
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -60,7 +60,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     setLiked(newLikedState);
     setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
 
-    // Update local storage
     const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
     if (newLikedState) {
       likedPosts[post.slug] = true;
@@ -126,6 +125,28 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     router.push(`/posts?q=${encodeURIComponent(tag)}`);
   };
   
+  if (!post) {
+    // Render a loading state or skeleton while the post is being found.
+    return (
+        <div className="container mx-auto px-4 py-10 max-w-4xl">
+            <div className="animate-pulse">
+                <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
+                <div className="h-12 bg-muted rounded w-3/4 mb-6"></div>
+                <div className="flex items-center space-x-4 mb-8">
+                    <div className="h-10 w-10 rounded-full bg-muted"></div>
+                    <div className="h-4 bg-muted rounded w-1/4"></div>
+                </div>
+                <div className="aspect-video bg-muted rounded-xl mb-8"></div>
+                <div className="space-y-4">
+                    <div className="h-6 bg-muted rounded w-full"></div>
+                    <div className="h-6 bg-muted rounded w-full"></div>
+                    <div className="h-6 bg-muted rounded w-2/3"></div>
+                </div>
+            </div>
+        </div>
+    );
+  }
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -241,3 +262,5 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 };
 
 export default PostPage;
+
+    
