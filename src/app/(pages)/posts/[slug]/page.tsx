@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { posts as initialPosts, Post, Comment } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Heart, MessageCircle, Share2 } from 'lucide-react';
+import { Calendar, Clock, Heart, MessageCircle, Share2, Copy } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import CommentSection from '@/components/comment-section';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,15 @@ import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { addComment, addReply, deleteComment, deleteReply, updateComment, updateReply } from '@/app/actions/comment-actions';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from '@/components/ui/input';
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user, isAdmin } = useAuth();
@@ -21,33 +30,28 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const { toast } = useToast();
   const slug = params.slug;
   
-  // This state will hold the posts, and will be updated by server actions
   const [posts, setPosts] = useState<Post[]>(initialPosts);
-
-  // Find the post from the current state.
   const post = useMemo(() => posts.find(p => p.slug === slug), [posts, slug]);
-
   const [liked, setLiked] = useState(false);
-  
-  // Initialize likeCount from the post found in the initial data.
+  const [currentUrl, setCurrentUrl] = useState('');
+
   const [likeCount, setLikeCount] = useState(() => {
      const initialPost = initialPosts.find(p => p.slug === slug);
-     // A default value in case the post is not found or has no comments.
      return initialPost?.comments.reduce((acc, c) => acc + c.likes, 0) + 15 || 0;
   });
 
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentUrl(window.location.href);
+    }
     if (!post) return;
-
-    // Persist and retrieve post like state from localStorage
     const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
     if (likedPosts[post.slug]) {
       setLiked(true);
     }
-  }, [post]);
+  }, [post, slug]);
 
-  // A single function to update the local state with the post returned from a server action.
   const updatePostState = (updatedPost: Post) => {
     const newPosts = posts.map(p => p.slug === updatedPost.slug ? updatedPost : p);
     setPosts(newPosts);
@@ -57,7 +61,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     if (!post) return;
     const newLikedState = !liked;
     setLiked(newLikedState);
-    // Update like count optimistically.
     setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
 
     const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
@@ -69,25 +72,9 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
   };
 
-  const handleShare = async () => {
-    if (!post) return;
-    // Use the Web Share API if available
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: post.title,
-          text: post.description,
-          url: window.location.href,
-        });
-        toast({ title: 'Post shared successfully!' });
-      } catch (error) {
-        // Silently ignore share cancellation on some devices.
-      }
-    } else {
-      // Fallback to copying the link to the clipboard
-      navigator.clipboard.writeText(window.location.href);
-      toast({ title: 'Link copied to clipboard!' });
-    }
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(currentUrl);
+    toast({ title: 'Link copied to clipboard!' });
   };
 
   const handleCommentClick = () => {
@@ -169,7 +156,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const handleLikeComment = useCallback((commentId: string) => {
     if (!post) return;
     const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
-    // Toggle the like state for the given comment ID
     const isLiked = !likedComments[commentId];
     
     if (isLiked) {
@@ -179,7 +165,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     }
     localStorage.setItem('likedComments', JSON.stringify(likedComments));
 
-    // Recursively update likes in the comments tree
     const updateLikes = (comments: Comment[]): Comment[] => {
         return comments.map(comment => ({
             ...comment,
@@ -192,13 +177,10 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     updatePostState(updatedPost);
   }, [post]);
 
-
-  // If the post is not found after the initial state is set, show a 404 page.
   if (!post) {
       return notFound();
   }
 
-  // Find related posts from the current state.
   const relatedPosts = posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   
   const getInitials = (name: string) => {
@@ -210,7 +192,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     router.push(`/posts?q=${encodeURIComponent(tag)}`);
   };
   
-  // For SEO purposes
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -289,10 +270,34 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
                 <span>{post.comments.length}</span>
               </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={handleShare}>
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Share this post</DialogTitle>
+                  <DialogDescription>
+                    Anyone with this link will be able to view this post.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center space-x-2">
+                  <div className="grid flex-1 gap-2">
+                    <Input
+                      id="link"
+                      defaultValue={currentUrl}
+                      readOnly
+                    />
+                  </div>
+                  <Button type="button" size="icon" onClick={handleCopyToClipboard}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </article>
 
