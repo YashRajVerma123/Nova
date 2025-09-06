@@ -19,18 +19,19 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user, isAdmin } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { slug } = params;
   
   // This state will hold the posts, and will be updated by server actions
   const [posts, setPosts] = useState<Post[]>(initialPosts);
 
   // Find the post from the current state.
-  const post = useMemo(() => posts.find(p => p.slug === params.slug), [posts, params.slug]);
+  const post = useMemo(() => posts.find(p => p.slug === slug), [posts, slug]);
 
   const [liked, setLiked] = useState(false);
   
   // Initialize likeCount from the post found in the initial data.
   const [likeCount, setLikeCount] = useState(() => {
-     const initialPost = initialPosts.find(p => p.slug === params.slug);
+     const initialPost = initialPosts.find(p => p.slug === slug);
      // A default value in case the post is not found or has no comments.
      return initialPost?.comments.reduce((acc, c) => acc + c.likes, 0) + 15 || 0;
   });
