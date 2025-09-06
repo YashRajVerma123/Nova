@@ -16,7 +16,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user } = useAuth();
   const router = useRouter();
 
-  // Find post directly without useMemo to avoid Next.js param warning
+  // Find post directly. The 'params' object is available synchronously in client components.
   const post = posts.find(p => p.slug === params.slug);
 
   const [comments, setComments] = useState<Comment[]>([]);
@@ -37,6 +37,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   }, [post]);
 
   if (!post) {
+    // This will trigger the not-found page if the post doesn't exist.
     return notFound();
   }
 
