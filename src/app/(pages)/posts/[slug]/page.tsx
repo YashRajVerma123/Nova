@@ -16,6 +16,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user } = useAuth();
   const router = useRouter();
 
+  // Find post directly. This is the correct way for this component.
   const post = posts.find(p => p.slug === params.slug);
 
   const [comments, setComments] = useState<Comment[]>([]);
