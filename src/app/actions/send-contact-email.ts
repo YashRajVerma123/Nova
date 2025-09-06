@@ -22,9 +22,14 @@ export async function sendContactEmail(values: z.infer<typeof formSchema>) {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // In a real implementation, if the email service failed, you would throw an error.
-  // For example:
-  // const { error } = await resend.emails.send({...});
+  // In a real implementation, you would check for success and throw an error on failure
+  // For example, with Resend:
+  // const { data, error } = await resend.emails.send({
+  //   from: 'onboarding@resend.dev',
+  //   to: 'help.novablog@gmail.com',
+  //   subject: `New contact from ${values.name}`,
+  //   react: EmailTemplate({ name: values.name, email: values.email, message: values.message })
+  // });
   // if (error) {
   //   throw new Error('Failed to send email');
   // }

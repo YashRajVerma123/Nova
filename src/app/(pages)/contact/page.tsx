@@ -1,4 +1,4 @@
-import { Mail, MessageSquare, User } from "lucide-react";
+import { Mail, MessageSquare } from "lucide-react";
 import ContactForm from "@/components/contact-form";
 
 const ContactPage = () => {
@@ -37,13 +37,8 @@ const ContactPage = () => {
                        <MessageSquare className="h-6 w-6 text-primary"/>
                     </div>
                     <div>
-                        <h3 className="font-semibold">Social Media</h3>
-                        <p className="text-muted-foreground">Follow us for updates</p>
-                        <div className="flex space-x-2 mt-1">
-                          <a href="#" className="text-primary hover:underline">Twitter</a>
-                          <span>/</span>
-                          <a href="#" className="text-primary hover:underline">LinkedIn</a>
-                        </div>
+                        <h3 className="font-semibold">Prefer a Form?</h3>
+                        <p className="text-muted-foreground">Use the form on this page to send us a message directly.</p>
                     </div>
                 </div>
             </div>

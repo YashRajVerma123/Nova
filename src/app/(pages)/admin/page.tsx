@@ -1,19 +1,60 @@
 'use client';
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Users, FileText, Settings } from "lucide-react";
+import { BarChart, Users, FileText, Settings, PlusCircle, BellPlus } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { addNotification } from "@/app/actions/add-notification";
 
 const AdminPage = () => {
     const { user, isAdmin, loading } = useAuth();
     const router = useRouter();
+    const [isNotifyDialogOpen, setNotifyDialogOpen] = useState(false);
+    const [notificationTitle, setNotificationTitle] = useState("");
+    const [notificationDesc, setNotificationDesc] = useState("");
+    const { toast } = useToast();
 
     useEffect(() => {
         if (!loading && !isAdmin) {
             router.push('/');
         }
     }, [user, isAdmin, loading, router]);
+    
+    const handleSendNotification = async () => {
+        if (!notificationTitle || !notificationDesc) {
+            toast({
+                title: "Incomplete Form",
+                description: "Please fill out both title and description.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            await addNotification({ title: notificationTitle, description: notificationDesc });
+            toast({
+                title: "Notification Sent!",
+                description: "Your notification has been added.",
+            });
+            setNotificationTitle("");
+            setNotificationDesc("");
+            setNotifyDialogOpen(false);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to send notification.",
+                variant: "destructive",
+            });
+        }
+    };
+
 
     if (loading || !isAdmin) {
         return (
@@ -55,27 +96,53 @@ const AdminPage = () => {
                         <p className="text-xs text-muted-foreground">+18.1% from last month</p>
                     </CardContent>
                 </Card>
-                 <Card className="glass-card">
+                <Link href="/admin/create-post">
+                     <Card className="glass-card h-full transition-all hover:border-primary/50 hover:-translate-y-1">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Create Post</CardTitle>
+                            <PlusCircle className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                             <div className="text-2xl font-bold">New</div>
+                            <p className="text-xs text-muted-foreground">Add a new blog post</p>
+                        </CardContent>
+                    </Card>
+                </Link>
+                <Card className="glass-card h-full transition-all hover:border-primary/50 hover:-translate-y-1 cursor-pointer" onClick={() => setNotifyDialogOpen(true)}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Manage Posts</CardTitle>
-                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Send Notification</CardTitle>
+                        <BellPlus className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                         <div className="text-2xl font-bold">5</div>
-                        <p className="text-xs text-muted-foreground">Total posts published</p>
-                    </CardContent>
-                </Card>
-                 <Card className="glass-card">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Settings</CardTitle>
-                        <Settings className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                         <div className="text-2xl font-bold">System</div>
-                        <p className="text-xs text-muted-foreground">Normal</p>
+                        <div className="text-2xl font-bold">Notify</div>
+                        <p className="text-xs text-muted-foreground">Broadcast to all users</p>
                     </CardContent>
                 </Card>
             </div>
+
+            <Dialog open={isNotifyDialogOpen} onOpenChange={setNotifyDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Send a New Notification</DialogTitle>
+                        <DialogDescription>
+                            This will be sent to all users and appear in their notification panel.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="title">Title</Label>
+                            <Input id="title" value={notificationTitle} onChange={(e) => setNotificationTitle(e.target.value)} placeholder="e.g. New Feature!" />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea id="description" value={notificationDesc} onChange={(e) => setNotificationDesc(e.target.value)} placeholder="Describe the notification..."/>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleSendNotification}>Send Notification</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

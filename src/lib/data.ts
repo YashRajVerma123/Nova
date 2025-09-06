@@ -43,6 +43,8 @@ export const authors: Record<string, Author> = {
   'john-smith': { id: 'john-smith', name: 'John Smith', avatar: 'https://i.pravatar.cc/150?u=john-smith', email: 'john.smith@example.com'},
 };
 
+// We are using an in-memory array to store posts and notifications.
+// In a real-world application, you would use a database like Firestore.
 export const posts: Post[] = [
   {
     slug: 'the-future-of-ai',
@@ -140,7 +142,17 @@ export const posts: Post[] = [
   },
 ];
 
-export const notifications: Notification[] = [
+export let notifications: Notification[] = [
     { id: 'n1', title: 'New Feature: Post Summaries', description: 'We\'ve added AI-powered summaries to our posts!', createdAt: '2024-07-28T12:00:00Z', read: false },
     { id: 'n2', title: 'Welcome to the new Nova!', description: 'Our new website is live. We hope you enjoy the new design and features.', createdAt: '2024-07-27T09:00:00Z', read: true },
 ];
+
+// In-memory data modification functions.
+// In a real app, these would be API calls to a database.
+export function addPost(post: Post) {
+  posts.unshift(post);
+}
+
+export function addNotification(notification: Notification) {
+  notifications.unshift(notification);
+}

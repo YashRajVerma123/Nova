@@ -5,7 +5,6 @@ import { Separator } from '@/components/ui/separator';
 const quickLinks = [
   { href: '/', label: 'Home' },
   { href: '/posts', label: 'Posts' },
-  { href: '/posts', label: 'Latest News' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact Us' },
 ];
