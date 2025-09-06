@@ -5,6 +5,17 @@ export type Author = {
   email: string;
 };
 
+export type Comment = {
+  id: string;
+  author: Author;
+  content: string;
+  createdAt: string;
+  likes: string[]; // Array of user IDs who liked the comment
+  replies: Comment[];
+  isPinned?: boolean;
+  isHearted?: boolean;
+};
+
 export type Post = {
   slug: string;
   title: string;
@@ -16,6 +27,7 @@ export type Post = {
   tags: string[];
   readTime: number; 
   featured?: boolean;
+  comments: Comment[];
 };
 
 export type Notification = {
@@ -27,15 +39,13 @@ export type Notification = {
   image?: string;
 };
 
-
-export const authors: Record<string, Author> = {
-  'yash-raj': { id: 'yash-raj', name: 'Yash Raj', avatar: 'https://i.pravatar.cc/150?u=yash-raj', email: 'yashrajverma916@gmail.com'},
-  'jane-doe': { id: 'jane-doe', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?u=jane-doe', email: 'jane.doe@example.com'},
-  'john-smith': { id: 'john-smith', name: 'John Smith', avatar: 'https://i.pravatar.cc/150?u=john-smith', email: 'john.smith@example.com'},
-};
-
 // We are using an in-memory array to store posts and notifications.
 // In a real-world application, you would use a database like Firestore.
+
+const yashRaj: Author = { id: 'yash-raj', name: 'Yash Raj', avatar: 'https://i.pravatar.cc/150?u=yash-raj', email: 'yashrajverma916@gmail.com'};
+const janeDoe: Author = { id: 'jane-doe', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?u=jane-doe', email: 'jane.doe@example.com'};
+const johnSmith: Author = { id: 'john-smith', name: 'John Smith', avatar: 'https://i.pravatar.cc/150?u=john-smith', email: 'john.smith@example.com'};
+
 export let posts: Post[] = [
   {
     slug: 'the-future-of-ai',
@@ -48,11 +58,40 @@ export let posts: Post[] = [
       <p>Generative AI models are becoming increasingly sophisticated, capable of creating text, images, and even code that is indistinguishable from human-created content. This opens up new frontiers for creativity and automation. However, it also raises important ethical questions that society must address.</p>
     `,
     coverImage: 'https://picsum.photos/1200/800?random=1',
-    author: authors['jane-doe'],
+    author: janeDoe,
     publishedAt: '2024-07-28T10:00:00Z',
     tags: ['AI', 'Technology', 'Future'],
     readTime: 10,
     featured: true,
+    comments: [
+      {
+        id: 'c1',
+        author: yashRaj,
+        content: 'Fantastic article, Jane! The ethical considerations are indeed the most challenging part of the AI revolution.',
+        createdAt: '2024-07-29T11:00:00Z',
+        likes: ['user1', 'user2', 'user3'],
+        replies: [
+          {
+            id: 'c1r1',
+            author: janeDoe,
+            content: 'Thanks, Yash! Glad you found it insightful. It\'s a conversation we all need to be a part of.',
+            createdAt: '2024-07-29T12:30:00Z',
+            likes: ['user4'],
+            replies: [],
+          }
+        ],
+        isPinned: true,
+      },
+      {
+        id: 'c2',
+        author: johnSmith,
+        content: 'I\'m particularly interested in how AI will impact creative fields. Do you think it will augment human creativity or replace it?',
+        createdAt: '2024-07-30T15:00:00Z',
+        likes: ['user5'],
+        replies: [],
+        isHearted: true,
+      }
+    ]
   },
   {
     slug: 'sustainable-living-guide',
@@ -65,11 +104,12 @@ export let posts: Post[] = [
       <img src="https://picsum.photos/800/400?random=2" data-ai-hint="nature environment" alt="Sustainable Living" class="rounded-lg my-6" />
     `,
     coverImage: 'https://picsum.photos/1200/800?random=2',
-    author: authors['john-smith'],
+    author: johnSmith,
     publishedAt: '2024-07-27T14:30:00Z',
     tags: ['Sustainability', 'Lifestyle', 'Environment'],
     readTime: 8,
     featured: true,
+    comments: [],
   },
   {
     slug: 'mastering-remote-work',
@@ -82,11 +122,12 @@ export let posts: Post[] = [
       <img src="https://picsum.photos/800/400?random=3" data-ai-hint="home office" alt="Remote Work" class="rounded-lg my-6" />
     `,
     coverImage: 'https://picsum.photos/1200/800?random=3',
-    author: authors['yash-raj'],
+    author: yashRaj,
     publishedAt: '2024-07-26T09:00:00Z',
     tags: ['Remote Work', 'Productivity', 'Wellness'],
     readTime: 5,
     featured: false,
+    comments: [],
   },
   {
     slug: 'the-art-of-minimalism',
@@ -98,11 +139,12 @@ export let posts: Post[] = [
       <p>By clearing the clutter from our lives, we can make room for what's most important: happiness, fulfillment, and freedom.</p>
     `,
     coverImage: 'https://picsum.photos/1200/800?random=4',
-    author: authors['jane-doe'],
+    author: janeDoe,
     publishedAt: '2024-07-25T18:00:00Z',
     tags: ['Minimalism', 'Lifestyle', 'Philosophy'],
     readTime: 7,
     featured: true,
+    comments: [],
   },
   {
     slug: 'exploring-the-deep-sea',
@@ -114,12 +156,13 @@ export let posts: Post[] = [
       <p>From bioluminescent jellyfish to giant squid, we're just beginning to understand the incredible biodiversity of the deep ocean. Join us on a journey to this mysterious realm.</p>
     `,
     coverImage: 'https://picsum.photos/1200/800?random=5',
-    author: authors['john-smith'],
+    author: johnSmith,
     publishedAt: '2024-07-24T12:00:00Z'
     ,
     tags: ['Ocean', 'Science', 'Exploration'],
     readTime: 9,
     featured: false,
+    comments: [],
   },
 ];
 

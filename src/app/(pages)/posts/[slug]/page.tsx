@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { posts as initialPosts, Post } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Heart, MessageCircle, Share2, Copy } from 'lucide-react';
+import { Calendar, Clock, Heart, Share2, Copy } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import BlogPostCard from '@/components/blog-post-card';
@@ -20,6 +20,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
+import CommentSection from '@/components/comment-section';
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
   const { toast } = useToast();
@@ -182,6 +183,10 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
             </Dialog>
           </div>
         </article>
+
+        <Separator className="my-12" />
+        <CommentSection postSlug={slug} initialComments={post.comments} postAuthorId={post.author.id} />
+
 
         {relatedPosts.length > 0 && (
           <>
