@@ -19,7 +19,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user, isAdmin } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { slug } = params;
+  const slug = params.slug;
   
   // This state will hold the posts, and will be updated by server actions
   const [posts, setPosts] = useState<Post[]>(initialPosts);
