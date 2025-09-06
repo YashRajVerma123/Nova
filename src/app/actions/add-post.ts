@@ -1,8 +1,11 @@
+
 'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { posts, authors, Post } from '@/lib/data';
+import { posts, Post, Author } from '@/lib/data';
+import { getAuth } from 'firebase-admin/auth';
+import { getAdminApp } from '@/lib/firebase-admin';
 
 const formSchema = z.object({
   title: z.string(),
@@ -27,11 +30,30 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
     if (!validatedFields.success) {
         throw new Error('Invalid data provided.');
     }
-    
-    const author = Object.values(authors).find(a => a.id === authorId);
-    if (!author) {
+
+    let author: Author;
+    try {
+      // Initialize the Firebase Admin SDK
+      const app = getAdminApp();
+      const auth = getAuth(app);
+      const userRecord = await auth.getUser(authorId);
+      
+      if (!userRecord) {
         throw new Error("Author not found. You must be logged in.");
+      }
+
+      author = {
+        id: userRecord.uid,
+        name: userRecord.displayName || 'Anonymous User',
+        email: userRecord.email || '',
+        avatar: userRecord.photoURL || `https://i.pravatar.cc/150?u=${userRecord.uid}`,
+      };
+
+    } catch (error) {
+       console.error("Firebase Admin SDK error:", error);
+       throw new Error("Author not found. You must be logged in.");
     }
+
 
     const { title, description, content, coverImage, tags, featured } = validatedFields.data;
 
