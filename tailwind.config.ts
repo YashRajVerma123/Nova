@@ -10,9 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['"Space Grotesk"', 'sans-serif'],
-        code: ['monospace'],
+        body: ['var(--font-inter)', 'sans-serif'],
+        headline: ['var(--font-space-grotesk)', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -91,7 +90,7 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in': 'fade-in 1s ease-out forwards',
-        'fade-in-up': 'fade-in-up 0.8s ease-out forwards',
+        'fade-in-up': 'fade-in-up 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards',
       },
     },
   },
