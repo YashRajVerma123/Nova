@@ -1,7 +1,7 @@
 'use client';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { posts, Post, Comment } from '@/lib/data';
+import { posts, Post, Comment, Author } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Heart, MessageCircle, Share2 } from 'lucide-react';
@@ -10,24 +10,29 @@ import CommentSection from '@/components/comment-section';
 import { Button } from '@/components/ui/button';
 import BlogPostCard from '@/components/blog-post-card';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user } = useAuth();
   const router = useRouter();
 
-  // Find post directly. The 'params' object is available synchronously in client components.
   const post = posts.find(p => p.slug === params.slug);
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
+  // Initialize state from post data and local storage
   useEffect(() => {
     if (post) {
       setComments(post.comments);
-      // In a real app, you'd fetch like count and user's like status from a DB
       setLikeCount(post.comments.reduce((acc, c) => acc + c.likes, 0) + 15); // mock likes
+      
+      // Check local storage for post like status
+      const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+      if (likedPosts[post.slug]) {
+        setLiked(true);
+      }
     }
   }, [post]);
   
@@ -37,7 +42,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   }, [post]);
 
   if (!post) {
-    // This will trigger the not-found page if the post doesn't exist.
     return notFound();
   }
 
@@ -48,10 +52,21 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     }
     return names[0].substring(0, 2);
   };
-
+  
   const handleLike = () => {
-    setLiked(!liked);
-    setLikeCount(prev => liked ? prev - 1 : prev + 1);
+    if (!post) return;
+    const newLikedState = !liked;
+    setLiked(newLikedState);
+    setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
+
+    // Update local storage
+    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+    if (newLikedState) {
+      likedPosts[post.slug] = true;
+    } else {
+      delete likedPosts[post.slug];
+    }
+    localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
   };
   
   const handleCommentClick = () => {
@@ -59,6 +74,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleShare = async () => {
+    if (!post) return;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -70,7 +86,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
         console.error('Error sharing:', error);
       }
     } else {
-      // Fallback for browsers that don't support Web Share API
       navigator.clipboard.writeText(window.location.href);
       alert('Link copied to clipboard!');
     }
@@ -78,8 +93,33 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 
   const handleAddComment = (newComment: Comment) => {
     setComments(prev => [newComment, ...prev]);
-    // In a real app, you would also persist this comment to your database
   };
+
+  const handleAddReply = (parentCommentId: string, reply: Comment) => {
+      setComments(prevComments => 
+        prevComments.map(comment => {
+            if (comment.id === parentCommentId) {
+                return {
+                    ...comment,
+                    replies: [...comment.replies, reply]
+                };
+            }
+            return comment;
+        })
+      );
+  };
+  
+  const handleLikeComment = useCallback((commentId: string, isLiked: boolean) => {
+    setComments(prevComments =>
+      prevComments.map(comment => {
+        if (comment.id === commentId) {
+          return { ...comment, likes: comment.likes + (isLiked ? 1 : -1) };
+        }
+        // This simple version doesn't handle likes on nested replies.
+        return comment;
+      })
+    );
+  }, []);
 
   const handleTagClick = (tag: string) => {
     router.push(`/posts?q=${encodeURIComponent(tag)}`);
@@ -173,7 +213,13 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 
         <Separator className="my-12" />
 
-        <CommentSection comments={comments} user={user} onAddComment={handleAddComment} />
+        <CommentSection 
+            comments={comments} 
+            user={user} 
+            onAddComment={handleAddComment}
+            onAddReply={handleAddReply}
+            onLikeComment={handleLikeComment}
+        />
 
         {relatedPosts.length > 0 && (
           <>
