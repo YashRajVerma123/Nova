@@ -14,9 +14,9 @@ const findComment = (comments: Comment[], id: string): {comment: Comment | null,
             return { comment, parent: comments };
         }
         if (comment.replies) {
-            const found = findComment(comment.replies, id);
-            if (found.comment) {
-                return found;
+            const foundInReplies = findComment(comment.replies, id);
+            if (foundInReplies.comment) {
+                return foundInReplies;
             }
         }
     }
@@ -68,7 +68,7 @@ export async function addReply(postSlug: string, parentCommentId: string, conten
     }
 
     const newReply: Comment = {
-        id: `c${Date.now()}`,
+        id: `r${Date.now()}`,
         author,
         content,
         createdAt: new Date().toISOString(),
@@ -101,15 +101,11 @@ export async function updateComment(postSlug: string, commentId: string, newCont
 export async function deleteComment(postSlug: string, commentId: string) {
     const post = findPostAndRevalidate(postSlug);
     
-    const { comment, parent } = findComment(post.comments, commentId);
-    
-    if (!comment || !parent) {
-        throw new Error('Comment not found');
-    }
-    
-    const index = parent.findIndex(c => c.id === commentId);
+    const index = post.comments.findIndex(c => c.id === commentId);
     if (index > -1) {
-        parent.splice(index, 1);
+        post.comments.splice(index, 1);
+    } else {
+        throw new Error('Comment not found');
     }
     
     return post.comments;
@@ -143,6 +139,8 @@ export async function deleteReply(postSlug: string, commentId: string, replyId: 
     const index = parentComment.replies.findIndex(r => r.id === replyId);
     if (index > -1) {
         parentComment.replies.splice(index, 1);
+    } else {
+        throw new Error('Reply not found');
     }
 
     return post.comments;
