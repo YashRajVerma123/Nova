@@ -5,15 +5,6 @@ export type Author = {
   email: string;
 };
 
-export type Comment = {
-  id: string;
-  author: Author;
-  content: string;
-  createdAt: string;
-  likes: number;
-  replies: Comment[];
-};
-
 export type Post = {
   slug: string;
   title: string;
@@ -25,7 +16,6 @@ export type Post = {
   tags: string[];
   readTime: number; 
   featured?: boolean;
-  comments: Comment[];
 };
 
 export type Notification = {
@@ -63,9 +53,6 @@ export let posts: Post[] = [
     tags: ['AI', 'Technology', 'Future'],
     readTime: 10,
     featured: true,
-    comments: [
-      { id: 'c1', author: authors['john-smith'], content: 'Great insights! The ethical considerations are indeed crucial.', createdAt: '2024-07-28T11:00:00Z', likes: 15, replies: [] },
-    ]
   },
   {
     slug: 'sustainable-living-guide',
@@ -83,7 +70,6 @@ export let posts: Post[] = [
     tags: ['Sustainability', 'Lifestyle', 'Environment'],
     readTime: 8,
     featured: true,
-    comments: []
   },
   {
     slug: 'mastering-remote-work',
@@ -101,11 +87,6 @@ export let posts: Post[] = [
     tags: ['Remote Work', 'Productivity', 'Wellness'],
     readTime: 5,
     featured: false,
-    comments: [
-       { id: 'c2', author: authors['jane-doe'], content: 'These are fantastic tips. Setting boundaries is so important.', createdAt: '2024-07-26T10:00:00Z', likes: 22, replies: [
-         { id: 'c3', author: authors['yash-raj'], content: 'Glad you found it helpful!', createdAt: '2024-07-26T10:30:00Z', likes: 5, replies: [] }
-       ] },
-    ]
   },
   {
     slug: 'the-art-of-minimalism',
@@ -122,7 +103,6 @@ export let posts: Post[] = [
     tags: ['Minimalism', 'Lifestyle', 'Philosophy'],
     readTime: 7,
     featured: true,
-    comments: []
   },
   {
     slug: 'exploring-the-deep-sea',
@@ -140,7 +120,6 @@ export let posts: Post[] = [
     tags: ['Ocean', 'Science', 'Exploration'],
     readTime: 9,
     featured: false,
-    comments: []
   },
 ];
 

@@ -52,7 +52,6 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
         author,
         publishedAt: new Date().toISOString(),
         readTime,
-        comments: [],
     };
     
     addNewPostToMemory(newPost);

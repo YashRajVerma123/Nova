@@ -2,17 +2,14 @@
 'use client';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { posts as initialPosts, Post, Comment } from '@/lib/data';
+import { posts as initialPosts, Post } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Heart, MessageCircle, Share2, Copy } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import CommentSection from '@/components/comment-section';
 import { Button } from '@/components/ui/button';
 import BlogPostCard from '@/components/blog-post-card';
-import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { addComment, addReply, deleteComment, deleteReply, updateComment, updateReply } from '@/app/actions/comment-actions';
+import { useEffect, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -25,21 +22,15 @@ import {
 import { Input } from '@/components/ui/input';
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
-  const { user, firebaseUser, isAdmin } = useAuth();
-  const router = useRouter();
   const { toast } = useToast();
+  const router = useRouter();
   const slug = params.slug;
   
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
-  const post = useMemo(() => posts.find(p => p.slug === slug), [posts, slug]);
+  const post = useMemo(() => initialPosts.find(p => p.slug === slug), [slug]);
+  
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 25) + 5);
   const [currentUrl, setCurrentUrl] = useState('');
-
-  const [likeCount, setLikeCount] = useState(() => {
-     const initialPost = initialPosts.find(p => p.slug === slug);
-     return initialPost?.comments.reduce((acc, c) => acc + c.likes, 0) + 15 || 0;
-  });
-
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -51,11 +42,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
       setLiked(true);
     }
   }, [post, slug]);
-
-  const updatePostState = (updatedPost: Post) => {
-    const newPosts = posts.map(p => p.slug === updatedPost.slug ? updatedPost : p);
-    setPosts(newPosts);
-  }
 
   const handleLike = () => {
     if (!post) return;
@@ -76,114 +62,12 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     navigator.clipboard.writeText(currentUrl);
     toast({ title: 'Link copied to clipboard!' });
   };
-
-  const handleCommentClick = () => {
-    document.getElementById('comment-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
   
-  const handleAddComment = async (content: string) => {
-    if (!user || !post || !firebaseUser) {
-        toast({ title: 'Please sign in to comment.', variant: 'destructive' });
-        return;
-    }
-    try {
-      const idToken = await firebaseUser.getIdToken();
-      const updatedPost = await addComment(post.slug, content, idToken);
-      updatePostState(updatedPost);
-      toast({ title: 'Comment posted!' });
-    } catch (e) {
-      toast({ title: 'Failed to post comment.', description: (e as Error).message, variant: 'destructive' });
-    }
-  };
-
-  const handleAddReply = async (parentCommentId: string, content: string) => {
-    if (!user || !post || !firebaseUser) {
-       toast({ title: 'Please sign in to reply.', variant: 'destructive' });
-       return;
-    }
-    try {
-        const idToken = await firebaseUser.getIdToken();
-        const updatedPost = await addReply(post.slug, parentCommentId, content, idToken);
-        updatePostState(updatedPost);
-        toast({ title: 'Reply posted!' });
-    } catch (e) {
-        toast({ title: 'Failed to post reply.', description: (e as Error).message, variant: 'destructive' });
-    }
-  };
-
-  const handleUpdateComment = async (commentId: string, newContent: string) => {
-    if (!post) return;
-    try {
-        const updatedPost = await updateComment(post.slug, commentId, newContent);
-        updatePostState(updatedPost);
-        toast({ title: 'Comment updated!' });
-    } catch(e) {
-        toast({ title: 'Failed to update comment.', description: (e as Error).message, variant: 'destructive' });
-    }
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
-    if (!post) return;
-    try {
-        const updatedPost = await deleteComment(post.slug, commentId);
-        updatePostState(updatedPost);
-        toast({ title: 'Comment deleted.' });
-    } catch (e) {
-        toast({ title: 'Failed to delete comment.', description: (e as Error).message, variant: 'destructive' });
-    }
-  };
-  
-  const handleUpdateReply = async (commentId: string, replyId: string, newContent: string) => {
-    if (!post) return;
-    try {
-        const updatedPost = await updateReply(post.slug, commentId, replyId, newContent);
-        updatePostState(updatedPost);
-        toast({ title: 'Reply updated!' });
-    } catch (e) {
-        toast({ title: 'Failed to update reply.', description: (e as Error).message, variant: 'destructive' });
-    }
-  };
-
-  const handleDeleteReply = async (commentId: string, replyId: string) => {
-    if (!post) return;
-    try {
-        const updatedPost = await deleteReply(post.slug, commentId, replyId);
-        updatePostState(updatedPost);
-        toast({ title: 'Reply deleted.' });
-    } catch (e) {
-        toast({ title: 'Failed to delete reply.', description: (e as Error).message, variant: 'destructive' });
-    }
-  };
-
-  const handleLikeComment = useCallback((commentId: string) => {
-    if (!post) return;
-    const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
-    const isLiked = !likedComments[commentId];
-    
-    if (isLiked) {
-        likedComments[commentId] = true;
-    } else {
-        delete likedComments[commentId];
-    }
-    localStorage.setItem('likedComments', JSON.stringify(likedComments));
-
-    const updateLikes = (comments: Comment[]): Comment[] => {
-        return comments.map(comment => ({
-            ...comment,
-            likes: comment.id === commentId ? (isLiked ? comment.likes + 1 : Math.max(0, comment.likes - 1)) : comment.likes,
-            replies: comment.replies ? updateLikes(comment.replies) : [],
-        }));
-    };
-    
-    const updatedPost = {...post, comments: updateLikes(post.comments)};
-    updatePostState(updatedPost);
-  }, [post]);
-
   if (!post) {
       return notFound();
   }
 
-  const relatedPosts = posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
+  const relatedPosts = initialPosts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -267,10 +151,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
                 <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
                 {likeCount}
               </Button>
-               <Button variant="outline" size="sm" onClick={handleCommentClick}>
-                <MessageCircle className="h-4 w-4 mr-2" />
-                <span>{post.comments.length}</span>
-              </Button>
             </div>
             <Dialog>
               <DialogTrigger asChild>
@@ -302,21 +182,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
             </Dialog>
           </div>
         </article>
-
-        <Separator className="my-12" />
-
-        <CommentSection 
-            comments={post.comments} 
-            user={user}
-            isAdmin={isAdmin}
-            onAddComment={handleAddComment}
-            onAddReply={handleAddReply}
-            onUpdateComment={handleUpdateComment}
-            onDeleteComment={handleDeleteComment}
-            onUpdateReply={handleUpdateReply}
-            onDeleteReply={handleDeleteReply}
-            onLikeComment={handleLikeComment}
-        />
 
         {relatedPosts.length > 0 && (
           <>
