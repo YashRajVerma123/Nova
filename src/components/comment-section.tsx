@@ -52,6 +52,17 @@ const CommentForm = ({ user, onSubmit, onCancel, initialContent = '', placeholde
             onCancel?.(); // Optionally close the form (used for replies/edits)
         }
     };
+    
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (content.trim()) {
+                 onSubmit(content.trim());
+                 setContent('');
+                 onCancel?.();
+            }
+        }
+    };
 
     return (
         <form onSubmit={handleSubmit} className={`flex items-start gap-2 ${isReply ? 'mt-4 ml-8' : 'mb-8'}`}>
@@ -63,6 +74,7 @@ const CommentForm = ({ user, onSubmit, onCancel, initialContent = '', placeholde
                 <Textarea 
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     placeholder={placeholder}
                     className="pr-20"
                     rows={isReply ? 2 : 3}
