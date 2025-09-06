@@ -1,63 +1,87 @@
 "use client";
 
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, updateProfile, User as FirebaseUser } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 import type { Author } from '@/lib/data';
-import { authors } from '@/lib/data';
 
 interface AuthContextType {
   user: Author | null;
+  firebaseUser: FirebaseUser | null;
   isAdmin: boolean;
-  signIn: (email: string) => void;
-  signOut: () => void;
+  signIn: () => Promise<void>;
+  signOut: () => Promise<void>;
+  updateUserProfile: (updates: { name?: string; avatar?: string }) => Promise<void>;
   loading: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const MOCK_USERS: Record<string, Author> = {
-  'yashrajverma916@gmail.com': authors['yash-raj'],
-  'jane.doe@example.com': authors['jane-doe'],
-  'john.smith@example.com': authors['john-smith'],
+const auth = getAuth(app);
+
+// A mapping from Firebase User to our app's Author type
+const formatUser = (user: FirebaseUser): Author => {
+    return {
+        id: user.uid,
+        name: user.displayName || "No Name",
+        email: user.email || "no-email@example.com",
+        avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`
+    };
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Author | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('nova-user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      if (fbUser) {
+        setFirebaseUser(fbUser);
+        setUser(formatUser(fbUser));
+      } else {
+        setFirebaseUser(null);
+        setUser(null);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-    } finally {
       setLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const signIn = useCallback((email: string) => {
-    const foundUser = MOCK_USERS[email];
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('nova-user', JSON.stringify(foundUser));
-    } else {
-      // For demo, create a new user if not in MOCK_USERS
-      const newUser = { id: 'new-user', name: 'New User', avatar: 'https://i.pravatar.cc/150', email };
-      setUser(newUser);
-      localStorage.setItem('nova-user', JSON.stringify(newUser));
-    }
+  const signIn = useCallback(async () => {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    setFirebaseUser(result.user);
+    setUser(formatUser(result.user));
   }, []);
 
-  const signOut = useCallback(() => {
+  const signOut = useCallback(async () => {
+    await firebaseSignOut(auth);
+    setFirebaseUser(null);
     setUser(null);
-    localStorage.removeItem('nova-user');
+  }, []);
+
+  const updateUserProfile = useCallback(async (updates: { name?: string; avatar?: string }) => {
+    if (!auth.currentUser) throw new Error("Not authenticated");
+    
+    await updateProfile(auth.currentUser, {
+        displayName: updates.name,
+        photoURL: updates.avatar,
+    });
+    
+    // Force a refresh of the user object to get the latest profile
+    await auth.currentUser.reload();
+    const updatedFbUser = auth.currentUser;
+    if (updatedFbUser) {
+      setFirebaseUser(updatedFbUser);
+      setUser(formatUser(updatedFbUser));
+    }
   }, []);
 
   const isAdmin = user?.email === 'yashrajverma916@gmail.com';
 
-  const value = { user, isAdmin, signIn, signOut, loading };
+  const value = { user, firebaseUser, isAdmin, signIn, signOut, updateUserProfile, loading };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
