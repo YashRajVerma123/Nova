@@ -20,23 +20,33 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const router = useRouter();
   const { toast } = useToast();
   
+  // This state will hold the posts, and will be updated by server actions
   const [posts, setPosts] = useState<Post[]>(initialPosts);
 
+  // Find the post from the current state.
   const post = useMemo(() => posts.find(p => p.slug === params.slug), [posts, params.slug]);
 
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post?.comments.reduce((acc, c) => acc + c.likes, 0) + 15 || 0);
+  
+  // Initialize likeCount from the post found in the initial data.
+  const [likeCount, setLikeCount] = useState(() => {
+     const initialPost = initialPosts.find(p => p.slug === params.slug);
+     // A default value in case the post is not found or has no comments.
+     return initialPost?.comments.reduce((acc, c) => acc + c.likes, 0) + 15 || 0;
+  });
+
 
   useEffect(() => {
     if (!post) return;
 
+    // Persist and retrieve post like state from localStorage
     const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
     if (likedPosts[post.slug]) {
       setLiked(true);
     }
-    setLikeCount(post.comments.reduce((acc, c) => acc + c.likes, 0) + 15);
   }, [post]);
 
+  // A single function to update the local state with the post returned from a server action.
   const updatePostState = (updatedPost: Post) => {
     const newPosts = posts.map(p => p.slug === updatedPost.slug ? updatedPost : p);
     setPosts(newPosts);
@@ -46,6 +56,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     if (!post) return;
     const newLikedState = !liked;
     setLiked(newLikedState);
+    // Update like count optimistically.
     setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
 
     const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
@@ -59,6 +70,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 
   const handleShare = async () => {
     if (!post) return;
+    // Use the Web Share API if available
     if (navigator.share) {
       try {
         await navigator.share({
@@ -68,9 +80,10 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
         });
         toast({ title: 'Post shared successfully!' });
       } catch (error) {
-        // Silently ignore share cancellation
+        // Silently ignore share cancellation on some devices.
       }
     } else {
+      // Fallback to copying the link to the clipboard
       navigator.clipboard.writeText(window.location.href);
       toast({ title: 'Link copied to clipboard!' });
     }
@@ -155,6 +168,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const handleLikeComment = useCallback((commentId: string) => {
     if (!post) return;
     const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
+    // Toggle the like state for the given comment ID
     const isLiked = !likedComments[commentId];
     
     if (isLiked) {
@@ -164,6 +178,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     }
     localStorage.setItem('likedComments', JSON.stringify(likedComments));
 
+    // Recursively update likes in the comments tree
     const updateLikes = (comments: Comment[]): Comment[] => {
         return comments.map(comment => ({
             ...comment,
@@ -177,10 +192,12 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   }, [post]);
 
 
+  // If the post is not found after the initial state is set, show a 404 page.
   if (!post) {
       return notFound();
   }
 
+  // Find related posts from the current state.
   const relatedPosts = posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   
   const getInitials = (name: string) => {
@@ -192,6 +209,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     router.push(`/posts?q=${encodeURIComponent(tag)}`);
   };
   
+  // For SEO purposes
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',

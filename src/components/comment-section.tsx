@@ -25,11 +25,13 @@ import {
 } from "@/components/ui/alert-dialog"
 
 
+// Helper to get initials from a name for the avatar fallback
 const getInitials = (name: string) => {
     const names = name.split(' ');
     return names.length > 1 && names[0] && names[1] ? `${names[0][0]}${names[1][0]}` : name.substring(0, 2);
 };
 
+// A reusable form for adding/editing comments and replies
 interface CommentFormProps {
     user: Author;
     onSubmit: (content: string) => void;
@@ -46,8 +48,8 @@ const CommentForm = ({ user, onSubmit, onCancel, initialContent = '', placeholde
         e.preventDefault();
         if (content.trim() && user) {
             onSubmit(content.trim());
-            setContent('');
-            onCancel?.();
+            setContent(''); // Reset form after submission
+            onCancel?.(); // Optionally close the form (used for replies/edits)
         }
     };
 
@@ -80,16 +82,19 @@ const CommentForm = ({ user, onSubmit, onCancel, initialContent = '', placeholde
 };
 
 
+// Component to render a single comment or reply
 interface CommentItemProps {
     comment: Comment;
-    user: Author | null;
+    user: Author | null; // The currently logged-in user
     isAdmin: boolean;
+    // Callbacks to server actions
     onAddReply: (parentCommentId: string, content: string) => void;
     onUpdateComment: (commentId: string, content: string) => void;
     onDeleteComment: (commentId: string) => void;
     onUpdateReply: (commentId: string, replyId: string, content: string) => void;
     onDeleteReply: (commentId: string, replyId: string) => void;
     onLikeComment: (commentId: string) => void;
+    // Flags to handle nesting
     isReply?: boolean;
     parentCommentId?: string;
 }
@@ -100,16 +105,18 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
     const [liked, setLiked] = useState(false);
     const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
     
+    // Determine user permissions for this specific comment
     const canEdit = user?.id === comment.author.id;
     const canDelete = canEdit || isAdmin;
 
+    // Check localStorage to see if the user has already liked this comment
     useEffect(() => {
         const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
         setLiked(!!likedComments[comment.id]);
     }, [comment.id]);
     
     const handleLikeClick = () => {
-        setLiked(!liked);
+        setLiked(!liked); // Optimistically update UI
         onLikeComment(comment.id);
     };
 
@@ -119,7 +126,7 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
         } else {
             onUpdateComment(comment.id, content);
         }
-        setIsEditing(false);
+        setIsEditing(false); // Close edit form on submit
     };
 
     const handleDelete = () => {
@@ -128,7 +135,7 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
         } else {
             onDeleteComment(comment.id);
         }
-        setDeleteDialogOpen(false);
+        setDeleteDialogOpen(false); // Close confirmation dialog
     };
     
     return (
@@ -184,7 +191,7 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
                                 <Heart className={`h-3 w-3 transition-colors group-hover:fill-red-500 group-hover:text-red-500 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
                                 <span>{comment.likes}</span>
                             </button>
-                            {user && (
+                            {user && !isReply && ( // Only allow replies to top-level comments for simplicity
                             <button className="flex items-center gap-1 hover:text-primary" onClick={() => setIsReplying(!isReplying)}>
                                 <MessageSquare className="h-3 w-3"/>
                                 <span>Reply</span>
@@ -245,6 +252,7 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
 };
 
 
+// The main container for the entire comment section
 interface CommentSectionProps {
   comments: Comment[];
   user: Author | null;

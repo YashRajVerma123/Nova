@@ -4,25 +4,30 @@
 import { revalidatePath } from 'next/cache';
 import { posts, authors, Comment, Post } from '@/lib/data';
 
+// Helper function to find a post by its slug. Throws an error if not found.
 const findPost = (slug: string): Post => {
     const post = posts.find(p => p.slug === slug);
     if (!post) throw new Error('Post not found');
     return post;
 }
 
+// Helper function to recursively find a comment (or reply) by its ID within a tree of comments.
 const findCommentRecursive = (comments: Comment[], commentId: string): { comment: Comment | null, parentReplies: Comment[] | null } => {
     for (const comment of comments) {
         if (comment.id === commentId) {
+            // Found the comment at the top level of the current array
             return { comment, parentReplies: comments };
         }
+        // If the comment has replies, search within them
         if (comment.replies && comment.replies.length > 0) {
             const found = findCommentRecursive(comment.replies, commentId);
-            if (found.comment) return found;
+            if (found.comment) return found; // Return if found in a nested level
         }
     }
-    return { comment: null, parentReplies: null };
+    return { comment: null, parentReplies: null }; // Not found in this branch
 };
 
+// Server Action to add a top-level comment to a post
 export async function addComment(postSlug: string, content: string, authorId: string): Promise<Post> {
     const post = findPost(postSlug);
     const author = Object.values(authors).find(a => a.id === authorId);
@@ -37,11 +42,12 @@ export async function addComment(postSlug: string, content: string, authorId: st
         replies: [],
     };
     
-    post.comments.unshift(newComment);
+    post.comments.unshift(newComment); // Add to the beginning of the array
     revalidatePath(`/posts/${postSlug}`);
     return post;
 }
 
+// Server Action to add a reply to an existing comment
 export async function addReply(postSlug: string, parentCommentId: string, content: string, authorId: string): Promise<Post> {
     const post = findPost(postSlug);
     const author = Object.values(authors).find(a => a.id === authorId);
@@ -59,11 +65,12 @@ export async function addReply(postSlug: string, parentCommentId: string, conten
         replies: [], 
     };
 
-    parentComment.replies.unshift(newReply);
+    parentComment.replies.unshift(newReply); // Add reply to the beginning
     revalidatePath(`/posts/${postSlug}`);
     return post;
 }
 
+// Server Action to update the content of an existing comment
 export async function updateComment(postSlug: string, commentId: string, newContent: string): Promise<Post> {
     const post = findPost(postSlug);
     const { comment } = findCommentRecursive(post.comments, commentId);
@@ -74,16 +81,18 @@ export async function updateComment(postSlug: string, commentId: string, newCont
     return post;
 }
 
+// Server Action to delete a top-level comment
 export async function deleteComment(postSlug: string, commentId: string): Promise<Post> {
     const post = findPost(postSlug);
     const index = post.comments.findIndex(c => c.id === commentId);
     if (index === -1) throw new Error('Comment not found');
     
-    post.comments.splice(index, 1);
+    post.comments.splice(index, 1); // Remove the comment from the array
     revalidatePath(`/posts/${postSlug}`);
     return post;
 }
 
+// Server Action to update the content of a reply
 export async function updateReply(postSlug: string, commentId: string, replyId: string, newContent: string): Promise<Post> {
     const post = findPost(postSlug);
     const { comment: parentComment } = findCommentRecursive(post.comments, commentId);
@@ -97,6 +106,7 @@ export async function updateReply(postSlug: string, commentId: string, replyId: 
     return post;
 }
 
+// Server Action to delete a reply
 export async function deleteReply(postSlug: string, commentId: string, replyId: string): Promise<Post> {
     const post = findPost(postSlug);
     const { comment: parentComment } = findCommentRecursive(post.comments, commentId);
@@ -105,7 +115,7 @@ export async function deleteReply(postSlug: string, commentId: string, replyId: 
     const index = parentComment.replies.findIndex(r => r.id === replyId);
     if (index === -1) throw new Error('Reply not found');
 
-    parentComment.replies.splice(index, 1);
+    parentComment.replies.splice(index, 1); // Remove the reply
     revalidatePath(`/posts/${postSlug}`);
     return post;
 }

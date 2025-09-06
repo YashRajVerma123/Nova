@@ -11,17 +11,24 @@ import { Separator } from './ui/separator';
 const NOTIFICATION_READ_STATE_KEY = 'read_notifications';
 
 const NotificationBell = () => {
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
+  // This effect runs when the popover is opened, ensuring we always have the freshest data.
   useEffect(() => {
-    // This effect ensures state is in sync with our mock data source
-    const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
-    const updatedNotifications = initialNotifications.map(n => ({
-      ...n,
-      read: readIds.includes(n.id),
-    })).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    setNotifications(updatedNotifications);
+    if (isOpen) {
+      // Get the latest list of notifications from our "data store"
+      const currentNotifications = initialNotifications;
+      const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
+      
+      // Update the read status based on localStorage and sort by most recent
+      const updatedNotifications = currentNotifications.map(n => ({
+        ...n,
+        read: readIds.includes(n.id),
+      })).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      setNotifications(updatedNotifications);
+    }
   }, [isOpen]); 
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -38,6 +45,7 @@ const NotificationBell = () => {
         readIds.push(id);
         localStorage.setItem(NOTIFICATION_READ_STATE_KEY, JSON.stringify(readIds));
     }
+    // Update state locally to give immediate feedback
     setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
   }
 
