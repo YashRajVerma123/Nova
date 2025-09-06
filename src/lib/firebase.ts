@@ -6,12 +6,13 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  "projectId": "nova-blog-ipybx",
+  "appId": "1:1044205513293:web:9c83b54d417a893dde8a04",
+  "storageBucket": "nova-blog-ipybx.firebasestorage.app",
+  "apiKey": "AIzaSyCk2nztaRVJ3Jsu0PZyUf3oGjY3uklCn6k",
+  "authDomain": "nova-blog-ipybx.firebaseapp.com",
+  "measurementId": "",
+  "messagingSenderId": "1044205513293"
 };
 
 // Initialize Firebase
