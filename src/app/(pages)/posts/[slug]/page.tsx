@@ -2,7 +2,7 @@
 'use client';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { posts, Post, Comment, Author } from '@/lib/data';
+import { posts, Post, Comment } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Heart, MessageCircle, Share2 } from 'lucide-react';
@@ -324,3 +324,5 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 };
 
 export default PostPage;
+
+    
