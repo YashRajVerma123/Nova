@@ -14,12 +14,17 @@ import { useToast } from "@/hooks/use-toast";
 import { addNotification } from "@/app/actions/add-notification";
 import { posts } from "@/lib/data";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
 const AdminPage = () => {
     const { user, isAdmin, loading } = useAuth();
     const router = useRouter();
     const [isNotifyDialogOpen, setNotifyDialogOpen] = useState(false);
     const [notificationTitle, setNotificationTitle] = useState("");
     const [notificationDesc, setNotificationDesc] = useState("");
+    const [notificationImage, setNotificationImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const { toast } = useToast();
     const [totalPosts, setTotalPosts] = useState(0);
 
@@ -27,10 +32,40 @@ const AdminPage = () => {
         if (!loading && !isAdmin) {
             router.push('/');
         }
-        // In a real app, you'd fetch this data. Here we get it from our mock data.
         setTotalPosts(posts.length);
     }, [user, isAdmin, loading, router]);
     
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > MAX_FILE_SIZE) {
+                toast({ title: "Image too large", description: "Please select an image smaller than 5MB.", variant: "destructive" });
+                return;
+            }
+            if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+                toast({ title: "Invalid image type", description: "Please select a JPG, JPEG, PNG, or WEBP file.", variant: "destructive" });
+                return;
+            }
+            setNotificationImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            setNotificationImage(null);
+            setImagePreview(null);
+        }
+    };
+
+    const resetNotificationForm = () => {
+        setNotificationTitle("");
+        setNotificationDesc("");
+        setNotificationImage(null);
+        setImagePreview(null);
+        setNotifyDialogOpen(false);
+    };
+
     const handleSendNotification = async () => {
         if (!notificationTitle || !notificationDesc) {
             toast({
@@ -41,15 +76,27 @@ const AdminPage = () => {
             return;
         }
 
+        let imageDataUri: string | undefined = undefined;
+        if (notificationImage) {
+            const reader = new FileReader();
+            reader.readAsDataURL(notificationImage);
+            reader.onloadend = async () => {
+                imageDataUri = reader.result as string;
+                await sendNotification(imageDataUri);
+            };
+        } else {
+            await sendNotification();
+        }
+    };
+
+    const sendNotification = async (image?: string) => {
         try {
-            await addNotification({ title: notificationTitle, description: notificationDesc });
+            await addNotification({ title: notificationTitle, description: notificationDesc, image });
             toast({
                 title: "Notification Sent!",
                 description: "Your notification has been added.",
             });
-            setNotificationTitle("");
-            setNotificationDesc("");
-            setNotifyDialogOpen(false);
+            resetNotificationForm();
         } catch (error) {
             toast({
                 title: "Error",
@@ -141,6 +188,15 @@ const AdminPage = () => {
                             <Label htmlFor="description">Description</Label>
                             <Textarea id="description" value={notificationDesc} onChange={(e) => setNotificationDesc(e.target.value)} placeholder="Describe the notification..."/>
                         </div>
+                         <div className="grid gap-2">
+                            <Label htmlFor="image">Image (Optional)</Label>
+                            <Input id="image" type="file" onChange={handleImageChange} accept="image/*"/>
+                        </div>
+                        {imagePreview && (
+                            <div className="mt-2">
+                                <img src={imagePreview} alt="Notification preview" className="rounded-md max-h-40 w-auto" />
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button onClick={handleSendNotification}>Send Notification</Button>

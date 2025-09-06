@@ -10,6 +10,7 @@ const formSchema = z.object({
   tags: z.string(),
   readTime: z.coerce.number(),
   authorId: z.string(),
+  coverImage: z.string(),
 });
 
 function createSlug(title: string) {
@@ -33,7 +34,7 @@ export async function addPostAction(values: z.infer<typeof formSchema>) {
         title: values.title,
         description: values.description,
         content: values.content,
-        coverImage: `https://picsum.photos/1200/800?random=${Math.floor(Math.random() * 1000)}`,
+        coverImage: values.coverImage,
         author: author,
         publishedAt: new Date().toISOString(),
         tags: values.tags.split(',').map(tag => tag.trim()),
@@ -42,14 +43,13 @@ export async function addPostAction(values: z.infer<typeof formSchema>) {
         comments: [],
     };
   
-    // In a real application, you would save this to a database.
-    // For this demo, we'll add it to our in-memory data store.
     addPost(newPost);
   
     // Revalidate paths to show the new post immediately
     revalidatePath('/');
     revalidatePath('/posts');
     revalidatePath(`/posts/${newPost.slug}`);
+    revalidatePath('/admin');
 
     return { success: true, post: newPost };
 }

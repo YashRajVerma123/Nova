@@ -1,5 +1,5 @@
-import { Mail, MessageSquare } from "lucide-react";
-import ContactForm from "@/components/contact-form";
+'use client';
+import { Mail } from "lucide-react";
 
 const ContactPage = () => {
   return (
@@ -13,41 +13,38 @@ const ContactPage = () => {
         </p>
       </section>
 
-      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div className="flex flex-col justify-center">
-            <h2 className="text-3xl font-headline font-bold mb-4">Contact Information</h2>
-            <p className="text-muted-foreground mb-8">
-                Reach out to us through the following channels. Our team will get back to you as soon as possible.
-            </p>
-            <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                    <div className="p-3 bg-primary/10 rounded-full">
-                       <Mail className="h-6 w-6 text-primary"/>
-                    </div>
-                    <div>
-                        <h3 className="font-semibold">Email</h3>
-                        <p className="text-muted-foreground">General Inquiries & Support</p>
-                        <a href="mailto:help.novablog@gmail.com" className="text-primary hover:underline">
-                            help.novablog@gmail.com
-                        </a>
-                    </div>
-                </div>
-                 <div className="flex items-start gap-4">
-                    <div className="p-3 bg-primary/10 rounded-full">
-                       <MessageSquare className="h-6 w-6 text-primary"/>
-                    </div>
-                    <div>
-                        <h3 className="font-semibold">Prefer a Form?</h3>
-                        <p className="text-muted-foreground">Use the form on this page to send us a message directly.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div className="glass-card p-8">
-          <h2 className="text-2xl font-headline font-bold mb-6 text-center">Send us a message</h2>
-          <ContactForm />
+      <div className="max-w-2xl mx-auto">
+        <div className="glass-card p-8 group relative overflow-hidden">
+           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
+           <div className="relative flex flex-col items-center justify-center text-center">
+             <div className="p-4 bg-primary/10 rounded-full mb-6">
+                <Mail className="h-10 w-10 text-primary" />
+             </div>
+             <h2 className="text-2xl font-headline font-bold mb-4">Our Inbox is Always Open</h2>
+             <p className="text-muted-foreground mb-6">
+                For the fastest response, please send us an email. We typically reply within 24 hours.
+             </p>
+             <div 
+                className="font-mono text-lg text-primary bg-secondary/50 px-6 py-3 rounded-lg tracking-widest animate-text-shine"
+                style={{
+                  animation: 'text-shine 2s linear infinite',
+                  background: 'linear-gradient(110deg, transparent 20%, hsl(var(--primary)) 50%, transparent 80%)',
+                  backgroundSize: '200% 100%',
+                  WebkitBackgroundClip: 'text',
+                  color: 'transparent',
+                }}
+             >
+                help.novablog@gmail.com
+             </div>
+           </div>
         </div>
       </div>
+       <style jsx>{`
+        @keyframes text-shine {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
     </div>
   );
 };

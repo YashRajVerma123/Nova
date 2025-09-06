@@ -1,5 +1,5 @@
 'use client';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 import { addPostAction } from '@/app/actions/add-post';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Loader2, Send } from 'lucide-react';
 import Link from 'next/link';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -20,12 +23,21 @@ const formSchema = z.object({
   content: z.string().min(50, 'Content must be at least 50 characters.'),
   tags: z.string().min(2, 'Please provide at least one tag.'),
   readTime: z.coerce.number().min(1, 'Read time must be at least 1 minute.'),
+  coverImage: z
+    .any()
+    .refine((files) => files?.length == 1, "Cover image is required.")
+    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
 });
 
 export default function CreatePostPage() {
   const { toast } = useToast();
   const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -35,6 +47,7 @@ export default function CreatePostPage() {
       content: '',
       tags: '',
       readTime: 5,
+      coverImage: undefined,
     },
   });
 
@@ -44,26 +57,49 @@ export default function CreatePostPage() {
     }
   }, [loading, isAdmin, router]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+    }
+  };
+  
+  const fileRef = form.register("coverImage");
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
         toast({ title: "Authentication Error", description: "You must be logged in to create a post.", variant: 'destructive'});
         return;
     }
-
-    try {
-      await addPostAction({ ...values, authorId: user.id });
-      toast({
-        title: 'Post Created!',
-        description: 'Your new blog post has been published.',
-      });
-      router.push('/posts');
-    } catch (error) {
-       toast({
-        title: 'Error Creating Post',
-        description: 'Something went wrong. Please try again later.',
-        variant: 'destructive',
-      });
-    }
+    
+    const imageFile = values.coverImage[0];
+    const reader = new FileReader();
+    
+    reader.onloadend = async () => {
+        const imageDataUri = reader.result as string;
+        try {
+          await addPostAction({ ...values, authorId: user.id, coverImage: imageDataUri });
+          toast({
+            title: 'Post Created!',
+            description: 'Your new blog post has been published.',
+          });
+          router.push('/posts');
+        } catch (error) {
+           toast({
+            title: 'Error Creating Post',
+            description: 'Something went wrong. Please try again later.',
+            variant: 'destructive',
+          });
+        }
+    };
+    
+    reader.readAsDataURL(imageFile);
   }
   
   if (loading || !isAdmin) {
@@ -159,6 +195,32 @@ export default function CreatePostPage() {
                     </FormItem>
                 )}
                 />
+                <FormField
+                  control={form.control}
+                  name="coverImage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cover Image</FormLabel>
+                      <FormControl>
+                        <Input 
+                            type="file" 
+                            accept="image/*" 
+                            {...fileRef}
+                            onChange={(e) => {
+                                field.onChange(e.target.files);
+                                handleImageChange(e);
+                            }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 {imagePreview && (
+                    <div className="mt-4">
+                        <img src={imagePreview} alt="Cover preview" className="rounded-md max-h-48 w-auto" />
+                    </div>
+                 )}
                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? (
                     <>

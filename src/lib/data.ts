@@ -34,6 +34,7 @@ export type Notification = {
   description: string;
   createdAt: string;
   read: boolean;
+  image?: string;
 };
 
 
@@ -45,7 +46,7 @@ export const authors: Record<string, Author> = {
 
 // We are using an in-memory array to store posts and notifications.
 // In a real-world application, you would use a database like Firestore.
-export const posts: Post[] = [
+export let posts: Post[] = [
   {
     slug: 'the-future-of-ai',
     title: 'The Future of Artificial Intelligence: Predictions and Possibilities',

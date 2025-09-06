@@ -6,6 +6,7 @@ import { addNotification as addNotificationToData, Notification } from '@/lib/da
 const formSchema = z.object({
   title: z.string(),
   description: z.string(),
+  image: z.string().optional(),
 });
 
 export async function addNotification(values: z.infer<typeof formSchema>) {
@@ -15,7 +16,8 @@ export async function addNotification(values: z.infer<typeof formSchema>) {
         title: values.title,
         description: values.description,
         createdAt: new Date().toISOString(),
-        read: false
+        read: false,
+        image: values.image
     };
   
     // In a real application, you would save this to a database.

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Bell, Check } from 'lucide-react';
+import { Bell, Check, Image as ImageIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -11,15 +11,18 @@ const NOTIFICATION_READ_STATE_KEY = 'read_notifications';
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
   
   useEffect(() => {
+    // We are using mockNotifications directly to ensure we always have the latest data
+    // in a real app, you might fetch this from an API
     const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
     const updatedNotifications = mockNotifications.map(n => ({
       ...n,
       read: readIds.includes(n.id) || n.read,
     }));
-    setNotifications(updatedNotifications);
-  }, []);
+    setNotifications(updatedNotifications.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  }, [isOpen]); // Rerun when popover is opened to get fresh data
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -30,7 +33,7 @@ const NotificationBell = () => {
   };
 
   return (
-    <Popover>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
@@ -43,19 +46,34 @@ const NotificationBell = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0">
-        <div className="p-4">
-          <h4 className="font-medium leading-none">Notifications</h4>
-          <p className="text-sm text-muted-foreground">You have {unreadCount} unread messages.</p>
+        <div className="flex justify-between items-center p-4">
+            <div>
+                <h4 className="font-medium leading-none">Notifications</h4>
+                <p className="text-sm text-muted-foreground">You have {unreadCount} unread messages.</p>
+            </div>
+             {unreadCount > 0 && (
+                <Button variant="link" size="sm" onClick={markAllAsRead} className="text-xs">
+                    Mark all as read
+                </Button>
+            )}
         </div>
         <Separator />
         <div className="p-2 max-h-80 overflow-y-auto">
           {notifications.length > 0 ? (
             notifications.map((notification) => (
-              <div key={notification.id} className="mb-2 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0">
-                <span className={`flex h-2 w-2 translate-y-1 rounded-full ${!notification.read ? 'bg-primary' : ''}`} />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">{notification.title}</p>
-                  <p className="text-sm text-muted-foreground">{notification.description}</p>
+              <div key={notification.id} className={`mb-1 p-2 rounded-lg ${!notification.read ? 'bg-primary/5' : ''}`}>
+                <div className="grid grid-cols-[25px_1fr] items-start">
+                    <span className="flex h-2 w-2 translate-y-1 rounded-full bg-primary" style={{ opacity: notification.read ? 0 : 1}} />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">{notification.title}</p>
+                      <p className="text-sm text-muted-foreground">{notification.description}</p>
+                       {notification.image && (
+                          <div className="mt-2 relative aspect-video rounded-md overflow-hidden border">
+                              <img src={notification.image} alt={notification.title} className="object-cover w-full h-full" />
+                          </div>
+                      )}
+                      <p className="text-xs text-muted-foreground/70 pt-1">{new Date(notification.createdAt).toLocaleString()}</p>
+                    </div>
                 </div>
               </div>
             ))
@@ -63,17 +81,6 @@ const NotificationBell = () => {
             <p className="text-sm text-muted-foreground text-center p-4">No new notifications.</p>
           )}
         </div>
-        {unreadCount > 0 && (
-          <>
-            <Separator />
-            <div className="p-2">
-              <Button onClick={markAllAsRead} className="w-full" size="sm">
-                <Check className="mr-2 h-4 w-4" />
-                Mark all as read
-              </Button>
-            </div>
-          </>
-        )}
       </PopoverContent>
     </Popover>
   );
