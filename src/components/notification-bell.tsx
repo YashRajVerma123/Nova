@@ -4,32 +4,32 @@ import { Bell, Check, Image as ImageIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { notifications as mockNotifications, Notification } from '@/lib/data';
+import { notifications, Notification } from '@/lib/data';
 import { Separator } from './ui/separator';
 
 const NOTIFICATION_READ_STATE_KEY = 'read_notifications';
 
 const NotificationBell = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [currentNotifications, setCurrentNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   
   useEffect(() => {
     // We are using mockNotifications directly to ensure we always have the latest data
     // in a real app, you might fetch this from an API
     const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
-    const updatedNotifications = mockNotifications.map(n => ({
+    const updatedNotifications = notifications.map(n => ({
       ...n,
       read: readIds.includes(n.id) || n.read,
     }));
-    setNotifications(updatedNotifications.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    setCurrentNotifications(updatedNotifications.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   }, [isOpen]); // Rerun when popover is opened to get fresh data
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = currentNotifications.filter(n => !n.read).length;
 
   const markAllAsRead = () => {
-    const allIds = notifications.map(n => n.id);
+    const allIds = currentNotifications.map(n => n.id);
     localStorage.setItem(NOTIFICATION_READ_STATE_KEY, JSON.stringify(allIds));
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+    setCurrentNotifications(currentNotifications.map(n => ({ ...n, read: true })));
   };
 
   return (
@@ -59,8 +59,8 @@ const NotificationBell = () => {
         </div>
         <Separator />
         <div className="p-2 max-h-80 overflow-y-auto">
-          {notifications.length > 0 ? (
-            notifications.map((notification) => (
+          {currentNotifications.length > 0 ? (
+            currentNotifications.map((notification) => (
               <div key={notification.id} className={`mb-1 p-2 rounded-lg ${!notification.read ? 'bg-primary/5' : ''}`}>
                 <div className="grid grid-cols-[25px_1fr] items-start">
                     <span className="flex h-2 w-2 translate-y-1 rounded-full bg-primary" style={{ opacity: notification.read ? 0 : 1}} />

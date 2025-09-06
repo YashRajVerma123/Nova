@@ -1,5 +1,5 @@
 'use client';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { posts, Post, Comment } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,6 +15,7 @@ import { useEffect, useState, useMemo } from 'react';
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user } = useAuth();
+  const router = useRouter();
   const post = useMemo(() => posts.find(p => p.slug === params.slug), [params.slug]);
   const [comments, setComments] = useState<Comment[]>(post?.comments || []);
   const [liked, setLiked] = useState(false);
@@ -75,6 +76,10 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     setComments(prev => [newComment, ...prev]);
     // In a real app, you would also persist this comment to your database
   };
+
+  const handleTagClick = (tag: string) => {
+    router.push(`/posts?q=${encodeURIComponent(tag)}`);
+  };
   
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -100,7 +105,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
           <header className="mb-8">
             <div className="flex flex-wrap gap-2 mb-4">
               {post.tags.map(tag => (
-                <Badge key={tag} variant="secondary">{tag}</Badge>
+                 <Badge key={tag} variant="secondary" className="cursor-pointer hover:bg-primary/20" onClick={() => handleTagClick(tag)}>{tag}</Badge>
               ))}
             </div>
             <h1 className="text-3xl md:text-5xl font-headline font-extrabold tracking-tight mb-4">{post.title}</h1>
