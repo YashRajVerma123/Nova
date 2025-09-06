@@ -202,7 +202,7 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
                             <Heart className={`h-3 w-3 transition-colors group-hover:fill-red-500 group-hover:text-red-500 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
                             <span>{likeCount}</span>
                         </button>
-                        {user && !isReply && (
+                        {user && (
                         <button className="flex items-center gap-1 hover:text-primary" onClick={() => setIsReplying(!isReplying)}>
                             <MessageSquare className="h-3 w-3"/>
                             <span>Reply</span>
@@ -216,7 +216,12 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
                  <CommentForm 
                     user={user} 
                     onSubmit={(content) => {
-                        onAddReply(comment.id, content)
+                        if (isReply) {
+                          // If this is already a reply, we are adding a reply to the parent comment
+                          onAddReply(parentCommentId!, content);
+                        } else {
+                          onAddReply(comment.id, content)
+                        }
                         setIsReplying(false);
                     }}
                     onCancel={() => setIsReplying(false)}
@@ -232,7 +237,7 @@ const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDe
                             comment={reply} 
                             user={user}
                             isAdmin={isAdmin}
-                            onAddReply={() => {}} // Nested replies not supported in this version
+                            onAddReply={onAddReply} 
                             onUpdateComment={()=>{}}
                             onDeleteComment={()=>{}}
                             onUpdateReply={onUpdateReply}
@@ -303,3 +308,5 @@ const CommentSection = (props: CommentSectionProps) => {
 }
 
 export default CommentSection;
+
+    
