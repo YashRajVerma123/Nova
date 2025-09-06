@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Menu, Search, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -23,6 +23,19 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/posts?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push('/posts');
+    }
+  };
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,10 +76,20 @@ const Header = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          <div className="relative">
-            <Input type="search" placeholder="Search articles..." className="pr-10 h-9 w-40 lg:w-64 bg-secondary" />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          </div>
+          <form onSubmit={handleSearch}>
+            <div className="relative">
+              <Input 
+                type="search" 
+                placeholder="Search articles..." 
+                className="pr-10 h-9 w-40 lg:w-64 bg-secondary" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          </form>
           <NotificationBell />
           <UserNav />
         </div>
@@ -105,10 +128,18 @@ const Header = () => {
                       ))}
                     </nav>
                     <div className="mt-auto">
-                      <div className="relative">
-                        <Input type="search" placeholder="Search..." className="pr-10 h-10 w-full bg-secondary" />
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      </div>
+                      <form onSubmit={handleSearch} className="relative">
+                        <Input 
+                          type="search" 
+                          placeholder="Search..." 
+                          className="pr-10 h-10 w-full bg-secondary"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                         />
+                         <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <Search className="h-5 w-5 text-muted-foreground" />
+                         </button>
+                      </form>
                     </div>
                  </div>
               </SheetContent>

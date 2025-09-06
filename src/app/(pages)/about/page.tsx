@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Newspaper, Rss, ShieldCheck } from "lucide-react";
-import Image from "next/image";
 
 const features = [
   {
@@ -37,18 +36,6 @@ const AboutPage = () => {
         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
           Cutting through the noise, delivering clarity. We are your essential destination for making sense of today's complex world.
         </p>
-      </section>
-
-      <section className="relative mb-24">
-         <Image 
-            src="https://picsum.photos/1200/500?random=10"
-            alt="Our Team"
-            width={1200}
-            height={500}
-            data-ai-hint="team meeting"
-            className="rounded-xl object-cover"
-         />
-         <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent rounded-xl"></div>
       </section>
 
       <section className="mb-24">

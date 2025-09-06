@@ -39,8 +39,16 @@
       radial-gradient(at 80% 20%, hsla(207, 44%, 49%, 0.1) 0px, transparent 50%);
     min-height: 100vh;
     font-feature-settings: "ss01";
+    animation: background-pan 15s ease-in-out infinite;
   }
 }
+
+@keyframes background-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 
 .glass-card {
   @apply bg-card/60 backdrop-blur-xl border border-white/5 rounded-xl shadow-lg;
