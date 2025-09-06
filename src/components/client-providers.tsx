@@ -1,0 +1,19 @@
+'use client';
+import { useState, useEffect, ReactNode } from 'react';
+import Preloader from '@/components/preloader';
+import { AuthProvider } from '@/contexts/auth-context';
+
+export function ClientProviders({ children }: { children: ReactNode }) {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500); // Simulate loading time
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Preloader />;
+  }
+
+  return <AuthProvider>{children}</AuthProvider>;
+}
