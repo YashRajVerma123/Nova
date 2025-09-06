@@ -3,17 +3,18 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, notFound } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import { useEffect } from 'react';
+import { Post, posts } from '@/lib/data';
+import { useToast } from '@/hooks/use-toast';
+import { updatePost } from '@/app/actions/post-actions';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { addPost } from '@/app/actions/post-actions';
 import { Switch } from '@/components/ui/switch';
-import { useAuth } from '@/hooks/use-auth';
-import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -27,30 +28,41 @@ const formSchema = z.object({
   featured: z.boolean().default(false),
 });
 
-export default function CreatePostPage() {
+export default function EditPostPage({ params }: { params: { slug: string } }) {
   const { toast } = useToast();
   const router = useRouter();
-  const { user, isAdmin, loading } = useAuth();
+  const { isAdmin, loading: authLoading } = useAuth();
   
+  const post = posts.find(p => p.slug === params.slug);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
       description: '',
       content: '',
-      coverImage: 'https://picsum.photos/1200/800',
+      coverImage: '',
       tags: '',
       featured: false,
     },
   });
+  
+  useEffect(() => {
+    if (post) {
+      form.reset({
+        ...post,
+        tags: post.tags.join(', '),
+      });
+    }
+  }, [post, form]);
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
+    if (!authLoading && !isAdmin) {
       router.push('/');
     }
-  }, [user, isAdmin, loading, router]);
-  
-  if (loading || !isAdmin) {
+  }, [isAdmin, authLoading, router]);
+
+  if (authLoading) {
       return (
           <div className="flex h-screen items-center justify-center">
               <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
@@ -58,22 +70,21 @@ export default function CreatePostPage() {
       );
   }
 
+  if (!post) {
+      return notFound();
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-     if (!user) {
-        toast({ title: 'Error', description: 'You must be logged in to create a post.', variant: 'destructive' });
-        return;
-    }
-    
     try {
-        const newPostSlug = await addPost(values, user.id);
+        const newSlug = await updatePost(params.slug, values);
         toast({
-            title: 'Post Created!',
-            description: 'Your new post has been published successfully.',
+            title: 'Post Updated!',
+            description: 'Your changes have been saved successfully.',
         });
-        router.push(`/posts/${newPostSlug}`);
+        router.push(`/posts/${newSlug}`);
     } catch (error) {
        toast({
-        title: 'Error Creating Post',
+        title: 'Error Updating Post',
         description: (error as Error).message || 'Something went wrong. Please try again later.',
         variant: 'destructive',
       });
@@ -89,8 +100,8 @@ export default function CreatePostPage() {
         </div>
         <Card className="glass-card">
             <CardHeader>
-                <CardTitle>Create a New Post</CardTitle>
-                <CardDescription>Fill out the details below to publish a new article to your blog.</CardDescription>
+                <CardTitle>Edit Post</CardTitle>
+                <CardDescription>Make changes to your article below. The slug will update if the title changes.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -182,7 +193,7 @@ export default function CreatePostPage() {
                         )}
                     />
                     <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                        {form.formState.isSubmitting ? 'Publishing...' : 'Publish Post'}
+                        {form.formState.isSubmitting ? 'Saving Changes...' : 'Save Changes'}
                     </Button>
                 </form>
                 </Form>

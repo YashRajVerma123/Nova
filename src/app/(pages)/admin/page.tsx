@@ -4,20 +4,38 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, PlusCircle, Users } from "lucide-react";
-import { posts } from "@/lib/data";
+import { BarChart, Edit, PlusCircle, Trash, Users } from "lucide-react";
+import { Post, posts } from "@/lib/data";
 import Link from "next/link";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { deletePost } from "@/app/actions/post-actions";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminPage = () => {
     const { user, isAdmin, loading } = useAuth();
     const router = useRouter();
-    const [totalPosts, setTotalPosts] = useState(0);
+    const { toast } = useToast();
+    const [allPosts, setAllPosts] = useState<Post[]>(posts);
+    const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [postToDelete, setPostToDelete] = useState<Post | null>(null);
 
     useEffect(() => {
         if (!loading && !isAdmin) {
             router.push('/');
         }
-        setTotalPosts(posts.length);
+        setAllPosts(posts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
     }, [user, isAdmin, loading, router]);
     
     if (loading || !isAdmin) {
@@ -27,6 +45,24 @@ const AdminPage = () => {
             </div>
         );
     }
+
+    const handleDeleteClick = (post: Post) => {
+        setPostToDelete(post);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!postToDelete) return;
+        try {
+            await deletePost(postToDelete.slug);
+            setAllPosts(allPosts.filter(p => p.slug !== postToDelete.slug));
+            toast({ title: "Post Deleted", description: `"${postToDelete.title}" has been deleted.` });
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to delete post.", variant: "destructive" });
+        }
+        setDeleteDialogOpen(false);
+        setPostToDelete(null);
+    };
 
     return (
         <div className="container mx-auto px-4 py-16">
@@ -39,15 +75,15 @@ const AdminPage = () => {
                 </p>
             </section>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto mb-12">
                 <Card className="glass-card">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
                         <BarChart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{totalPosts}</div>
-                        <p className="text-xs text-muted-foreground">Manage all posts</p>
+                        <div className="text-2xl font-bold">{allPosts.length}</div>
+                        <p className="text-xs text-muted-foreground">Manage all posts below</p>
                     </CardContent>
                 </Card>
                  <Card className="glass-card">
@@ -72,6 +108,62 @@ const AdminPage = () => {
                     </Card>
                 </Link>
             </div>
+
+            <Card className="glass-card max-w-7xl mx-auto">
+                <CardHeader>
+                    <CardTitle>Manage Posts</CardTitle>
+                    <CardDescription>Here you can edit or delete existing posts.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50%]">Title</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {allPosts.map(post => (
+                                <TableRow key={post.slug}>
+                                    <TableCell className="font-medium">{post.title}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={post.featured ? "default" : "secondary"}>
+                                            {post.featured ? "Featured" : "Standard"}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>{new Date(post.publishedAt).toLocaleDateString()}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button asChild variant="ghost" size="icon">
+                                            <Link href={`/admin/edit-post/${post.slug}`}><Edit className="h-4 w-4" /></Link>
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(post)}>
+                                            <Trash className="h-4 w-4 text-red-500" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the post
+                            <span className="font-bold"> &quot;{postToDelete?.title}&quot;</span>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
