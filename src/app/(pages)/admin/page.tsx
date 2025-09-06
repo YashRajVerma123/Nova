@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Users, FileText, Settings, PlusCircle, BellPlus } from "lucide-react";
+import { BarChart, Users, PlusCircle, BellPlus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { addNotification } from "@/app/actions/add-notification";
+import { posts } from "@/lib/data";
 
 const AdminPage = () => {
     const { user, isAdmin, loading } = useAuth();
@@ -20,11 +21,14 @@ const AdminPage = () => {
     const [notificationTitle, setNotificationTitle] = useState("");
     const [notificationDesc, setNotificationDesc] = useState("");
     const { toast } = useToast();
+    const [totalPosts, setTotalPosts] = useState(0);
 
     useEffect(() => {
         if (!loading && !isAdmin) {
             router.push('/');
         }
+        // In a real app, you'd fetch this data. Here we get it from our mock data.
+        setTotalPosts(posts.length);
     }, [user, isAdmin, loading, router]);
     
     const handleSendNotification = async () => {
@@ -78,12 +82,12 @@ const AdminPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <Card className="glass-card">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Site Analytics</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
                         <BarChart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+1,234</div>
-                        <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                        <div className="text-2xl font-bold">{totalPosts}</div>
+                        <p className="text-xs text-muted-foreground">Manage all posts</p>
                     </CardContent>
                 </Card>
                  <Card className="glass-card">
@@ -92,8 +96,8 @@ const AdminPage = () => {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+235</div>
-                        <p className="text-xs text-muted-foreground">+18.1% from last month</p>
+                        <div className="text-2xl font-bold">1</div>
+                        <p className="text-xs text-muted-foreground">Currently logged in</p>
                     </CardContent>
                 </Card>
                 <Link href="/admin/create-post">

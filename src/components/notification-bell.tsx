@@ -1,17 +1,31 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bell, Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { notifications as mockNotifications } from '@/lib/data';
+import { notifications as mockNotifications, Notification } from '@/lib/data';
 import { Separator } from './ui/separator';
 
+const NOTIFICATION_READ_STATE_KEY = 'read_notifications';
+
 const NotificationBell = () => {
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  useEffect(() => {
+    const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
+    const updatedNotifications = mockNotifications.map(n => ({
+      ...n,
+      read: readIds.includes(n.id) || n.read,
+    }));
+    setNotifications(updatedNotifications);
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAllAsRead = () => {
+    const allIds = notifications.map(n => n.id);
+    localStorage.setItem(NOTIFICATION_READ_STATE_KEY, JSON.stringify(allIds));
     setNotifications(notifications.map(n => ({ ...n, read: true })));
   };
 
