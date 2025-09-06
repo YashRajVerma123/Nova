@@ -3,9 +3,10 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Users } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, PlusCircle, Users } from "lucide-react";
 import { posts } from "@/lib/data";
+import Link from "next/link";
 
 const AdminPage = () => {
     const { user, isAdmin, loading } = useAuth();
@@ -34,11 +35,11 @@ const AdminPage = () => {
                     Admin Dashboard<span className="text-primary">.</span>
                 </h1>
                 <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-                    Welcome, {user?.name}. Here are the current stats for your application.
+                    Welcome, {user?.name}. Manage your application from here.
                 </p>
             </section>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 <Card className="glass-card">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
@@ -59,6 +60,17 @@ const AdminPage = () => {
                         <p className="text-xs text-muted-foreground">Currently logged in</p>
                     </CardContent>
                 </Card>
+                 <Link href="/admin/create-post" className="group">
+                    <Card className="glass-card h-full flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors duration-300">
+                        <CardHeader>
+                            <PlusCircle className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </CardHeader>
+                        <CardContent>
+                            <CardTitle className="text-lg">Create New Post</CardTitle>
+                             <CardDescription className="text-xs">Write and publish a new article.</CardDescription>
+                        </CardContent>
+                    </Card>
+                </Link>
             </div>
         </div>
     );
