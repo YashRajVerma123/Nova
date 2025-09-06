@@ -3,8 +3,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Users } from "lucide-react";
+import { BarChart, Users, PlusCircle } from "lucide-react";
 import { posts } from "@/lib/data";
+import Link from "next/link";
 
 const AdminPage = () => {
     const { user, isAdmin, loading } = useAuth();
@@ -37,7 +38,7 @@ const AdminPage = () => {
                 </p>
             </section>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-lg mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
                 <Card className="glass-card">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
@@ -58,6 +59,18 @@ const AdminPage = () => {
                         <p className="text-xs text-muted-foreground">Currently logged in</p>
                     </CardContent>
                 </Card>
+                 <Link href="/admin/create-post" className="block">
+                    <Card className="glass-card h-full transition-all hover:border-primary/50 hover:-translate-y-1">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">New Post</CardTitle>
+                            <PlusCircle className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">Create</div>
+                            <p className="text-xs text-muted-foreground">Publish a new article</p>
+                        </CardContent>
+                    </Card>
+                </Link>
             </div>
         </div>
     );
