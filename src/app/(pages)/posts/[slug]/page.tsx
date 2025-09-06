@@ -13,40 +13,27 @@ import BlogPostCard from '@/components/blog-post-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, useMemo } from 'react';
 
-// export async function generateStaticParams() {
-//   return posts.map(post => ({
-//     slug: post.slug,
-//   }));
-// }
-
 const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user } = useAuth();
-  const [post, setPost] = useState<Post | undefined>(undefined);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const post = useMemo(() => posts.find(p => p.slug === params.slug), [params.slug]);
+  const [comments, setComments] = useState<Comment[]>(post?.comments || []);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
-    const foundPost = posts.find(p => p.slug === params.slug);
-    if (foundPost) {
-      setPost(foundPost);
-      setComments(foundPost.comments);
-      // In a real app, you'd fetch like count and user's like status
-      setLikeCount(foundPost.comments.reduce((acc, c) => acc + c.likes, 0) + 15); // mock likes
-    } else {
-      notFound();
+    if (post) {
+      // In a real app, you'd fetch like count and user's like status from a DB
+      setLikeCount(post.comments.reduce((acc, c) => acc + c.likes, 0) + 15); // mock likes
     }
-  }, [params.slug]);
-
+  }, [post]);
+  
   const relatedPosts = useMemo(() => {
     if (!post) return [];
     return posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   }, [post]);
 
   if (!post) {
-    return <div className="flex h-screen items-center justify-center">
-             <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
-           </div>;
+    return notFound();
   }
 
   const getInitials = (name: string) => {
