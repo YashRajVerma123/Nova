@@ -38,10 +38,6 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
       const auth = getAuth(app);
       const userRecord = await auth.getUser(authorId);
       
-      if (!userRecord) {
-        throw new Error("Author not found. You must be logged in.");
-      }
-
       author = {
         id: userRecord.uid,
         name: userRecord.displayName || 'Anonymous User',
