@@ -2,7 +2,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { posts, authors, Comment, Post } from '@/lib/data';
+import { posts, authors as initialAuthors, Comment, Post, Author } from '@/lib/data';
+import { getAdminApp } from '@/lib/firebase-admin';
+import { getAuth } from 'firebase-admin/auth';
+
+// Initialize Firebase Admin SDK
+getAdminApp();
 
 // Helper function to find a post by its slug. Throws an error if not found.
 const findPost = (slug: string): Post => {
@@ -10,6 +15,30 @@ const findPost = (slug: string): Post => {
     if (!post) throw new Error('Post not found');
     return post;
 }
+
+// Helper function to get an author from Firebase or the initial hardcoded list
+const getAuthor = async (authorId: string): Promise<Author> => {
+    // First, check the hardcoded authors for initial data
+    const hardcodedAuthor = Object.values(initialAuthors).find(a => a.id === authorId);
+    if (hardcodedAuthor) {
+        return hardcodedAuthor;
+    }
+
+    // If not found, fetch from Firebase Auth
+    try {
+        const userRecord = await getAuth().getUser(authorId);
+        return {
+            id: userRecord.uid,
+            name: userRecord.displayName || 'Anonymous',
+            avatar: userRecord.photoURL || `https://i.pravatar.cc/150?u=${userRecord.uid}`,
+            email: userRecord.email || 'no-email@example.com',
+        };
+    } catch (error) {
+        console.error("Error fetching author:", error);
+        throw new Error('Author not found from provided ID.');
+    }
+}
+
 
 // Helper function to recursively find a comment (or reply) by its ID within a tree of comments.
 const findCommentRecursive = (comments: Comment[], commentId: string): { comment: Comment | null, parentReplies: Comment[] | null } => {
@@ -30,8 +59,7 @@ const findCommentRecursive = (comments: Comment[], commentId: string): { comment
 // Server Action to add a top-level comment to a post
 export async function addComment(postSlug: string, content: string, authorId: string): Promise<Post> {
     const post = findPost(postSlug);
-    const author = Object.values(authors).find(a => a.id === authorId);
-    if (!author) throw new Error("Invalid author ID");
+    const author = await getAuthor(authorId);
 
     const newComment: Comment = {
         id: `c${Date.now()}`,
@@ -50,8 +78,7 @@ export async function addComment(postSlug: string, content: string, authorId: st
 // Server Action to add a reply to an existing comment
 export async function addReply(postSlug: string, parentCommentId: string, content: string, authorId: string): Promise<Post> {
     const post = findPost(postSlug);
-    const author = Object.values(authors).find(a => a.id === authorId);
-    if (!author) throw new Error("Invalid author ID");
+    const author = await getAuthor(authorId);
 
     const { comment: parentComment } = findCommentRecursive(post.comments, parentCommentId);
     if (!parentComment) throw new Error('Parent comment not found');
