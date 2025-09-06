@@ -19,33 +19,31 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user, isAdmin } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  
+  // Find the post data once, directly during render. This is the correct pattern.
+  const post = posts.find(p => p.slug === params.slug);
 
-  const [post, setPost] = useState<Post | undefined>(undefined);
-  const [comments, setComments] = useState<Comment[]>([]);
+  // If the post is not found after the initial render, show a 404 page.
+  if (!post) {
+      notFound();
+  }
+
+  const [comments, setComments] = useState<Comment[]>(post.comments);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
-  // This useEffect correctly handles finding the post based on params
-  // and setting all related state.
+  // useEffect is now only for client-side interactions after the component has mounted.
   useEffect(() => {
-    const currentPost = posts.find(p => p.slug === params.slug);
-    if (currentPost) {
-      setPost(currentPost);
-      setComments(currentPost.comments);
-      setLikeCount(currentPost.comments.reduce((acc, c) => acc + c.likes, 0) + 15); // mock likes
-      
-      const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
-      if (likedPosts[currentPost.slug]) {
-        setLiked(true);
-      }
-    } else {
-        // If post not found after client-side check, trigger notFound
-        notFound();
+    // Set initial likes from localStorage
+    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+    if (likedPosts[post.slug]) {
+      setLiked(true);
     }
-  }, [params.slug]);
+    // Set initial like count (mocked)
+    setLikeCount(post.comments.reduce((acc, c) => acc + c.likes, 0) + 15);
+  }, [post.slug, post.comments]);
   
   const relatedPosts = useMemo(() => {
-    if (!post) return [];
     return posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   }, [post]);
 
@@ -58,7 +56,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
   
   const handleLike = () => {
-    if (!post) return;
     const newLikedState = !liked;
     setLiked(newLikedState);
     setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
@@ -77,7 +74,6 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleShare = async () => {
-    if (!post) return;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -95,7 +91,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleAddComment = async (content: string) => {
-    if (!post || !user) return;
+    if (!user) return;
     const optimisticComment: Comment = {
       id: `temp-${Date.now()}`,
       author: user,
@@ -116,35 +112,31 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleAddReply = async (parentCommentId: string, content: string) => {
-    if (!post || !user) return;
+    if (!user) return;
     const newComments = await addReply(post.slug, parentCommentId, content, user.id);
     setComments(newComments);
     toast({ title: 'Reply posted!' });
   };
 
   const handleUpdateComment = async (commentId: string, newContent: string) => {
-    if (!post) return;
     const newComments = await updateComment(post.slug, commentId, newContent);
     setComments(newComments);
     toast({ title: 'Comment updated!' });
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!post) return;
     const newComments = await deleteComment(post.slug, commentId);
     setComments(newComments);
     toast({ title: 'Comment deleted.' });
   };
   
   const handleUpdateReply = async (commentId: string, replyId: string, newContent: string) => {
-    if (!post) return;
     const newComments = await updateReply(post.slug, commentId, replyId, newContent);
     setComments(newComments);
     toast({ title: 'Reply updated!' });
   };
 
   const handleDeleteReply = async (commentId: string, replyId: string) => {
-    if (!post) return;
     const newComments = await deleteReply(post.slug, commentId, replyId);
     setComments(newComments);
     toast({ title: 'Reply deleted.' });
@@ -182,27 +174,8 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     router.push(`/posts?q=${encodeURIComponent(tag)}`);
   };
   
-  if (!post) {
-    // Render a loading state or skeleton while the post is being found.
-    return (
-        <div className="container mx-auto px-4 py-10 max-w-4xl">
-            <div className="animate-pulse">
-                <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
-                <div className="h-12 bg-muted rounded w-3/4 mb-6"></div>
-                <div className="flex items-center space-x-4 mb-8">
-                    <div className="h-10 w-10 rounded-full bg-muted"></div>
-                    <div className="h-4 bg-muted rounded w-1/4"></div>
-                </div>
-                <div className="aspect-video bg-muted rounded-xl mb-8"></div>
-                <div className="space-y-4">
-                    <div className="h-6 bg-muted rounded w-full"></div>
-                    <div className="h-6 bg-muted rounded w-full"></div>
-                    <div className="h-6 bg-muted rounded w-2/3"></div>
-                </div>
-            </div>
-        </div>
-    );
-  }
+  // Since post is guaranteed to exist here, we don't need a loading state.
+  // If it didn't exist, notFound() would have been called.
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -324,5 +297,3 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 };
 
 export default PostPage;
-
-    
