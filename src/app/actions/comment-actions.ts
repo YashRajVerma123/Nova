@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -7,7 +8,43 @@ import { getAuth } from 'firebase-admin/auth';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initialize Firebase Admin SDK
-getAdminApp();
+try {
+  getAdminApp();
+} catch (error) {
+  console.error('Firebase Admin SDK initialization error:', error);
+  // Throwing an error here to prevent the actions from being used with a faulty config.
+  // We'll add a more specific error message in each function.
+}
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+const createAuthError = () => new Error('The server is experiencing authentication issues. Please try again later.');
+
+const verifyToken = async (token: string): Promise<Author> => {
+    if (!token) {
+        throw new Error('Authentication token not provided.');
+    }
+    try {
+        const decodedToken = await getAuth().verifyIdToken(token);
+        const user = await getAuth().getUser(decodedToken.uid);
+        return {
+            id: user.uid,
+            name: user.displayName || 'Anonymous User',
+            avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+            email: user.email || 'no-email@example.com',
+        };
+    } catch (error) {
+        console.error("Error verifying token:", error);
+        // This is where the private key error would surface if initialization fails.
+        if (getErrorMessage(error).includes('private key')) {
+          throw createAuthError();
+        }
+        throw new Error('Invalid or expired authentication token.');
+    }
+};
 
 // Helper to find a comment/reply in the nested structure
 const findComment = (comments: Comment[], commentId: string): { parent: Comment[] | null, comment: Comment | null, index: number } => {
@@ -26,28 +63,13 @@ const findComment = (comments: Comment[], commentId: string): { parent: Comment[
     return { parent: null, comment: null, index: -1 };
 };
 
-const verifyToken = async (token: string): Promise<Author> => {
-    if (!token) {
-        throw new Error('Authentication token not provided.');
-    }
-    try {
-        const decodedToken = await getAuth().verifyIdToken(token);
-        const user = await getAuth().getUser(decodedToken.uid);
-        return {
-            id: user.uid,
-            name: user.displayName || 'Anonymous User',
-            avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
-            email: user.email || 'no-email@example.com',
-        };
-    } catch (error) {
-        console.error("Error verifying token:", error);
-        throw new Error('Invalid or expired authentication token.');
-    }
-};
-
-
 export async function addComment(postSlug: string, content: string, parentId: string | null, token: string) {
-    const author = await verifyToken(token);
+    let author: Author;
+    try {
+      author = await verifyToken(token);
+    } catch (error) {
+      throw createAuthError();
+    }
     
     const post = posts.find((p) => p.slug === postSlug);
     if (!post) {
@@ -80,7 +102,12 @@ export async function addComment(postSlug: string, content: string, parentId: st
 
 
 export async function deleteComment(postSlug: string, commentId: string, token: string) {
-    const user = await verifyToken(token);
+    let user: Author;
+    try {
+      user = await verifyToken(token);
+    } catch (error) {
+      throw createAuthError();
+    }
     const post = posts.find((p) => p.slug === postSlug);
     if (!post) throw new Error('Post not found');
     
@@ -112,7 +139,12 @@ export async function deleteComment(postSlug: string, commentId: string, token: 
 }
 
 export async function editComment(postSlug: string, commentId: string, newContent: string, token: string) {
-    const user = await verifyToken(token);
+    let user: Author;
+    try {
+      user = await verifyToken(token);
+    } catch (error) {
+      throw createAuthError();
+    }
     const post = posts.find((p) => p.slug === postSlug);
     if (!post) throw new Error('Post not found');
 
@@ -131,7 +163,12 @@ export async function editComment(postSlug: string, commentId: string, newConten
 }
 
 export async function toggleLike(postSlug: string, commentId: string, token: string) {
-    const user = await verifyToken(token);
+    let user: Author;
+    try {
+      user = await verifyToken(token);
+    } catch (error) {
+      throw createAuthError();
+    }
     const post = posts.find((p) => p.slug === postSlug);
     if (!post) throw new Error('Post not found');
 
@@ -150,7 +187,12 @@ export async function toggleLike(postSlug: string, commentId: string, token: str
 }
 
 export async function togglePin(postSlug: string, commentId: string, token: string) {
-    const user = await verifyToken(token);
+    let user: Author;
+    try {
+      user = await verifyToken(token);
+    } catch (error) {
+      throw createAuthError();
+    }
     const post = posts.find((p) => p.slug === postSlug);
     if (!post) throw new Error('Post not found');
     
@@ -161,7 +203,7 @@ export async function togglePin(postSlug: string, commentId: string, token: stri
 
     // Unpin any currently pinned comment
     post.comments.forEach(c => {
-      if (c.isPinned) c.isPinned = false;
+      if (c.id !== commentId && c.isPinned) c.isPinned = false;
     });
 
     const { comment } = findComment(post.comments, commentId);
@@ -174,7 +216,12 @@ export async function togglePin(postSlug: string, commentId: string, token: stri
 }
 
 export async function toggleHeart(postSlug: string, commentId: string, token: string) {
-    const user = await verifyToken(token);
+    let user: Author;
+    try {
+      user = await verifyToken(token);
+    } catch (error) {
+      throw createAuthError();
+    }
     const post = posts.find((p) => p.slug === postSlug);
     if (!post) throw new Error('Post not found');
     
