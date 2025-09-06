@@ -102,7 +102,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
             if (comment.id === parentCommentId) {
                 return {
                     ...comment,
-                    replies: [...comment.replies, reply]
+                    replies: [...(comment.replies || []), reply]
                 };
             }
             return comment;
