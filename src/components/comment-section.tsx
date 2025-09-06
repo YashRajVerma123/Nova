@@ -1,155 +1,246 @@
+
 'use client';
 import type { Comment, Author } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
-import { Heart, MessageSquare, Send } from "lucide-react";
+import { Heart, MessageSquare, Send, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from 'next/link';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 const getInitials = (name: string) => {
     const names = name.split(' ');
-    if (names.length > 1) {
+    if (names.length > 1 && names[0] && names[1]) {
       return `${names[0][0]}${names[1][0]}`;
     }
-    return names[0].substring(0, 2);
+    return name ? name.substring(0, 2) : '';
 };
 
-
-interface ReplyFormProps {
+interface CommentFormProps {
     user: Author;
-    onAddReply: (reply: Comment) => void;
-    onCancel: () => void;
+    onSubmit: (content: string) => void;
+    onCancel?: () => void;
+    initialContent?: string;
+    placeholder: string;
+    isReply?: boolean;
 }
 
-const ReplyForm = ({ user, onAddReply, onCancel }: ReplyFormProps) => {
-    const [replyContent, setReplyContent] = useState('');
+const CommentForm = ({ user, onSubmit, onCancel, initialContent = '', placeholder, isReply = false }: CommentFormProps) => {
+    const [content, setContent] = useState(initialContent);
 
-    const handlePostReply = () => {
-        if (replyContent.trim() && user) {
-            const reply: Comment = {
-                id: `c${Date.now()}`,
-                author: user,
-                content: replyContent.trim(),
-                createdAt: new Date().toISOString(),
-                likes: 0,
-                replies: [],
-            };
-            onAddReply(reply);
-            setReplyContent('');
-            onCancel();
+    const handleSubmit = () => {
+        if (content.trim() && user) {
+            onSubmit(content.trim());
+            setContent('');
+            onCancel?.();
         }
     };
 
     return (
-        <div className="flex items-start gap-2 mt-4 ml-8">
-             <Avatar className="h-8 w-8">
+        <div className={`flex items-start gap-2 ${isReply ? 'mt-4 ml-8' : 'mb-8'}`}>
+             <Avatar className={isReply ? 'h-8 w-8' : 'h-10 w-10'}>
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 relative">
                 <Textarea 
-                    value={replyContent}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    placeholder="Write a reply..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder={placeholder}
                     className="pr-10"
-                    rows={2}
+                    rows={isReply ? 2 : 3}
                 />
-                <div className="absolute right-2 top-2 flex flex-col gap-1">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handlePostReply} disabled={!replyContent.trim()}>
+                <div className={`absolute right-2 top-2 flex ${isReply ? 'flex-col gap-1' : 'flex-row'}`}>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSubmit} disabled={!content.trim()}>
                         <Send className="h-4 w-4"/>
                     </Button>
+                    {onCancel && (
                      <Button size="icon" variant="ghost" className="h-7 w-7 text-xs" onClick={onCancel}>X</Button>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
 
-const CommentItem = ({ comment, user, onAddReply, onLikeComment }: { comment: Comment; user: Author | null; onAddReply: (reply: Comment) => void; onLikeComment: (commentId: string, isLiked: boolean) => void; }) => {
+
+interface CommentItemProps {
+    comment: Comment;
+    user: Author | null;
+    isAdmin: boolean;
+    onAddReply: (parentCommentId: string, content: string) => void;
+    onUpdateComment: (commentId: string, content: string) => void;
+    onDeleteComment: (commentId: string) => void;
+    onUpdateReply: (commentId: string, replyId: string, content: string) => void;
+    onDeleteReply: (commentId: string, replyId: string) => void;
+    onLikeComment: (commentId: string, isLiked: boolean) => void;
+    isReply?: boolean;
+    parentCommentId?: string;
+}
+
+const CommentItem = ({ comment, user, isAdmin, onAddReply, onUpdateComment, onDeleteComment, onUpdateReply, onDeleteReply, onLikeComment, isReply=false, parentCommentId }: CommentItemProps) => {
     const [isReplying, setIsReplying] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(comment.likes);
+    const canEdit = user?.id === comment.author.id;
+    const canDelete = canEdit || isAdmin;
 
     useEffect(() => {
-        // Check local storage for like status
         const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
         if (likedComments[comment.id]) {
             setLiked(true);
         }
-    }, [comment.id]);
+        setLikeCount(comment.likes);
+    }, [comment.id, comment.likes]);
     
     const handleLikeClick = () => {
         const newLikedState = !liked;
         setLiked(newLikedState);
         setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
         onLikeComment(comment.id, newLikedState);
+    };
 
-        // Update local storage
-        const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
-        if (newLikedState) {
-            likedComments[comment.id] = true;
+    const handleUpdateSubmit = (content: string) => {
+        if(isReply && parentCommentId) {
+            onUpdateReply(parentCommentId, comment.id, content)
         } else {
-            delete likedComments[comment.id];
+            onUpdateComment(comment.id, content);
         }
-        localStorage.setItem('likedComments', JSON.stringify(likedComments));
+        setIsEditing(false);
+    };
+
+    const handleDelete = () => {
+        if(isReply && parentCommentId) {
+            onDeleteReply(parentCommentId, comment.id)
+        } else {
+            onDeleteComment(comment.id);
+        }
     };
     
     return (
         <div>
             <div className="flex items-start gap-4">
-                <Avatar className="h-10 w-10">
+                <Avatar className={isReply ? 'h-8 w-8' : 'h-10 w-10'}>
                     <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
                     <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-sm">{comment.author.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                            {new Date(comment.createdAt).toLocaleDateString()}
-                        </p>
+                    <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-sm">{comment.author.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                              {new Date(comment.createdAt).toLocaleDateString()}
+                          </p>
+                       </div>
+                       {(canEdit || canDelete) && !isEditing && (
+                         <DropdownMenu>
+                           <DropdownMenuTrigger asChild>
+                             <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreHorizontal className="h-4 w-4" />
+                             </Button>
+                           </DropdownMenuTrigger>
+                           <DropdownMenuContent align="end">
+                            {canEdit && <DropdownMenuItem onSelect={() => setIsEditing(true)}><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>}
+                            {canDelete && 
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete this {isReply ? 'reply' : 'comment'}.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                             }
+                           </DropdownMenuContent>
+                         </DropdownMenu>
+                       )}
                     </div>
-                    <p className="text-sm text-foreground/90">{comment.content}</p>
+                    {isEditing ? (
+                        <CommentForm 
+                          user={user!}
+                          initialContent={comment.content}
+                          onSubmit={handleUpdateSubmit}
+                          onCancel={() => setIsEditing(false)}
+                          placeholder="Edit your comment..."
+                          isReply
+                        />
+                    ) : (
+                      <p className="text-sm text-foreground/90 whitespace-pre-wrap">{comment.content}</p>
+                    )}
+                    
+                    {!isEditing && (
                     <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                         <button className="flex items-center gap-1 hover:text-primary group" onClick={handleLikeClick}>
                             <Heart className={`h-3 w-3 transition-colors group-hover:fill-red-500 group-hover:text-red-500 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
                             <span>{likeCount}</span>
                         </button>
-                        {user && (
+                        {user && !isReply && (
                         <button className="flex items-center gap-1 hover:text-primary" onClick={() => setIsReplying(!isReplying)}>
                             <MessageSquare className="h-3 w-3"/>
                             <span>Reply</span>
                         </button>
                         )}
                     </div>
+                    )}
                 </div>
             </div>
             {isReplying && user && (
-                 <ReplyForm 
+                 <CommentForm 
                     user={user} 
-                    onAddReply={onAddReply}
+                    onSubmit={(content) => {
+                        onAddReply(comment.id, content)
+                        setIsReplying(false);
+                    }}
                     onCancel={() => setIsReplying(false)}
+                    placeholder="Write a reply..."
+                    isReply
                  />
             )}
-            {comment.replies.length > 0 && (
+            {comment.replies && comment.replies.length > 0 && (
                 <div className="mt-4 space-y-4 pl-6 border-l border-border/50">
                     {comment.replies.map(reply => (
-                        // Note: Nested replies don't have reply functionality in this simplified version
-                         <div key={reply.id} className="flex items-start gap-4">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={reply.author.avatar} alt={reply.author.name} />
-                                <AvatarFallback>{getInitials(reply.author.name)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <p className="font-semibold text-xs">{reply.author.name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {new Date(reply.createdAt).toLocaleDateString()}
-                                    </p>
-                                </div>
-                                <p className="text-sm text-foreground/90">{reply.content}</p>
-                            </div>
-                        </div>
+                         <CommentItem 
+                            key={reply.id} 
+                            comment={reply} 
+                            user={user}
+                            isAdmin={isAdmin}
+                            onAddReply={() => {}} // Nested replies not supported in this version
+                            onUpdateComment={()=>{}}
+                            onDeleteComment={()=>{}}
+                            onUpdateReply={onUpdateReply}
+                            onDeleteReply={onDeleteReply}
+                            onLikeComment={onLikeComment}
+                            isReply
+                            parentCommentId={comment.id}
+                        />
                     ))}
                 </div>
             )}
@@ -161,57 +252,28 @@ const CommentItem = ({ comment, user, onAddReply, onLikeComment }: { comment: Co
 interface CommentSectionProps {
   comments: Comment[];
   user: Author | null;
-  onAddComment: (comment: Comment) => void;
-  onAddReply: (parentCommentId: string, reply: Comment) => void;
+  isAdmin: boolean;
+  onAddComment: (content: string) => void;
+  onAddReply: (parentCommentId: string, content: string) => void;
+  onUpdateComment: (commentId: string, content: string) => void;
+  onDeleteComment: (commentId: string) => void;
+  onUpdateReply: (commentId: string, replyId: string, content: string) => void;
+  onDeleteReply: (commentId: string, replyId: string) => void;
   onLikeComment: (commentId: string, isLiked: boolean) => void;
 }
 
-const CommentSection = ({ comments, user, onAddComment, onAddReply, onLikeComment }: CommentSectionProps) => {
-    const [newComment, setNewComment] = useState("");
-
-    const handlePostComment = () => {
-        if (newComment.trim() && user) {
-            const comment: Comment = {
-                id: `c${Date.now()}`,
-                author: user,
-                content: newComment.trim(),
-                createdAt: new Date().toISOString(),
-                likes: 0,
-                replies: [],
-            };
-            onAddComment(comment);
-            setNewComment("");
-        }
-    };
+const CommentSection = (props: CommentSectionProps) => {
+    const { comments, user, isAdmin, onAddComment } = props;
 
     return (
         <section id="comment-section">
             <h2 className="text-2xl font-headline font-bold mb-6">Comments ({comments.length})</h2>
             {user ? (
-                <div className="flex items-start gap-4 mb-8">
-                    <Avatar>
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 relative">
-                        <Textarea 
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Write a comment..."
-                            className="pr-12"
-                            rows={3}
-                        />
-                        <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="absolute right-2 top-2 h-8 w-8"
-                            onClick={handlePostComment}
-                            disabled={!newComment.trim()}
-                        >
-                            <Send className="h-4 w-4"/>
-                        </Button>
-                    </div>
-                </div>
+                <CommentForm
+                    user={user}
+                    onSubmit={onAddComment}
+                    placeholder="Write a comment..."
+                />
             ) : (
                 <div className="text-center p-4 border rounded-lg mb-8">
                     <p className="text-muted-foreground">
@@ -226,8 +288,13 @@ const CommentSection = ({ comments, user, onAddComment, onAddReply, onLikeCommen
                         key={comment.id} 
                         comment={comment} 
                         user={user}
-                        onAddReply={(reply) => onAddReply(comment.id, reply)}
-                        onLikeComment={onLikeComment}
+                        isAdmin={isAdmin}
+                        onAddReply={props.onAddReply}
+                        onUpdateComment={props.onUpdateComment}
+                        onDeleteComment={props.onDeleteComment}
+                        onUpdateReply={props.onUpdateReply}
+                        onDeleteReply={props.onDeleteReply}
+                        onLikeComment={props.onLikeComment}
                     />
                 )}
             </div>

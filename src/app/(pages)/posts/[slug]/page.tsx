@@ -12,10 +12,13 @@ import { Button } from '@/components/ui/button';
 import BlogPostCard from '@/components/blog-post-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { addComment, addReply, deleteComment, deleteReply, updateComment, updateReply } from '@/app/actions/comment-actions';
+import { useToast } from '@/hooks/use-toast';
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   const [post, setPost] = useState<Post | undefined>(undefined);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -23,7 +26,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   const [likeCount, setLikeCount] = useState(0);
 
   // This useEffect correctly handles finding the post based on params
-  // and setting all related state, avoiding the Next.js warning.
+  // and setting all related state.
   useEffect(() => {
     const currentPost = posts.find(p => p.slug === params.slug);
     if (currentPost) {
@@ -87,38 +90,92 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      toast({ title: 'Link copied to clipboard!' });
     }
   };
 
-  const handleAddComment = (newComment: Comment) => {
-    setComments(prev => [newComment, ...prev]);
+  const handleAddComment = async (content: string) => {
+    if (!post || !user) return;
+    const optimisticComment: Comment = {
+      id: `temp-${Date.now()}`,
+      author: user,
+      content,
+      createdAt: new Date().toISOString(),
+      likes: 0,
+      replies: [],
+    };
+    setComments(prev => [optimisticComment, ...prev]);
+    try {
+      const newComments = await addComment(post.slug, content, user.id);
+      setComments(newComments);
+      toast({ title: 'Comment posted!' });
+    } catch {
+      toast({ title: 'Failed to post comment.', variant: 'destructive' });
+      setComments(prev => prev.filter(c => c.id !== optimisticComment.id));
+    }
   };
 
-  const handleAddReply = (parentCommentId: string, reply: Comment) => {
-      setComments(prevComments => 
-        prevComments.map(comment => {
-            if (comment.id === parentCommentId) {
-                return {
-                    ...comment,
-                    replies: [...(comment.replies || []), reply]
-                };
-            }
-            return comment;
-        })
-      );
+  const handleAddReply = async (parentCommentId: string, content: string) => {
+    if (!post || !user) return;
+    const newComments = await addReply(post.slug, parentCommentId, content, user.id);
+    setComments(newComments);
+    toast({ title: 'Reply posted!' });
+  };
+
+  const handleUpdateComment = async (commentId: string, newContent: string) => {
+    if (!post) return;
+    const newComments = await updateComment(post.slug, commentId, newContent);
+    setComments(newComments);
+    toast({ title: 'Comment updated!' });
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!post) return;
+    const newComments = await deleteComment(post.slug, commentId);
+    setComments(newComments);
+    toast({ title: 'Comment deleted.' });
   };
   
+  const handleUpdateReply = async (commentId: string, replyId: string, newContent: string) => {
+    if (!post) return;
+    const newComments = await updateReply(post.slug, commentId, replyId, newContent);
+    setComments(newComments);
+    toast({ title: 'Reply updated!' });
+  };
+
+  const handleDeleteReply = async (commentId: string, replyId: string) => {
+    if (!post) return;
+    const newComments = await deleteReply(post.slug, commentId, replyId);
+    setComments(newComments);
+    toast({ title: 'Reply deleted.' });
+  };
+
+
   const handleLikeComment = useCallback((commentId: string, isLiked: boolean) => {
-    setComments(prevComments =>
-      prevComments.map(comment => {
-        if (comment.id === commentId) {
-          return { ...comment, likes: comment.likes + (isLiked ? 1 : -1) };
-        }
-        // This simple version doesn't handle likes on nested replies.
-        return comment;
-      })
-    );
+    // This is a client-side only like for now
+    const likedComments = JSON.parse(localStorage.getItem('likedComments') || '{}');
+    if (isLiked) {
+        likedComments[commentId] = true;
+    } else {
+        delete likedComments[commentId];
+    }
+    localStorage.setItem('likedComments', JSON.stringify(likedComments));
+
+    const updateLikes = (comments: Comment[]): Comment[] => {
+        return comments.map(comment => {
+            let newLikes = comment.likes;
+            if (comment.id === commentId) {
+                // This logic is simplified; a real app would prevent double-liking
+                newLikes = isLiked ? comment.likes + 1 : Math.max(0, comment.likes - 1);
+            }
+            return {
+                ...comment,
+                likes: newLikes,
+                replies: comment.replies ? updateLikes(comment.replies) : [],
+            };
+        });
+    };
+    setComments(prev => updateLikes(prev));
   }, []);
 
   const handleTagClick = (tag: string) => {
@@ -237,9 +294,14 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 
         <CommentSection 
             comments={comments} 
-            user={user} 
+            user={user}
+            isAdmin={isAdmin}
             onAddComment={handleAddComment}
             onAddReply={handleAddReply}
+            onUpdateComment={handleUpdateComment}
+            onDeleteComment={handleDeleteComment}
+            onUpdateReply={handleUpdateReply}
+            onDeleteReply={handleDeleteReply}
             onLikeComment={handleLikeComment}
         />
 
@@ -262,5 +324,3 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 };
 
 export default PostPage;
-
-    
