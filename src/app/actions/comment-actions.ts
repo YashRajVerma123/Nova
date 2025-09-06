@@ -8,20 +8,34 @@ import { posts, authors, Comment } from '@/lib/data';
 // For now, we trust the userId passed from the client.
 
 // Helper to find a comment/reply in the nested structure
-const findComment = (comments: Comment[], id: string): {comment: Comment | null, parent: Comment[] | null} => {
+const findComment = (comments: Comment[], id: string): {comment: Comment | null, parent: Comment[] | null, parentReplies: Comment[] | null } => {
     for (const comment of comments) {
         if (comment.id === id) {
-            return { comment, parent: comments };
+            return { comment, parent: comments, parentReplies: null };
         }
-        if (comment.replies) {
+        if (comment.replies && comment.replies.length > 0) {
             const foundInReplies = findComment(comment.replies, id);
             if (foundInReplies.comment) {
-                return foundInReplies;
+                // if found in replies, the "parent" is actually the replies array of the container comment
+                return { comment: foundInReplies.comment, parent: comments, parentReplies: comment.replies };
             }
         }
     }
-    return { comment: null, parent: null };
+    return { comment: null, parent: null, parentReplies: null };
 };
+
+const findParentComment = (comments: Comment[], id: string): Comment | null => {
+    for (const comment of comments) {
+        if (comment.id === id) {
+            return comment;
+        }
+        if (comment.replies) {
+            const found = findParentComment(comment.replies, id);
+            if (found) return found;
+        }
+    }
+    return null;
+}
 
 const findPostAndRevalidate = (slug: string) => {
     const post = posts.find(p => p.slug === slug);
@@ -61,7 +75,7 @@ export async function addReply(postSlug: string, parentCommentId: string, conten
         throw new Error("Invalid author ID");
     }
 
-    const { comment: parentComment } = findComment(post.comments, parentCommentId);
+    const parentComment = findParentComment(post.comments, parentCommentId);
     
     if (!parentComment) {
         throw new Error('Parent comment not found');
@@ -105,7 +119,8 @@ export async function deleteComment(postSlug: string, commentId: string) {
     if (index > -1) {
         post.comments.splice(index, 1);
     } else {
-        throw new Error('Comment not found');
+        // This should not happen if called from UI correctly, but as a safeguard.
+        throw new Error('Comment not found in root level');
     }
     
     return post.comments;
@@ -113,7 +128,7 @@ export async function deleteComment(postSlug: string, commentId: string) {
 
 export async function updateReply(postSlug: string, commentId: string, replyId: string, newContent: string) {
     const post = findPostAndRevalidate(postSlug);
-    const { comment: parentComment } = findComment(post.comments, commentId);
+    const parentComment = findParentComment(post.comments, commentId);
 
     if (!parentComment || !parentComment.replies) {
         throw new Error('Parent comment not found');
@@ -130,7 +145,7 @@ export async function updateReply(postSlug: string, commentId: string, replyId: 
 
 export async function deleteReply(postSlug: string, commentId: string, replyId: string) {
     const post = findPostAndRevalidate(postSlug);
-    const { comment: parentComment } = findComment(post.comments, commentId);
+    const parentComment = findParentComment(post.comments, commentId);
 
     if (!parentComment || !parentComment.replies) {
         throw new Error('Parent comment not found');

@@ -91,55 +91,71 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleAddComment = async (content: string) => {
-    if (!user) return;
-    const optimisticComment: Comment = {
-      id: `temp-${Date.now()}`,
-      author: user,
-      content,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      replies: [],
-    };
-    setComments(prev => [optimisticComment, ...prev]);
+    if (!user) {
+        toast({ title: 'Please sign in to comment.', variant: 'destructive' });
+        return;
+    }
     try {
       const newComments = await addComment(post.slug, content, user.id);
       setComments(newComments);
       toast({ title: 'Comment posted!' });
-    } catch {
-      toast({ title: 'Failed to post comment.', variant: 'destructive' });
-      setComments(prev => prev.filter(c => c.id !== optimisticComment.id));
+    } catch (e) {
+      toast({ title: 'Failed to post comment.', description: (e as Error).message, variant: 'destructive' });
     }
   };
 
   const handleAddReply = async (parentCommentId: string, content: string) => {
-    if (!user) return;
-    const newComments = await addReply(post.slug, parentCommentId, content, user.id);
-    setComments(newComments);
-    toast({ title: 'Reply posted!' });
+    if (!user) {
+       toast({ title: 'Please sign in to reply.', variant: 'destructive' });
+       return;
+    }
+    try {
+        const newComments = await addReply(post.slug, parentCommentId, content, user.id);
+        setComments(newComments);
+        toast({ title: 'Reply posted!' });
+    } catch (e) {
+        toast({ title: 'Failed to post reply.', description: (e as Error).message, variant: 'destructive' });
+    }
   };
 
   const handleUpdateComment = async (commentId: string, newContent: string) => {
-    const newComments = await updateComment(post.slug, commentId, newContent);
-    setComments(newComments);
-    toast({ title: 'Comment updated!' });
+    try {
+        const newComments = await updateComment(post.slug, commentId, newContent);
+        setComments(newComments);
+        toast({ title: 'Comment updated!' });
+    } catch(e) {
+        toast({ title: 'Failed to update comment.', description: (e as Error).message, variant: 'destructive' });
+    }
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    const newComments = await deleteComment(post.slug, commentId);
-    setComments(newComments);
-    toast({ title: 'Comment deleted.' });
+    try {
+        const newComments = await deleteComment(post.slug, commentId);
+        setComments(newComments);
+        toast({ title: 'Comment deleted.' });
+    } catch (e) {
+        toast({ title: 'Failed to delete comment.', description: (e as Error).message, variant: 'destructive' });
+    }
   };
   
   const handleUpdateReply = async (commentId: string, replyId: string, newContent: string) => {
-    const newComments = await updateReply(post.slug, commentId, replyId, newContent);
-    setComments(newComments);
-    toast({ title: 'Reply updated!' });
+    try {
+        const newComments = await updateReply(post.slug, commentId, replyId, newContent);
+        setComments(newComments);
+        toast({ title: 'Reply updated!' });
+    } catch (e) {
+        toast({ title: 'Failed to update reply.', description: (e as Error).message, variant: 'destructive' });
+    }
   };
 
   const handleDeleteReply = async (commentId: string, replyId: string) => {
-    const newComments = await deleteReply(post.slug, commentId, replyId);
-    setComments(newComments);
-    toast({ title: 'Reply deleted.' });
+    try {
+        const newComments = await deleteReply(post.slug, commentId, replyId);
+        setComments(newComments);
+        toast({ title: 'Reply deleted.' });
+    } catch (e) {
+        toast({ title: 'Failed to delete reply.', description: (e as Error).message, variant: 'destructive' });
+    }
   };
 
 
