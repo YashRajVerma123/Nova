@@ -1,6 +1,7 @@
+'use client';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { posts } from '@/lib/data';
+import { posts, Post, Comment } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Heart, MessageCircle, Share2 } from 'lucide-react';
@@ -9,21 +10,44 @@ import CommentSection from '@/components/comment-section';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import BlogPostCard from '@/components/blog-post-card';
+import { useAuth } from '@/hooks/use-auth';
+import { useEffect, useState, useMemo } from 'react';
 
-export async function generateStaticParams() {
-  return posts.map(post => ({
-    slug: post.slug,
-  }));
-}
+// export async function generateStaticParams() {
+//   return posts.map(post => ({
+//     slug: post.slug,
+//   }));
+// }
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
-  const post = posts.find(p => p.slug === params.slug);
+  const { user } = useAuth();
+  const [post, setPost] = useState<Post | undefined>(undefined);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+
+  useEffect(() => {
+    const foundPost = posts.find(p => p.slug === params.slug);
+    if (foundPost) {
+      setPost(foundPost);
+      setComments(foundPost.comments);
+      // In a real app, you'd fetch like count and user's like status
+      setLikeCount(foundPost.comments.reduce((acc, c) => acc + c.likes, 0) + 15); // mock likes
+    } else {
+      notFound();
+    }
+  }, [params.slug]);
+
+  const relatedPosts = useMemo(() => {
+    if (!post) return [];
+    return posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
+  }, [post]);
 
   if (!post) {
-    notFound();
+    return <div className="flex h-screen items-center justify-center">
+             <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+           </div>;
   }
-  
-  const relatedPosts = posts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
 
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -31,6 +55,38 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
       return `${names[0][0]}${names[1][0]}`;
     }
     return names[0].substring(0, 2);
+  };
+
+  const handleLike = () => {
+    setLiked(!liked);
+    setLikeCount(prev => liked ? prev - 1 : prev + 1);
+  };
+  
+  const handleCommentClick = () => {
+    document.getElementById('comment-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.description,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  const handleAddComment = (newComment: Comment) => {
+    setComments(prev => [newComment, ...prev]);
+    // In a real app, you would also persist this comment to your database
   };
   
   const jsonLd = {
@@ -102,16 +158,16 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="group/heart">
-                <Heart className="h-4 w-4 mr-2 transition-all duration-300 group-hover/heart:fill-red-500 group-hover/heart:text-red-500" />
-                Like
+              <Button variant="outline" size="sm" onClick={handleLike}>
+                <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
+                {likeCount}
               </Button>
-               <Button variant="outline" size="sm">
+               <Button variant="outline" size="sm" onClick={handleCommentClick}>
                 <MessageCircle className="h-4 w-4 mr-2" />
-                <span>{post.comments.length}</span>
+                <span>{comments.length}</span>
               </Button>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleShare}>
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </Button>
@@ -121,7 +177,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
 
         <Separator className="my-12" />
 
-        <CommentSection comments={post.comments} />
+        <CommentSection comments={comments} user={user} onAddComment={handleAddComment} />
 
         {relatedPosts.length > 0 && (
           <>

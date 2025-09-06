@@ -1,11 +1,11 @@
 'use client';
-import type { Comment } from "@/lib/data";
+import type { Comment, Author } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
-import { useAuth } from "@/hooks/use-auth";
 import { Heart, MessageSquare, Send } from "lucide-react";
 import { useState } from "react";
+import Link from 'next/link';
 
 const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -49,20 +49,32 @@ const CommentItem = ({ comment }: { comment: Comment }) => (
 );
 
 
-const CommentSection = ({ comments }: { comments: Comment[] }) => {
-    const { user } = useAuth();
+interface CommentSectionProps {
+  comments: Comment[];
+  user: Author | null;
+  onAddComment: (comment: Comment) => void;
+}
+
+const CommentSection = ({ comments, user, onAddComment }: CommentSectionProps) => {
     const [newComment, setNewComment] = useState("");
 
     const handlePostComment = () => {
-        if (newComment.trim()) {
-            console.log("Posting comment:", newComment);
-            // Here you would typically call an API to post the comment
+        if (newComment.trim() && user) {
+            const comment: Comment = {
+                id: `c${Date.now()}`,
+                author: user,
+                content: newComment.trim(),
+                createdAt: new Date().toISOString(),
+                likes: 0,
+                replies: [],
+            };
+            onAddComment(comment);
             setNewComment("");
         }
     };
 
     return (
-        <section>
+        <section id="comment-section">
             <h2 className="text-2xl font-headline font-bold mb-6">Comments ({comments.length})</h2>
             {user ? (
                 <div className="flex items-start gap-4 mb-8">
@@ -76,6 +88,7 @@ const CommentSection = ({ comments }: { comments: Comment[] }) => {
                             onChange={(e) => setNewComment(e.target.value)}
                             placeholder="Write a comment..."
                             className="pr-12"
+                            rows={3}
                         />
                         <Button 
                             size="icon" 
@@ -91,7 +104,7 @@ const CommentSection = ({ comments }: { comments: Comment[] }) => {
             ) : (
                 <div className="text-center p-4 border rounded-lg mb-8">
                     <p className="text-muted-foreground">
-                        <a href="#" className="text-primary hover:underline">Sign in</a> to join the conversation.
+                        <Link href="/api/auth/signin" className="text-primary hover:underline">Sign in</Link> to join the conversation.
                     </p>
                 </div>
             )}
