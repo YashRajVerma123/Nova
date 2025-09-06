@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { posts, authors as initialAuthors, Comment, Post, Author } from '@/lib/data';
+import { posts, Comment, Post, Author } from '@/lib/data';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
 
@@ -16,17 +16,12 @@ const findPost = (slug: string): Post => {
     return post;
 }
 
-// Helper function to get an author from Firebase or the initial hardcoded list
-const getAuthor = async (authorId: string): Promise<Author> => {
-    // First, check the hardcoded authors for initial data
-    const hardcodedAuthor = Object.values(initialAuthors).find(a => a.id === authorId);
-    if (hardcodedAuthor) {
-        return hardcodedAuthor;
-    }
-
-    // If not found, fetch from Firebase Auth
+// Helper function to verify the user's token and get their profile
+const getAuthorFromToken = async (idToken: string): Promise<Author> => {
     try {
-        const userRecord = await getAuth().getUser(authorId);
+        const decodedToken = await getAuth().verifyIdToken(idToken);
+        const userRecord = await getAuth().getUser(decodedToken.uid);
+        
         return {
             id: userRecord.uid,
             name: userRecord.displayName || 'Anonymous',
@@ -34,8 +29,8 @@ const getAuthor = async (authorId: string): Promise<Author> => {
             email: userRecord.email || 'no-email@example.com',
         };
     } catch (error) {
-        console.error("Error fetching author:", error);
-        throw new Error('Author not found from provided ID.');
+        console.error("Error verifying token or fetching user:", error);
+        throw new Error('Invalid authentication token.');
     }
 }
 
@@ -57,9 +52,9 @@ const findCommentRecursive = (comments: Comment[], commentId: string): { comment
 };
 
 // Server Action to add a top-level comment to a post
-export async function addComment(postSlug: string, content: string, authorId: string): Promise<Post> {
+export async function addComment(postSlug: string, content: string, idToken: string): Promise<Post> {
     const post = findPost(postSlug);
-    const author = await getAuthor(authorId);
+    const author = await getAuthorFromToken(idToken);
 
     const newComment: Comment = {
         id: `c${Date.now()}`,
@@ -76,9 +71,9 @@ export async function addComment(postSlug: string, content: string, authorId: st
 }
 
 // Server Action to add a reply to an existing comment
-export async function addReply(postSlug: string, parentCommentId: string, content: string, authorId: string): Promise<Post> {
+export async function addReply(postSlug: string, parentCommentId: string, content: string, idToken: string): Promise<Post> {
     const post = findPost(postSlug);
-    const author = await getAuthor(authorId);
+    const author = await getAuthorFromToken(idToken);
 
     const { comment: parentComment } = findCommentRecursive(post.comments, parentCommentId);
     if (!parentComment) throw new Error('Parent comment not found');

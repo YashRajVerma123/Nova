@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
-  const { user, isAdmin } = useAuth();
+  const { user, firebaseUser, isAdmin } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const slug = params.slug;
@@ -82,12 +82,13 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
   
   const handleAddComment = async (content: string) => {
-    if (!user || !post) {
+    if (!user || !post || !firebaseUser) {
         toast({ title: 'Please sign in to comment.', variant: 'destructive' });
         return;
     }
     try {
-      const updatedPost = await addComment(post.slug, content, user.id);
+      const idToken = await firebaseUser.getIdToken();
+      const updatedPost = await addComment(post.slug, content, idToken);
       updatePostState(updatedPost);
       toast({ title: 'Comment posted!' });
     } catch (e) {
@@ -96,12 +97,13 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
   };
 
   const handleAddReply = async (parentCommentId: string, content: string) => {
-    if (!user || !post) {
+    if (!user || !post || !firebaseUser) {
        toast({ title: 'Please sign in to reply.', variant: 'destructive' });
        return;
     }
     try {
-        const updatedPost = await addReply(post.slug, parentCommentId, content, user.id);
+        const idToken = await firebaseUser.getIdToken();
+        const updatedPost = await addReply(post.slug, parentCommentId, content, idToken);
         updatePostState(updatedPost);
         toast({ title: 'Reply posted!' });
     } catch (e) {
