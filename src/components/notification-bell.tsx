@@ -1,10 +1,11 @@
+
 'use client';
 import { useEffect, useState } from 'react';
-import { Bell, Check, Image as ImageIcon } from 'lucide-react';
+import { Bell } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { notifications, Notification } from '@/lib/data';
+import { notifications as serverNotifications, Notification } from '@/lib/data';
 import { Separator } from './ui/separator';
 
 const NOTIFICATION_READ_STATE_KEY = 'read_notifications';
@@ -14,15 +15,15 @@ const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   
   useEffect(() => {
-    // We are using mockNotifications directly to ensure we always have the latest data
-    // in a real app, you might fetch this from an API
+    // When the component mounts or the popover is opened, we sync with the latest data.
+    // In a real app, this would be an API fetch. Here, we re-import from our "data" source.
     const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
-    const updatedNotifications = notifications.map(n => ({
+    const updatedNotifications = serverNotifications.map(n => ({
       ...n,
-      read: readIds.includes(n.id) || n.read,
+      read: readIds.includes(n.id),
     }));
     setCurrentNotifications(updatedNotifications.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-  }, [isOpen]); // Rerun when popover is opened to get fresh data
+  }, [isOpen]); // Re-run when popover is opened to get the latest notifications
 
   const unreadCount = currentNotifications.filter(n => !n.read).length;
 
