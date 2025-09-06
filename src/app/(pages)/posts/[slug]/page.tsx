@@ -8,7 +8,6 @@ import { Calendar, Clock, Heart, MessageCircle, Share2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import CommentSection from '@/components/comment-section';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import BlogPostCard from '@/components/blog-post-card';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, useMemo } from 'react';
@@ -16,13 +15,17 @@ import { useEffect, useState, useMemo } from 'react';
 const PostPage = ({ params }: { params: { slug: string } }) => {
   const { user } = useAuth();
   const router = useRouter();
-  const post = useMemo(() => posts.find(p => p.slug === params.slug), [params.slug]);
-  const [comments, setComments] = useState<Comment[]>(post?.comments || []);
+
+  // Find post directly without useMemo to avoid Next.js param warning
+  const post = posts.find(p => p.slug === params.slug);
+
+  const [comments, setComments] = useState<Comment[]>([]);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
     if (post) {
+      setComments(post.comments);
       // In a real app, you'd fetch like count and user's like status from a DB
       setLikeCount(post.comments.reduce((acc, c) => acc + c.likes, 0) + 15); // mock likes
     }
