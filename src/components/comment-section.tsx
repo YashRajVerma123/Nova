@@ -1,21 +1,37 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, KeyboardEvent } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { addComment, toggleCommentLike } from '@/app/actions/comment-actions';
+import { addComment, toggleCommentLike, updateComment, deleteComment } from '@/app/actions/comment-actions';
 import { posts, Comment as CommentType, Author } from '@/lib/data';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Heart, MessageSquare } from 'lucide-react';
+import { Heart, MessageSquare, MoreHorizontal, Trash2, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CommentSectionProps {
   postSlug: string;
@@ -33,21 +49,43 @@ const CommentForm = ({
     postSlug, 
     onCommentAdded, 
     parentId = null,
-    buttonText = "Post Comment"
+    buttonText = "Post Comment",
+    initialContent = '',
+    onCancel,
+    isEditing = false,
+    commentId,
 }: { 
     postSlug: string, 
     onCommentAdded: (newComment: CommentType) => void,
     parentId?: string | null,
-    buttonText?: string
+    buttonText?: string,
+    initialContent?: string,
+    onCancel?: () => void,
+    isEditing?: boolean,
+    commentId?: string,
 }) => {
-    const [comment, setComment] = useState('');
+    const [content, setContent] = useState(initialContent);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { user, signIn } = useAuth();
+    const { user, isAdmin, signIn } = useAuth();
     const { toast } = useToast();
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    
+    useEffect(() => {
+        if (isEditing) {
+            textareaRef.current?.focus();
+            textareaRef.current?.select();
+        }
+    }, [isEditing]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!comment.trim()) return;
+    const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit();
+        }
+    }
+
+    const handleSubmit = async () => {
+        if (!content.trim()) return;
 
         if (!user) {
             toast({
@@ -60,40 +98,57 @@ const CommentForm = ({
 
         setIsSubmitting(true);
         try {
-            const result = await addComment(postSlug, comment, user, parentId);
-            if (result.error) throw new Error(result.error);
-            if (result.comment) {
-                onCommentAdded(result.comment);
-                setComment('');
+            if (isEditing && commentId) {
+                const result = await updateComment(postSlug, commentId, content, user.id, isAdmin);
+                if (result.error) throw new Error(result.error);
+                if (result.success && result.updatedComment) {
+                    onCommentAdded(result.updatedComment);
+                }
+            } else {
+                const result = await addComment(postSlug, content, user, parentId);
+                if (result.error) throw new Error(result.error);
+                if (result.comment) {
+                    onCommentAdded(result.comment);
+                    setContent('');
+                }
             }
         } catch (error) {
-            const errorMessage = (error instanceof Error) ? error.message : 'Failed to post comment.';
+            const errorMessage = (error instanceof Error) ? error.message : 'An error occurred.';
             toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
+            if (onCancel) onCancel();
         }
     };
     
      if (!user) return null;
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
             <div className="flex items-start gap-4">
-                <Avatar>
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                </Avatar>
+                {!isEditing && (
+                    <Avatar>
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    </Avatar>
+                )}
                 <Textarea
+                    ref={textareaRef}
                     placeholder={parentId ? "Write a reply..." : "Add your comment..."}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     rows={2}
+                    className={isEditing ? 'ml-14' : ''}
                 />
             </div>
-            <Button type="submit" className="self-end" disabled={isSubmitting}>
-                {isSubmitting ? 'Posting...' : buttonText}
-            </Button>
-        </form>
+            <div className="flex justify-end gap-2">
+                {onCancel && <Button variant="ghost" onClick={onCancel}>Cancel</Button>}
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? 'Saving...' : buttonText}
+                </Button>
+            </div>
+        </div>
     )
 }
 
@@ -102,21 +157,37 @@ const Comment = ({
     comment, 
     postSlug, 
     onReply,
+    onUpdate,
+    onDelete,
     likedComments,
     onLikeToggle
 }: { 
     comment: CommentType, 
     postSlug: string,
     onReply: (newReply: CommentType, parentId: string) => void,
+    onUpdate: (updatedComment: CommentType) => void,
+    onDelete: (commentId: string) => void,
     likedComments: { [key: string]: boolean },
-    onLikeToggle: (commentId: string) => void
+    onLikeToggle: (commentId: string, isLiked: boolean) => void
 }) => {
     const [showReplyForm, setShowReplyForm] = useState(false);
-    const isLiked = likedComments[comment.id] || false;
+    const [isEditing, setIsEditing] = useState(false);
+    const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const { user, isAdmin } = useAuth();
 
-    const handleLikeClick = () => {
-        onLikeToggle(comment.id);
-        toggleCommentLike(postSlug, comment.id);
+    const isLiked = likedComments[comment.id] || false;
+    const canModify = user && (user.id === comment.author.id || isAdmin);
+
+    const handleLikeClick = async () => {
+        onLikeToggle(comment.id, isLiked);
+        await toggleCommentLike(postSlug, comment.id, isLiked);
+    }
+    
+    const handleDelete = async () => {
+        if (!canModify) return;
+        setDeleteDialogOpen(false);
+        onDelete(comment.id);
+        await deleteComment(postSlug, comment.id, user!.id, isAdmin);
     }
 
     return (
@@ -126,25 +197,64 @@ const Comment = ({
               <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="flex items-baseline gap-2">
-                <p className="font-semibold">{comment.author.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(comment.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-              <p className="text-muted-foreground mt-1">{comment.content}</p>
-              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                  <button onClick={handleLikeClick} className={cn("flex items-center gap-1 hover:text-primary", { 'text-red-500': isLiked })}>
-                      <Heart className={cn("h-4 w-4", { 'fill-current': isLiked })} />
-                      <span>{comment.likes}</span>
-                  </button>
-                  <button onClick={() => setShowReplyForm(!showReplyForm)} className="flex items-center gap-1 hover:text-primary">
-                      <MessageSquare className="h-4 w-4" />
-                      <span>Reply</span>
-                  </button>
-              </div>
+              {!isEditing ? (
+                <>
+                <div className="flex items-baseline gap-2">
+                    <p className="font-semibold">{comment.author.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                    {new Date(comment.createdAt).toLocaleDateString()}
+                    </p>
+                </div>
+                <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{comment.content}</p>
+                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                    <button onClick={handleLikeClick} className={cn("flex items-center gap-1 hover:text-primary transition-colors", { 'text-red-500': isLiked })}>
+                        <Heart className={cn("h-4 w-4 transition-all transform", { 'fill-current scale-110': isLiked })} />
+                        <span>{comment.likes}</span>
+                    </button>
+                    <button onClick={() => setShowReplyForm(!showReplyForm)} className="flex items-center gap-1 hover:text-primary">
+                        <MessageSquare className="h-4 w-4" />
+                        <span>Reply</span>
+                    </button>
+                </div>
+                </>
+              ) : (
+                <CommentForm
+                    postSlug={postSlug}
+                    isEditing={true}
+                    commentId={comment.id}
+                    initialContent={comment.content}
+                    onCommentAdded={(updated) => {
+                        onUpdate(updated);
+                        setIsEditing(false);
+                    }}
+                    onCancel={() => setIsEditing(false)}
+                    buttonText="Save"
+                />
+              )}
 
-              {showReplyForm && (
+              {canModify && !isEditing && (
+                  <div className="absolute top-0 right-0">
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7">
+                                  <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => setIsEditing(true)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  <span>Edit</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setDeleteDialogOpen(true)} className="text-red-500">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <span>Delete</span>
+                              </DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                  </div>
+              )}
+
+              {showReplyForm && !isEditing && (
                   <div className="mt-4">
                       <CommentForm 
                           postSlug={postSlug}
@@ -154,6 +264,7 @@ const Comment = ({
                             onReply(newReply, comment.id);
                             setShowReplyForm(false);
                           }}
+                          onCancel={() => setShowReplyForm(false)}
                       />
                   </div>
               )}
@@ -165,19 +276,36 @@ const Comment = ({
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-4 space-y-6 border-l-2 pl-6">
                        {comment.replies.map(reply => (
+                           <div className="relative" key={reply.id}>
                            <Comment 
-                                key={reply.id} 
                                 comment={reply} 
                                 postSlug={postSlug}
                                 onReply={onReply}
+                                onUpdate={onUpdate}
+                                onDelete={onDelete}
                                 likedComments={likedComments}
                                 onLikeToggle={onLikeToggle}
                             />
+                            </div>
                        ))}
                     </CollapsibleContent>
                  </Collapsible>
               )}
             </div>
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your comment.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
           </div>
     )
 }
@@ -189,34 +317,69 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   const { user, signIn } = useAuth();
   
   useEffect(() => {
+    setComments(post?.comments || [])
+  }, [post?.comments])
+
+  useEffect(() => {
     const storedLikes = JSON.parse(localStorage.getItem(LIKED_COMMENTS_STORAGE_KEY) || '{}');
     setLikedComments(storedLikes[postSlug] || {});
   }, [postSlug]);
 
-  const handleLikeToggle = (commentId: string) => {
+  const updateCommentsState = (list: CommentType[], updatedComment: CommentType): CommentType[] => {
+      return list.map(c => {
+          if (c.id === updatedComment.id) {
+              return { ...c, ...updatedComment };
+          }
+          if (c.replies) {
+              return { ...c, replies: updateCommentsState(c.replies, updatedComment) };
+          }
+          return c;
+      });
+  }
+  
+  const deleteCommentFromState = (list: CommentType[], commentId: string): CommentType[] => {
+    return list.filter(c => {
+        if (c.id === commentId) {
+            return false;
+        }
+        if (c.replies) {
+            c.replies = deleteCommentFromState(c.replies, commentId);
+        }
+        return true;
+    });
+  }
+
+  const handleLikeToggle = (commentId: string, isLiked: boolean) => {
+    // Optimistically update UI
     setLikedComments(prev => {
-        const newLikedState = !prev[commentId];
-        const newLikes = { ...prev, [commentId]: newLikedState };
-        
+        const newLikes = { ...prev, [commentId]: !isLiked };
         const allStoredLikes = JSON.parse(localStorage.getItem(LIKED_COMMENTS_STORAGE_KEY) || '{}');
         allStoredLikes[postSlug] = newLikes;
         localStorage.setItem(LIKED_COMMENTS_STORAGE_KEY, JSON.stringify(allStoredLikes));
-
-        // Optimistically update the like count on the comment
-        const updateLikes = (list: CommentType[]): CommentType[] => {
-            return list.map(c => {
-                if (c.id === commentId) {
-                    return { ...c, likes: c.likes + (newLikedState ? 1 : -1) };
-                }
-                if (c.replies) {
-                    return { ...c, replies: updateLikes(c.replies) };
-                }
-                return c;
-            });
-        };
-        setComments(updateLikes);
-
         return newLikes;
+    });
+
+    setComments(prevComments => {
+        return prevComments.map(c => {
+            if (c.id === commentId) {
+                return { ...c, likes: c.likes + (isLiked ? -1 : 1) };
+            }
+             if (c.replies) {
+                const updateReplies = (replies: CommentType[]): CommentType[] => {
+                    return replies.map(reply => {
+                         if (reply.id === commentId) {
+                            return { ...reply, likes: reply.likes + (isLiked ? -1 : 1) };
+                        }
+                        if(reply.replies) {
+                            return {...reply, replies: updateReplies(reply.replies)}
+                        }
+                        return reply;
+                    })
+                }
+                return { ...c, replies: updateReplies(c.replies) };
+            }
+            return c;
+        });
     });
   }
 
@@ -228,7 +391,8 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
       const addReplyRecursively = (list: CommentType[]): CommentType[] => {
           return list.map(comment => {
               if (comment.id === parentId) {
-                  return { ...comment, replies: [newReply, ...comment.replies] };
+                  const newReplies = comment.replies ? [newReply, ...comment.replies] : [newReply];
+                  return { ...comment, replies: newReplies };
               }
               if (comment.replies && comment.replies.length > 0) {
                   return { ...comment, replies: addReplyRecursively(comment.replies) };
@@ -237,6 +401,14 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
           });
       };
       setComments(prev => addReplyRecursively(prev));
+  }
+
+  const handleUpdateComment = (updatedComment: CommentType) => {
+      setComments(prev => updateCommentsState(prev, updatedComment));
+  }
+  
+  const handleDeleteComment = (commentId: string) => {
+      setComments(prev => deleteCommentFromState(prev, commentId));
   }
   
   return (
@@ -255,14 +427,17 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
 
       <div className="mt-8 space-y-6">
         {comments.map((comment) => (
-          <Comment 
-            key={comment.id} 
-            comment={comment}
-            postSlug={postSlug}
-            onReply={addReplyToState}
-            likedComments={likedComments}
-            onLikeToggle={handleLikeToggle}
-          />
+          <div className="relative" key={comment.id}>
+            <Comment 
+                comment={comment}
+                postSlug={postSlug}
+                onReply={addReplyToState}
+                onUpdate={handleUpdateComment}
+                onDelete={handleDeleteComment}
+                likedComments={likedComments}
+                onLikeToggle={handleLikeToggle}
+            />
+           </div>
         ))}
       </div>
     </section>
