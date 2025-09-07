@@ -20,6 +20,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
+import CommentSection from '@/components/comment-section';
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
   const { toast } = useToast();
@@ -182,6 +183,10 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
             </Dialog>
           </div>
         </article>
+
+        <Separator className="my-12" />
+
+        <CommentSection postSlug={post.slug} />
 
         {relatedPosts.length > 0 && (
           <>

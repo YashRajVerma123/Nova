@@ -1,8 +1,16 @@
+
 export type Author = {
   id: string;
   name: string;
   avatar: string;
   email: string;
+};
+
+export type Comment = {
+  id: string;
+  content: string;
+  author: Author;
+  createdAt: string;
 };
 
 export type Post = {
@@ -16,6 +24,7 @@ export type Post = {
   tags: string[];
   readTime: number; 
   featured?: boolean;
+  comments?: Comment[];
 };
 
 export type Notification = {
@@ -51,6 +60,9 @@ export let posts: Post[] = [
     tags: ['AI', 'Technology', 'Future'],
     readTime: 10,
     featured: true,
+    comments: [
+      { id: '1', content: 'Great overview of the future of AI!', author: yashRaj, createdAt: '2024-07-28T12:00:00Z' },
+    ]
   },
   {
     slug: 'sustainable-living-guide',
@@ -68,6 +80,7 @@ export let posts: Post[] = [
     tags: ['Sustainability', 'Lifestyle', 'Environment'],
     readTime: 8,
     featured: true,
+    comments: [],
   },
   {
     slug: 'mastering-remote-work',
@@ -85,6 +98,7 @@ export let posts: Post[] = [
     tags: ['Remote Work', 'Productivity', 'Wellness'],
     readTime: 5,
     featured: false,
+    comments: [],
   },
   {
     slug: 'the-art-of-minimalism',
@@ -101,6 +115,7 @@ export let posts: Post[] = [
     tags: ['Minimalism', 'Lifestyle', 'Philosophy'],
     readTime: 7,
     featured: true,
+    comments: [],
   },
   {
     slug: 'exploring-the-deep-sea',
@@ -118,6 +133,7 @@ export let posts: Post[] = [
     tags: ['Ocean', 'Science', 'Exploration'],
     readTime: 9,
     featured: false,
+    comments: [],
   },
 ];
 
