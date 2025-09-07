@@ -31,6 +31,7 @@ const UserNav = () => {
   const [isSignInOpen, setSignInOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [newUsername, setNewUsername] = useState(user?.name || '');
+  const [newAvatarUrl, setNewAvatarUrl] = useState(user?.avatar || '');
   const { toast } = useToast();
 
 
@@ -53,10 +54,10 @@ const UserNav = () => {
     if (!user || !newUsername.trim()) return;
 
     try {
-      await updateUserProfile({ name: newUsername.trim() });
+      await updateUserProfile({ name: newUsername.trim(), avatar: newAvatarUrl.trim() });
       toast({
         title: 'Profile Updated',
-        description: 'Your name has been successfully updated.',
+        description: 'Your profile has been successfully updated.',
       });
       setProfileOpen(false);
     } catch (error) {
@@ -68,6 +69,14 @@ const UserNav = () => {
       });
     }
   };
+  
+   // Update local state if user object changes (e.g. after login)
+  useState(() => {
+    if (user) {
+      setNewUsername(user.name);
+      setNewAvatarUrl(user.avatar);
+    }
+  });
 
   if (loading) {
     return <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />;
@@ -151,15 +160,15 @@ const UserNav = () => {
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
             <DialogDescription>
-              Update your name. Profile picture is synced from your Google account.
+              Make changes to your profile here. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleProfileUpdate}>
             <div className="grid gap-4 py-4">
                <div className="flex justify-center">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    <AvatarImage src={newAvatarUrl} alt={newUsername} />
+                    <AvatarFallback>{getInitials(newUsername)}</AvatarFallback>
                   </Avatar>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -170,6 +179,17 @@ const UserNav = () => {
                   id="name"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="avatar" className="text-right">
+                  Avatar URL
+                </Label>
+                <Input
+                  id="avatar"
+                  value={newAvatarUrl}
+                  onChange={(e) => setNewAvatarUrl(e.target.value)}
                   className="col-span-3"
                 />
               </div>
