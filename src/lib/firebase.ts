@@ -5,13 +5,13 @@ import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  "projectId": "nova-blog-ipybx",
-  "appId": "1:1044205513293:web:9c83b54d417a893dde8a04",
-  "storageBucket": "nova-blog-ipybx.appspot.com",
-  "apiKey": "AIzaSyCk2nztaRVJ3Jsu0PZyUf3oGjY3uklCn6k",
-  "authDomain": "nova-blog-ipybx.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "1044205513293"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
