@@ -45,6 +45,10 @@ const getInitials = (name: string) => {
 
 const LIKED_COMMENTS_STORAGE_KEY = 'likedComments';
 
+const sortComments = (commentList: CommentType[]) => {
+    return [...commentList].sort((a,b) => (b.pinned ? 1 : -1) - (a.pinned ? 1 : -1) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
 // Sub-component for submitting a comment or reply
 const CommentForm = ({ 
     postSlug, 
@@ -182,15 +186,19 @@ const Comment = ({
     const canModify = user && (user.id === comment.author.id || isAdmin);
 
     const handleLikeClick = async () => {
-        onLikeToggle(comment.id, isLiked);
-        await toggleCommentLike(postSlug, comment.id, isLiked);
+        const result = await toggleCommentLike(postSlug, comment.id, isLiked);
+        if (result.success) {
+            onLikeToggle(comment.id, isLiked);
+        }
     }
     
     const handleDelete = async () => {
         if (!canModify || !user) return;
+        const result = await deleteComment(postSlug, comment.id, user.id, isAdmin);
         setDeleteDialogOpen(false);
-        onDelete(comment.id);
-        await deleteComment(postSlug, comment.id, user.id, isAdmin);
+        if(result.success) {
+            onDelete(comment.id);
+        }
     }
 
     const handleHighlight = async () => {
@@ -210,8 +218,9 @@ const Comment = ({
     }
 
     return (
-       <div className={cn("flex items-start gap-4 p-4 rounded-lg transition-colors duration-300", {
+       <div className={cn("flex items-start gap-4 p-4 rounded-lg transition-colors duration-300 relative", {
            "bg-primary/10 border-l-4 border-primary": comment.highlighted,
+           "border-amber-500/30": comment.highlighted,
        })}>
             <Avatar>
               <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
@@ -355,7 +364,9 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   
   useEffect(() => {
     const post = getPost(postSlug);
-    setComments(post?.comments || [])
+    if (post) {
+      setComments(post.comments || [])
+    }
   }, [postSlug])
 
   useEffect(() => {
@@ -378,7 +389,9 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   const updateCommentsState = (list: CommentType[], updatedComment: CommentType): CommentType[] => {
       return list.map(c => {
           if (c.id === updatedComment.id) {
-              return { ...updatedComment, replies: c.replies || [] };
+              // Ensure replies are carried over from the old state
+              const oldComment = list.find(oldC => oldC.id === updatedComment.id);
+              return { ...updatedComment, replies: oldComment?.replies || [] };
           }
           if (c.replies) {
               return { ...c, replies: updateCommentsState(c.replies, updatedComment) };
@@ -388,15 +401,16 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   }
   
   const deleteCommentFromState = (list: CommentType[], commentId: string): CommentType[] => {
-    return list.filter(c => {
+    return list.reduce((acc, c) => {
         if (c.id === commentId) {
-            return false;
+            return acc; // filter it out
         }
         if (c.replies) {
             c.replies = deleteCommentFromState(c.replies, commentId);
         }
-        return true;
-    });
+        acc.push(c);
+        return acc;
+    }, [] as CommentType[]);
   }
 
   const handleLikeToggle = (commentId: string, isLiked: boolean) => {
@@ -423,14 +437,14 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   }
 
   const addCommentToState = (newComment: CommentType) => {
-      setComments(prev => [newComment, ...prev].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setComments(prev => sortComments([newComment, ...prev]));
   }
   
   const addReplyToState = (newReply: CommentType, parentId: string) => {
       const addReplyRecursively = (list: CommentType[]): CommentType[] => {
           return list.map(comment => {
               if (comment.id === parentId) {
-                  const newReplies = comment.replies ? [newReply, ...comment.replies] : [newReply];
+                  const newReplies = comment.replies ? sortComments([newReply, ...comment.replies]) : [newReply];
                   return { ...comment, replies: newReplies };
               }
               if (comment.replies && comment.replies.length > 0) {
@@ -446,12 +460,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
       setComments(prev => updateCommentsState(prev, updatedComment));
   }
   
-  const sortComments = (commentList: CommentType[]) => {
-      return commentList.sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
   const handleAdminAction = (updatedComment: CommentType) => {
-    // This is for pin/highlight which might affect sorting
     setComments(prev => {
         const updatedList = updateCommentsState(prev, updatedComment);
         return sortComments(updatedList);

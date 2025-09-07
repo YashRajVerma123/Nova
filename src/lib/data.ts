@@ -1,3 +1,4 @@
+
 import { posts, comments } from './data-store';
 export type Author = {
   id: string;
@@ -15,6 +16,8 @@ export type Comment = {
   replies: Comment[];
   highlighted?: boolean;
   pinned?: boolean;
+  postSlug: string;
+  parentId: string | null;
 };
 
 export type Post = {
@@ -42,41 +45,62 @@ export type Notification = {
 
 
 const sortComments = (commentList: Comment[]) => {
-    return commentList.sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return commentList.sort((a,b) => (b.pinned ? 1 : -1) - (a.pinned ? 1 : -1) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
 export const getPosts = (): Post[] => {
-    return posts.map(post => ({
-        ...post,
-        comments: sortComments(comments.filter(c => c.postSlug === post.slug && !c.parentId))
-    }));
+    const allPosts = [...posts];
+    const allComments = [...comments];
+    return allPosts.map(post => {
+        const postComments = allComments.filter(c => c.postSlug === post.slug);
+        return {
+            ...post,
+            comments: buildCommentTree(postComments),
+        }
+    });
 };
 
 export const getPost = (slug: string): Post | undefined => {
-    const post = posts.find(p => p.slug === slug);
+    const allPosts = [...posts];
+    const allComments = [...comments];
+
+    const post = allPosts.find(p => p.slug === slug);
     if (!post) return undefined;
     
-    const buildCommentTree = (commentList: (Comment & { postSlug: string, parentId: string | null})[]): Comment[] => {
-        const commentMap = new Map(commentList.map(c => [c.id, {...c, replies: []}]));
-        const rootComments: Comment[] = [];
-
-        commentList.forEach(comment => {
-            if (comment.parentId && commentMap.has(comment.parentId)) {
-                const parent = commentMap.get(comment.parentId)!;
-                parent.replies.push(commentMap.get(comment.id)!);
-            } else {
-                rootComments.push(commentMap.get(comment.id)!);
-            }
-        });
-        return sortComments(rootComments);
-    }
-    
-    const postComments = comments.filter(c => c.postSlug === slug);
+    const postComments = allComments.filter(c => c.postSlug === slug);
 
     return {
         ...post,
         comments: buildCommentTree(postComments),
     }
+}
+
+const buildCommentTree = (commentList: Comment[]): Comment[] => {
+    const commentMap = new Map(commentList.map(c => [c.id, {...c, replies: []}]));
+    const rootComments: Comment[] = [];
+
+    commentList.forEach(comment => {
+        const currentComment = commentMap.get(comment.id)!;
+        if (comment.parentId && commentMap.has(comment.parentId)) {
+            const parent = commentMap.get(comment.parentId)!;
+            // Ensure replies array exists
+            if (!parent.replies) {
+                parent.replies = [];
+            }
+            parent.replies.push(currentComment);
+        } else {
+            rootComments.push(currentComment);
+        }
+    });
+
+    // Sort replies within each comment as well
+    commentMap.forEach(comment => {
+        if(comment.replies && comment.replies.length > 0) {
+            comment.replies = sortComments(comment.replies);
+        }
+    });
+
+    return sortComments(rootComments);
 }
 
 
