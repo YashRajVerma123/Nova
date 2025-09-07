@@ -1,5 +1,5 @@
 // This file now only contains the initial raw data for seeding the database.
-import { Post, Comment, Author } from './data';
+import { Post, Comment, Author, Notification } from './data';
 
 const yashRaj: Author = { id: 'yash-raj', name: 'Yash Raj', avatar: 'https://i.pravatar.cc/150?u=yash-raj', email: 'yashrajverma916@gmail.com'};
 const janeDoe: Author = { id: 'jane-doe', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?u=jane-doe', email: 'jane.doe@example.com'};
@@ -25,7 +25,7 @@ export const initialPostsData: PostSeedData[] = [
         readTime: 10,
         featured: true,
         comments: [
-            { content: 'Great overview of the future of AI!', author: yashRaj, createdAt: '2024-07-28T12:00:00Z', likes: 15, replies: [], parentId: null }
+            { content: 'Great overview of the future of AI!', author: yashRaj, createdAt: '2024-07-28T12:00:00Z', likes: 15, parentId: null }
         ],
     },
     {
@@ -99,4 +99,9 @@ export const initialPostsData: PostSeedData[] = [
         featured: false,
         comments: [],
     },
+];
+
+export const initialNotificationsData: Omit<Notification, 'id' | 'read'>[] = [
+    { title: 'New Feature: Post Summaries', description: 'We\'ve added AI-powered summaries to our posts!', createdAt: '2024-07-28T12:00:00Z' },
+    { title: 'Welcome to the new Nova!', description: 'Our new website is live. We hope you enjoy the new design and features.', createdAt: '2024-07-27T09:00:00Z' },
 ];

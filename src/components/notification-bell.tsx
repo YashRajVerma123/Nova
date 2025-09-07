@@ -5,7 +5,7 @@ import { Bell } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { notifications as initialNotifications, Notification } from '@/lib/data';
+import { Notification, getNotifications } from '@/lib/data';
 import { Separator } from './ui/separator';
 
 const NOTIFICATION_READ_STATE_KEY = 'read_notifications';
@@ -13,21 +13,35 @@ const NOTIFICATION_READ_STATE_KEY = 'read_notifications';
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAndSetNotifications = async () => {
+    setLoading(true);
+    try {
+      const currentNotifications = await getNotifications();
+      const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
+      
+      const updatedNotifications = currentNotifications.map(n => ({
+        ...n,
+        read: readIds.includes(n.id),
+      })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      setNotifications(updatedNotifications);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAndSetNotifications();
+  }, []);
 
   // This effect runs when the popover is opened, ensuring we always have the freshest data.
   useEffect(() => {
     if (isOpen) {
-      // Get the latest list of notifications from our "data store"
-      const currentNotifications = initialNotifications;
-      const readIds = JSON.parse(localStorage.getItem(NOTIFICATION_READ_STATE_KEY) || '[]');
-      
-      // Update the read status based on localStorage and sort by most recent
-      const updatedNotifications = currentNotifications.map(n => ({
-        ...n,
-        read: readIds.includes(n.id),
-      })).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
-      setNotifications(updatedNotifications);
+      fetchAndSetNotifications();
     }
   }, [isOpen]); 
 
@@ -76,7 +90,9 @@ const NotificationBell = () => {
         </div>
         <Separator />
         <div className="p-2 max-h-80 overflow-y-auto">
-          {notifications.length > 0 ? (
+          {loading ? (
+             <div className="text-center p-4 text-sm text-muted-foreground">Loading...</div>
+          ) : notifications.length > 0 ? (
             notifications.map((notification) => (
               <div key={notification.id} className={`mb-1 p-2 rounded-lg cursor-pointer hover:bg-secondary/50`} onClick={() => markOneAsRead(notification.id)}>
                 <div className="grid grid-cols-[25px_1fr] items-start">

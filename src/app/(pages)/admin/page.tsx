@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Edit, PlusCircle, Trash, Users } from "lucide-react";
+import { BarChart, Edit, PlusCircle, Trash, Users, BellRing } from "lucide-react";
 import { Post, getPosts } from "@/lib/data";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,6 +22,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deletePost } from "@/app/actions/post-actions";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { addNotificationAction } from "@/app/actions/notification-actions";
+
+
+const notificationSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters.'),
+  description: z.string().min(10, 'Description must be at least 10 characters.'),
+  image: z.string().url().optional().or(z.literal('')),
+});
+
 
 const AdminPage = () => {
     const { user, isAdmin, loading } = useAuth();
@@ -30,6 +45,15 @@ const AdminPage = () => {
     const [allPosts, setAllPosts] = useState<Post[]>([]);
     const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+
+    const notificationForm = useForm<z.infer<typeof notificationSchema>>({
+      resolver: zodResolver(notificationSchema),
+      defaultValues: {
+        title: '',
+        description: '',
+        image: '',
+      },
+    });
 
     useEffect(() => {
         if (!loading && !isAdmin) {
@@ -67,6 +91,16 @@ const AdminPage = () => {
         setDeleteDialogOpen(false);
         setPostToDelete(null);
     };
+
+    const onNotificationSubmit = async (values: z.infer<typeof notificationSchema>) => {
+      try {
+        await addNotificationAction(values);
+        toast({ title: "Notification Sent!", description: "Your notification has been published to all users." });
+        notificationForm.reset();
+      } catch (error) {
+        toast({ title: "Error", description: "Failed to send notification.", variant: "destructive" });
+      }
+    }
 
     return (
         <div className="container mx-auto px-4 py-16">
@@ -112,46 +146,111 @@ const AdminPage = () => {
                     </Card>
                 </Link>
             </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                <div className="lg:col-span-2">
+                    <Card className="glass-card">
+                        <CardHeader>
+                            <CardTitle>Manage Posts</CardTitle>
+                            <CardDescription>Here you can edit or delete existing posts.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50%]">Title</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {allPosts.map(post => (
+                                        <TableRow key={post.id}>
+                                            <TableCell className="font-medium">{post.title}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={post.featured ? "default" : "secondary"}>
+                                                    {post.featured ? "Featured" : "Standard"}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>{new Date(post.publishedAt).toLocaleDateString()}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button asChild variant="ghost" size="icon">
+                                                    <Link href={`/admin/edit-post/${post.slug}`}><Edit className="h-4 w-4" /></Link>
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(post)}>
+                                                    <Trash className="h-4 w-4 text-red-500" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </div>
 
-            <Card className="glass-card max-w-7xl mx-auto">
-                <CardHeader>
-                    <CardTitle>Manage Posts</CardTitle>
-                    <CardDescription>Here you can edit or delete existing posts.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[50%]">Title</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {allPosts.map(post => (
-                                <TableRow key={post.id}>
-                                    <TableCell className="font-medium">{post.title}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={post.featured ? "default" : "secondary"}>
-                                            {post.featured ? "Featured" : "Standard"}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>{new Date(post.publishedAt).toLocaleDateString()}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button asChild variant="ghost" size="icon">
-                                            <Link href={`/admin/edit-post/${post.slug}`}><Edit className="h-4 w-4" /></Link>
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(post)}>
-                                            <Trash className="h-4 w-4 text-red-500" />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                <div>
+                    <Card className="glass-card">
+                        <CardHeader>
+                           <div className="flex items-center gap-2">
+                            <BellRing className="h-5 w-5 text-primary" />
+                            <CardTitle>Send Notification</CardTitle>
+                           </div>
+                            <CardDescription>Publish an announcement to all users.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <Form {...notificationForm}>
+                            <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-4">
+                              <FormField
+                                control={notificationForm.control}
+                                name="title"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Title</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="New Feature Alert!" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={notificationForm.control}
+                                name="description"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Description</FormLabel>
+                                    <FormControl>
+                                      <Textarea placeholder="Check out our new comment system!" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={notificationForm.control}
+                                name="image"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Image URL (Optional)</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="https://example.com/image.png" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button type="submit" className="w-full" disabled={notificationForm.formState.isSubmitting}>
+                                {notificationForm.formState.isSubmitting ? 'Sending...' : 'Send Notification'}
+                              </Button>
+                            </form>
+                          </Form>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
 
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
