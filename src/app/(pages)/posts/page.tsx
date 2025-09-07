@@ -1,6 +1,7 @@
+
 'use client'
 import { useSearchParams } from 'next/navigation';
-import { posts } from '@/lib/data';
+import { getPosts } from '@/lib/data';
 import BlogPostCard from '@/components/blog-post-card';
 import { useMemo } from 'react';
 
@@ -9,7 +10,8 @@ const PostsPage = () => {
   const searchQuery = searchParams.get('q');
 
   const filteredPosts = useMemo(() => {
-    let sortedPosts = [...posts].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    let allPosts = getPosts();
+    let sortedPosts = [...allPosts].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
     if (!searchQuery) {
       return sortedPosts;
     }

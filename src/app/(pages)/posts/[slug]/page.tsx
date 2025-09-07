@@ -2,7 +2,7 @@
 'use client';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { posts as initialPosts, Post } from '@/lib/data';
+import { Post, getPost, getPosts } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Heart, Share2, Copy } from 'lucide-react';
@@ -22,11 +22,12 @@ import {
 import { Input } from '@/components/ui/input';
 import CommentSection from '@/components/comment-section';
 
-const PostPage = ({ params: { slug } }: { params: { slug: string } }) => {
+const PostPage = ({ params }: { params: { slug: string } }) => {
   const { toast } = useToast();
   const router = useRouter();
+  const slug = params.slug;
   
-  const post = useMemo(() => initialPosts.find(p => p.slug === slug), [slug]);
+  const post = useMemo(() => getPost(slug), [slug]);
   
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 25) + 5);
@@ -67,7 +68,8 @@ const PostPage = ({ params: { slug } }: { params: { slug: string } }) => {
       return notFound();
   }
 
-  const relatedPosts = initialPosts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
+  const allPosts = getPosts();
+  const relatedPosts = allPosts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -185,7 +187,7 @@ const PostPage = ({ params: { slug } }: { params: { slug: string } }) => {
 
         <Separator className="my-12" />
 
-        <CommentSection postSlug={post.slug} />
+        <CommentSection postSlug={slug} />
 
         {relatedPosts.length > 0 && (
           <>

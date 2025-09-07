@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Edit, PlusCircle, Trash, Users } from "lucide-react";
-import { Post, posts } from "@/lib/data";
+import { Post, getPosts } from "@/lib/data";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +27,7 @@ const AdminPage = () => {
     const { user, isAdmin, loading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
-    const [allPosts, setAllPosts] = useState<Post[]>(posts);
+    const [allPosts, setAllPosts] = useState<Post[]>([]);
     const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
 
@@ -35,6 +35,7 @@ const AdminPage = () => {
         if (!loading && !isAdmin) {
             router.push('/');
         }
+        const posts = getPosts();
         setAllPosts(posts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
     }, [user, isAdmin, loading, router]);
     

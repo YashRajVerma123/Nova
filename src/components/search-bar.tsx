@@ -1,10 +1,11 @@
+
 'use client';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { File, Search } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
-import { Post, posts } from '@/lib/data';
+import { Post, getPosts } from '@/lib/data';
 import Link from 'next/link';
 
 const SearchBar = () => {
@@ -20,6 +21,7 @@ const SearchBar = () => {
       setResults([]);
       return;
     }
+    const posts = getPosts();
     const filteredPosts = posts.filter(
       (post) =>
         post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

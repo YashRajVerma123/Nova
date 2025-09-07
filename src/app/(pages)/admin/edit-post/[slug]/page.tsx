@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { useRouter, notFound } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect } from 'react';
-import { Post, posts } from '@/lib/data';
+import { Post, getPost } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { updatePost } from '@/app/actions/post-actions';
 
@@ -33,7 +33,7 @@ export default function EditPostPage({ params }: { params: { slug: string } }) {
   const router = useRouter();
   const { isAdmin, loading: authLoading } = useAuth();
   
-  const post = posts.find(p => p.slug === params.slug);
+  const post = getPost(params.slug);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

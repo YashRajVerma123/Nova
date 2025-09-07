@@ -4,12 +4,12 @@
 import { useState, useEffect, useMemo, useRef, KeyboardEvent } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { addComment, toggleCommentLike, updateComment, deleteComment } from '@/app/actions/comment-actions';
-import { posts, Comment as CommentType, Author } from '@/lib/data';
+import { addComment, toggleCommentLike, updateComment, deleteComment, toggleCommentHighlight, toggleCommentPin } from '@/app/actions/comment-actions';
+import { Comment as CommentType, Author, getPost } from '@/lib/data';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Heart, MessageSquare, MoreHorizontal, Trash2, Edit } from 'lucide-react';
+import { Heart, MessageSquare, MoreHorizontal, Trash2, Edit, Pin, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Collapsible,
@@ -32,6 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from './ui/badge';
 
 interface CommentSectionProps {
   postSlug: string;
@@ -159,6 +160,7 @@ const Comment = ({
     onReply,
     onUpdate,
     onDelete,
+    onAdminAction,
     likedComments,
     onLikeToggle
 }: { 
@@ -167,6 +169,7 @@ const Comment = ({
     onReply: (newReply: CommentType, parentId: string) => void,
     onUpdate: (updatedComment: CommentType) => void,
     onDelete: (commentId: string) => void,
+    onAdminAction: (updatedComment: CommentType) => void,
     likedComments: { [key: string]: boolean },
     onLikeToggle: (commentId: string, isLiked: boolean) => void
 }) => {
@@ -184,14 +187,33 @@ const Comment = ({
     }
     
     const handleDelete = async () => {
-        if (!canModify) return;
+        if (!canModify || !user) return;
         setDeleteDialogOpen(false);
         onDelete(comment.id);
-        await deleteComment(postSlug, comment.id, user!.id, isAdmin);
+        await deleteComment(postSlug, comment.id, user.id, isAdmin);
+    }
+
+    const handleHighlight = async () => {
+        if (!isAdmin) return;
+        const result = await toggleCommentHighlight(postSlug, comment.id, isAdmin);
+        if (result.success && result.updatedComment) {
+            onAdminAction(result.updatedComment);
+        }
+    }
+
+    const handlePin = async () => {
+         if (!isAdmin) return;
+        const result = await toggleCommentPin(postSlug, comment.id, isAdmin);
+        if (result.success && result.updatedComment) {
+            onAdminAction(result.updatedComment);
+        }
     }
 
     return (
-       <div className="flex items-start gap-4">
+       <div className={cn("flex items-start gap-4 p-4 rounded-lg", {
+           "bg-primary/10 border-l-4 border-primary": comment.highlighted,
+           "border-b border-dashed border-muted-foreground": comment.pinned,
+       })}>
             <Avatar>
               <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
               <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
@@ -199,11 +221,14 @@ const Comment = ({
             <div className="flex-1">
               {!isEditing ? (
                 <>
-                <div className="flex items-baseline gap-2">
-                    <p className="font-semibold">{comment.author.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                    {new Date(comment.createdAt).toLocaleDateString()}
-                    </p>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-baseline gap-2">
+                        <p className="font-semibold">{comment.author.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                        {new Date(comment.createdAt).toLocaleDateString()}
+                        </p>
+                    </div>
+                    {comment.pinned && <Badge variant="secondary"><Pin className="h-3 w-3 mr-1" /> Pinned</Badge>}
                 </div>
                 <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{comment.content}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
@@ -233,7 +258,7 @@ const Comment = ({
               )}
 
               {canModify && !isEditing && (
-                  <div className="absolute top-0 right-0">
+                  <div className="absolute top-2 right-2">
                       <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -245,6 +270,18 @@ const Comment = ({
                                   <Edit className="mr-2 h-4 w-4" />
                                   <span>Edit</span>
                               </DropdownMenuItem>
+                                {isAdmin && (
+                                    <>
+                                        <DropdownMenuItem onSelect={handleHighlight}>
+                                            <Star className="mr-2 h-4 w-4" />
+                                            <span>{comment.highlighted ? "Unhighlight" : "Highlight"}</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={handlePin}>
+                                            <Pin className="mr-2 h-4 w-4" />
+                                            <span>{comment.pinned ? "Unpin" : "Pin"}</span>
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
                               <DropdownMenuItem onSelect={() => setDeleteDialogOpen(true)} className="text-red-500">
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   <span>Delete</span>
@@ -283,6 +320,7 @@ const Comment = ({
                                 onReply={onReply}
                                 onUpdate={onUpdate}
                                 onDelete={onDelete}
+                                onAdminAction={onAdminAction}
                                 likedComments={likedComments}
                                 onLikeToggle={onLikeToggle}
                             />
@@ -311,24 +349,37 @@ const Comment = ({
 }
 
 export default function CommentSection({ postSlug }: CommentSectionProps) {
-  const post = useMemo(() => posts.find(p => p.slug === postSlug), [postSlug]);
-  const [comments, setComments] = useState<CommentType[]>(post?.comments || []);
+  const [comments, setComments] = useState<CommentType[]>([]);
   const [likedComments, setLikedComments] = useState<{ [key: string]: boolean }>({});
   const { user, signIn } = useAuth();
   
   useEffect(() => {
+    const post = getPost(postSlug);
     setComments(post?.comments || [])
-  }, [post?.comments])
+  }, [postSlug])
 
   useEffect(() => {
     const storedLikes = JSON.parse(localStorage.getItem(LIKED_COMMENTS_STORAGE_KEY) || '{}');
     setLikedComments(storedLikes[postSlug] || {});
   }, [postSlug]);
+  
+  const commentCount = useMemo(() => {
+    let count = 0;
+    const countReplies = (list: CommentType[]) => {
+        list.forEach(c => {
+            count++;
+            if (c.replies) countReplies(c.replies);
+        })
+    }
+    countReplies(comments);
+    return count;
+  }, [comments])
 
   const updateCommentsState = (list: CommentType[], updatedComment: CommentType): CommentType[] => {
       return list.map(c => {
           if (c.id === updatedComment.id) {
-              return { ...c, ...updatedComment };
+              // Preserve existing replies when updating
+              return { ...c, ...updatedComment, replies: c.replies };
           }
           if (c.replies) {
               return { ...c, replies: updateCommentsState(c.replies, updatedComment) };
@@ -350,7 +401,6 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   }
 
   const handleLikeToggle = (commentId: string, isLiked: boolean) => {
-    // Optimistically update UI
     setLikedComments(prev => {
         const newLikes = { ...prev, [commentId]: !isLiked };
         const allStoredLikes = JSON.parse(localStorage.getItem(LIKED_COMMENTS_STORAGE_KEY) || '{}');
@@ -359,32 +409,22 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
         return newLikes;
     });
 
-    setComments(prevComments => {
-        return prevComments.map(c => {
-            if (c.id === commentId) {
-                return { ...c, likes: c.likes + (isLiked ? -1 : 1) };
-            }
-             if (c.replies) {
-                const updateReplies = (replies: CommentType[]): CommentType[] => {
-                    return replies.map(reply => {
-                         if (reply.id === commentId) {
-                            return { ...reply, likes: reply.likes + (isLiked ? -1 : 1) };
-                        }
-                        if(reply.replies) {
-                            return {...reply, replies: updateReplies(reply.replies)}
-                        }
-                        return reply;
-                    })
-                }
-                return { ...c, replies: updateReplies(c.replies) };
-            }
-            return c;
-        });
-    });
+    const updateLikesRecursively = (list: CommentType[]): CommentType[] => {
+      return list.map(c => {
+        if (c.id === commentId) {
+          return { ...c, likes: c.likes + (isLiked ? -1 : 1) };
+        }
+        if (c.replies) {
+          return { ...c, replies: updateLikesRecursively(c.replies) };
+        }
+        return c;
+      });
+    };
+    setComments(prevComments => updateLikesRecursively(prevComments));
   }
 
   const addCommentToState = (newComment: CommentType) => {
-      setComments(prev => [newComment, ...prev]);
+      setComments(prev => [newComment, ...prev].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   }
   
   const addReplyToState = (newReply: CommentType, parentId: string) => {
@@ -406,6 +446,12 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   const handleUpdateComment = (updatedComment: CommentType) => {
       setComments(prev => updateCommentsState(prev, updatedComment));
   }
+
+  const handleAdminAction = (updatedComment: CommentType) => {
+    // This is for pin/highlight which might affect sorting
+    const post = getPost(postSlug);
+    setComments(post?.comments || []);
+  }
   
   const handleDeleteComment = (commentId: string) => {
       setComments(prev => deleteCommentFromState(prev, commentId));
@@ -413,7 +459,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   
   return (
     <section>
-      <h2 className="text-3xl font-headline font-bold mb-8">Comments ({comments.length})</h2>
+      <h2 className="text-3xl font-headline font-bold mb-8">Comments ({commentCount})</h2>
       <div className="glass-card p-6">
         {user ? (
           <CommentForm postSlug={postSlug} onCommentAdded={addCommentToState} />
@@ -434,6 +480,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                 onReply={addReplyToState}
                 onUpdate={handleUpdateComment}
                 onDelete={handleDeleteComment}
+                onAdminAction={handleAdminAction}
                 likedComments={likedComments}
                 onLikeToggle={handleLikeToggle}
             />

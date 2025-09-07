@@ -1,7 +1,9 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { Post, addPost as addNewPostToMemory, Author, posts } from '@/lib/data';
+import { Post, Author } from '@/lib/data';
+import { posts } from '@/lib/data-store';
 import { z } from 'zod';
 
 
@@ -57,9 +59,10 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
         author,
         publishedAt: new Date().toISOString(),
         readTime,
+        comments: [],
     };
     
-    addNewPostToMemory(newPost);
+    posts.unshift(newPost);
 
     revalidatePath('/');
     revalidatePath('/posts');
@@ -100,7 +103,7 @@ export async function updatePost(slug: string, values: z.infer<typeof formSchema
   revalidatePath(`/posts/${newSlug}`);
   revalidatePath('/admin');
 
-  return newPost.slug;
+  return newSlug;
 }
 
 

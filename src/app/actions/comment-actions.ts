@@ -2,24 +2,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { Author, Comment, posts } from '@/lib/data';
-
-// Helper function to find a comment/reply in the nested structure
-const findComment = (comments: Comment[], commentId: string): { comment: Comment | null, parent: Comment[] | null, index: number } => {
-    for (let i = 0; i < comments.length; i++) {
-        const comment = comments[i];
-        if (comment.id === commentId) {
-            return { comment, parent: comments, index: i };
-        }
-        if (comment.replies && comment.replies.length > 0) {
-            const foundInReply = findComment(comment.replies, commentId);
-            if (foundInReply.comment) {
-                return foundInReply;
-            }
-        }
-    }
-    return { comment: null, parent: null, index: -1 };
-};
+import { Author, Comment } from '@/lib/data';
+import { comments } from '@/lib/data-store';
 
 export async function addComment(
     postSlug: string, 
@@ -31,57 +15,30 @@ export async function addComment(
         return { error: 'You must be logged in to comment.' };
     }
     
-    const post = posts.find(p => p.slug === postSlug);
-    if (!post) {
-        return { error: 'Post not found.' };
-    }
-
-    const newComment: Comment = {
+    const newComment = {
         id: new Date().toISOString() + Math.random(),
         content,
         author,
         createdAt: new Date().toISOString(),
         likes: 0,
         replies: [],
+        postSlug,
+        parentId,
     };
     
-    if (parentId) {
-        // This is a reply
-        const { comment: parentComment } = findComment(post.comments || [], parentId);
-        if (parentComment) {
-            if (!parentComment.replies) parentComment.replies = [];
-            parentComment.replies.unshift(newComment);
-        } else {
-            return { error: 'Parent comment not found.' };
-        }
-    } else {
-        // This is a top-level comment
-        if (!post.comments) {
-            post.comments = [];
-        }
-        post.comments.unshift(newComment);
-    }
-
-
+    comments.push(newComment);
     revalidatePath(`/posts/${postSlug}`);
-
-    return { comment: newComment };
+    return { comment: newComment as Comment };
 }
 
 
 export async function toggleCommentLike(postSlug: string, commentId: string, isLiked: boolean) {
-    const post = posts.find(p => p.slug === postSlug);
-    if (!post || !post.comments) {
-        return { error: 'Post not found.' };
-    }
-
-    const { comment } = findComment(post.comments, commentId);
+    const comment = comments.find(c => c.id === commentId);
 
     if (!comment) {
         return { error: 'Comment not found.' };
     }
     
-    // If the client says it was liked, we unlike, and vice-versa.
     if (isLiked) {
         comment.likes = (comment.likes || 1) - 1;
     } else {
@@ -94,12 +51,7 @@ export async function toggleCommentLike(postSlug: string, commentId: string, isL
 }
 
 export async function updateComment(postSlug: string, commentId: string, newContent: string, authorId: string, isAdmin: boolean) {
-     const post = posts.find(p => p.slug === postSlug);
-    if (!post || !post.comments) {
-        return { error: 'Post not found.' };
-    }
-
-    const { comment } = findComment(post.comments, commentId);
+    const comment = comments.find(c => c.id === commentId);
     
     if (!comment) {
         return { error: 'Comment not found.' };
@@ -111,27 +63,60 @@ export async function updateComment(postSlug: string, commentId: string, newCont
 
     comment.content = newContent;
     revalidatePath(`/posts/${postSlug}`);
-    return { success: true, updatedComment: comment };
+    return { success: true, updatedComment: comment as Comment };
 }
 
 export async function deleteComment(postSlug: string, commentId: string, authorId: string, isAdmin: boolean) {
-    const post = posts.find(p => p.slug === postSlug);
-    if (!post || !post.comments) {
-        return { error: 'Post not found.' };
-    }
+    const commentIndex = comments.findIndex(c => c.id === commentId);
     
-    const { comment, parent, index } = findComment(post.comments, commentId);
-    
-    if (!comment || !parent || index === -1) {
+    if (commentIndex === -1) {
         return { error: 'Comment not found.' };
     }
 
+    const comment = comments[commentIndex];
     if (comment.author.id !== authorId && !isAdmin) {
         return { error: 'You are not authorized to delete this comment.' };
     }
 
-    parent.splice(index, 1);
+    // Also delete all replies
+    const repliesToDelete = comments.filter(c => c.parentId === commentId);
+    const idsToDelete = [commentId, ...repliesToDelete.map(r => r.id)];
+
+    for (let i = comments.length - 1; i >= 0; i--) {
+        if (idsToDelete.includes(comments[i].id)) {
+            comments.splice(i, 1);
+        }
+    }
     
     revalidatePath(`/posts/${postSlug}`);
     return { success: true };
+}
+
+
+export async function toggleCommentHighlight(postSlug: string, commentId: string, isAdmin: boolean) {
+    if (!isAdmin) {
+        return { error: "You are not authorized to perform this action." };
+    }
+    const comment = comments.find(c => c.id === commentId);
+    if (!comment) {
+        return { error: 'Comment not found.' };
+    }
+
+    comment.highlighted = !comment.highlighted;
+    revalidatePath(`/posts/${postSlug}`);
+    return { success: true, updatedComment: comment as Comment };
+}
+
+export async function toggleCommentPin(postSlug: string, commentId: string, isAdmin: boolean) {
+     if (!isAdmin) {
+        return { error: "You are not authorized to perform this action." };
+    }
+    const comment = comments.find(c => c.id === commentId);
+    if (!comment) {
+        return { error: 'Comment not found.' };
+    }
+    
+    comment.pinned = !comment.pinned;
+    revalidatePath(`/posts/${postSlug}`);
+    return { success: true, updatedComment: comment as Comment };
 }

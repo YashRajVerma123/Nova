@@ -1,8 +1,9 @@
+
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { posts } from '@/lib/data';
+import { getPosts } from '@/lib/data';
 import BlogPostCard from '@/components/blog-post-card';
 import {
   Carousel,
@@ -14,6 +15,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 
 export default function HomePage() {
+  const posts = getPosts();
   const featuredPosts = posts.filter(p => p.featured);
   const recentPosts = posts
     .filter(p => !p.featured)
