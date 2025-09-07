@@ -1,5 +1,10 @@
 
-import { posts } from './data-store';
+'use client';
+
+// In a real app, this would be a call to a database.
+// We are using an in-memory store for demonstration purposes.
+import { posts as initialPosts } from '@/lib/data-store';
+
 export type Author = {
   id: string;
   name: string;
@@ -44,11 +49,14 @@ export type Notification = {
 
 
 const sortComments = (commentList: Comment[]) => {
-    return [...commentList].sort((a,b) => (b.pinned ? 1 : -1) - (a.pinned ? 1 : -1) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // True comes before false. Pinned items will be at the top.
+    // For items with the same pinned status, sort by date.
+    return [...commentList].sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
 export const getPosts = (): Post[] => {
     // Sort comments within each post before returning
+    const posts = initialPosts;
     return posts.map(p => ({
         ...p,
         comments: sortComments(p.comments),
@@ -56,7 +64,7 @@ export const getPosts = (): Post[] => {
 };
 
 export const getPost = (slug: string): Post | undefined => {
-    const post = posts.find(p => p.slug === slug);
+    const post = initialPosts.find(p => p.slug === slug);
     if (!post) return undefined;
     
     // Recursively sort all replies as well
@@ -81,7 +89,7 @@ export let notifications: Notification[] = [
 // In-memory data modification functions.
 // In a real app, these would be API calls to a database.
 export function addPost(post: Post) {
-  posts.unshift(post);
+  initialPosts.unshift(post);
 }
 
 export function addNotification(notification: Notification) {

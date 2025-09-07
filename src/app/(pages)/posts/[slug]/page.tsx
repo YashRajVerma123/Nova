@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import CommentSection from '@/components/comment-section';
+import { posts as initialPosts } from '@/lib/data-store';
 
 const PostPage = ({ params }: { params: { slug: string } }) => {
   const { toast } = useToast();
