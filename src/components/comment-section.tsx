@@ -210,9 +210,8 @@ const Comment = ({
     }
 
     return (
-       <div className={cn("flex items-start gap-4 p-4 rounded-lg", {
+       <div className={cn("flex items-start gap-4 p-4 rounded-lg transition-colors duration-300", {
            "bg-primary/10 border-l-4 border-primary": comment.highlighted,
-           "border-b border-dashed border-muted-foreground": comment.pinned,
        })}>
             <Avatar>
               <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
@@ -229,6 +228,7 @@ const Comment = ({
                         </p>
                     </div>
                     {comment.pinned && <Badge variant="secondary"><Pin className="h-3 w-3 mr-1" /> Pinned</Badge>}
+                    {comment.highlighted && <Badge variant="default" className="bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30"><Star className="h-3 w-3 mr-1" /> Highlighted</Badge>}
                 </div>
                 <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{comment.content}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
@@ -378,8 +378,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   const updateCommentsState = (list: CommentType[], updatedComment: CommentType): CommentType[] => {
       return list.map(c => {
           if (c.id === updatedComment.id) {
-              // Preserve existing replies when updating
-              return { ...c, ...updatedComment, replies: c.replies };
+              return { ...updatedComment, replies: c.replies || [] };
           }
           if (c.replies) {
               return { ...c, replies: updateCommentsState(c.replies, updatedComment) };
@@ -446,11 +445,17 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   const handleUpdateComment = (updatedComment: CommentType) => {
       setComments(prev => updateCommentsState(prev, updatedComment));
   }
+  
+  const sortComments = (commentList: CommentType[]) => {
+      return commentList.sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
 
   const handleAdminAction = (updatedComment: CommentType) => {
     // This is for pin/highlight which might affect sorting
-    const post = getPost(postSlug);
-    setComments(post?.comments || []);
+    setComments(prev => {
+        const updatedList = updateCommentsState(prev, updatedComment);
+        return sortComments(updatedList);
+    });
   }
   
   const handleDeleteComment = (commentId: string) => {

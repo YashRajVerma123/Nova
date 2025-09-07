@@ -41,10 +41,14 @@ export type Notification = {
 };
 
 
+const sortComments = (commentList: Comment[]) => {
+    return commentList.sort((a,b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
 export const getPosts = (): Post[] => {
     return posts.map(post => ({
         ...post,
-        comments: comments.filter(c => c.postSlug === post.slug && !c.parentId).sort((a,b) => (b.pinned ? 1 : -1) - (a.pinned ? 1 : -1) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        comments: sortComments(comments.filter(c => c.postSlug === post.slug && !c.parentId))
     }));
 };
 
@@ -64,7 +68,7 @@ export const getPost = (slug: string): Post | undefined => {
                 rootComments.push(commentMap.get(comment.id)!);
             }
         });
-        return rootComments.sort((a,b) => (b.pinned ? 1 : -1) - (a.pinned ? 1 : -1) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return sortComments(rootComments);
     }
     
     const postComments = comments.filter(c => c.postSlug === slug);
