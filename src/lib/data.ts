@@ -45,7 +45,7 @@ export type Notification = {
 
 
 const sortComments = (commentList: Comment[]) => {
-    return commentList.sort((a,b) => (b.pinned ? 1 : -1) - (a.pinned ? 1 : -1) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return [...commentList].sort((a,b) => (b.pinned ? 1 : -1) - (a.pinned ? 1 : -1) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
 export const getPosts = (): Post[] => {
