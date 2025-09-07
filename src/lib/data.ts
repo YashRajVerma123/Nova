@@ -5,17 +5,6 @@ export type Author = {
   email: string;
 };
 
-export type Comment = {
-  id: string;
-  author: Author;
-  content: string;
-  createdAt: string;
-  likes: string[]; // Array of user IDs who liked the comment
-  replies: Comment[];
-  isPinned?: boolean;
-  isHearted?: boolean;
-};
-
 export type Post = {
   slug: string;
   title: string;
@@ -27,7 +16,6 @@ export type Post = {
   tags: string[];
   readTime: number; 
   featured?: boolean;
-  comments: Comment[];
 };
 
 export type Notification = {
@@ -63,35 +51,6 @@ export let posts: Post[] = [
     tags: ['AI', 'Technology', 'Future'],
     readTime: 10,
     featured: true,
-    comments: [
-      {
-        id: 'c1',
-        author: yashRaj,
-        content: 'Fantastic article, Jane! The ethical considerations are indeed the most challenging part of the AI revolution.',
-        createdAt: '2024-07-29T11:00:00Z',
-        likes: ['user1', 'user2', 'user3'],
-        replies: [
-          {
-            id: 'c1r1',
-            author: janeDoe,
-            content: 'Thanks, Yash! Glad you found it insightful. It\'s a conversation we all need to be a part of.',
-            createdAt: '2024-07-29T12:30:00Z',
-            likes: ['user4'],
-            replies: [],
-          }
-        ],
-        isPinned: true,
-      },
-      {
-        id: 'c2',
-        author: johnSmith,
-        content: 'I\'m particularly interested in how AI will impact creative fields. Do you think it will augment human creativity or replace it?',
-        createdAt: '2024-07-30T15:00:00Z',
-        likes: ['user5'],
-        replies: [],
-        isHearted: true,
-      }
-    ]
   },
   {
     slug: 'sustainable-living-guide',
@@ -109,7 +68,6 @@ export let posts: Post[] = [
     tags: ['Sustainability', 'Lifestyle', 'Environment'],
     readTime: 8,
     featured: true,
-    comments: [],
   },
   {
     slug: 'mastering-remote-work',
@@ -127,7 +85,6 @@ export let posts: Post[] = [
     tags: ['Remote Work', 'Productivity', 'Wellness'],
     readTime: 5,
     featured: false,
-    comments: [],
   },
   {
     slug: 'the-art-of-minimalism',
@@ -144,7 +101,6 @@ export let posts: Post[] = [
     tags: ['Minimalism', 'Lifestyle', 'Philosophy'],
     readTime: 7,
     featured: true,
-    comments: [],
   },
   {
     slug: 'exploring-the-deep-sea',
@@ -162,7 +118,6 @@ export let posts: Post[] = [
     tags: ['Ocean', 'Science', 'Exploration'],
     readTime: 9,
     featured: false,
-    comments: [],
   },
 ];
 
