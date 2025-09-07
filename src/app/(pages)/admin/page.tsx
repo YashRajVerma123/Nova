@@ -4,8 +4,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Edit, PlusCircle, Trash, Users, BellRing } from "lucide-react";
-import { Post, getPosts } from "@/lib/data";
+import { BarChart, Edit, PlusCircle, Trash, Users, BellRing, Image as ImageIcon } from "lucide-react";
+import { Post, getPosts, Notification, getNotifications } from "@/lib/data";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,8 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { addNotificationAction } from "@/app/actions/notification-actions";
+import { addNotificationAction, deleteNotificationAction } from "@/app/actions/notification-actions";
+import { Separator } from "@/components/ui/separator";
 
 
 const notificationSchema = z.object({
@@ -43,8 +44,11 @@ const AdminPage = () => {
     const router = useRouter();
     const { toast } = useToast();
     const [allPosts, setAllPosts] = useState<Post[]>([]);
-    const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
+    const [isPostDeleteDialogOpen, setPostDeleteDialogOpen] = useState(false);
+    const [isNotifDeleteDialogOpen, setNotifDeleteDialogOpen] = useState(false);
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+    const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
 
     const notificationForm = useForm<z.infer<typeof notificationSchema>>({
       resolver: zodResolver(notificationSchema),
@@ -55,15 +59,18 @@ const AdminPage = () => {
       },
     });
 
+    const fetchAllData = async () => {
+        const posts = await getPosts();
+        setAllPosts(posts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
+        const notifications = await getNotifications();
+        setAllNotifications(notifications);
+    }
+
     useEffect(() => {
         if (!loading && !isAdmin) {
             router.push('/');
         }
-        const fetchPosts = async () => {
-            const posts = await getPosts();
-            setAllPosts(posts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
-        }
-        fetchPosts();
+        fetchAllData();
     }, [user, isAdmin, loading, router]);
     
     if (loading || !isAdmin) {
@@ -74,12 +81,17 @@ const AdminPage = () => {
         );
     }
 
-    const handleDeleteClick = (post: Post) => {
+    const handleDeletePostClick = (post: Post) => {
         setPostToDelete(post);
-        setDeleteDialogOpen(true);
+        setPostDeleteDialogOpen(true);
+    };
+    
+    const handleDeleteNotifClick = (notification: Notification) => {
+        setNotificationToDelete(notification);
+        setNotifDeleteDialogOpen(true);
     };
 
-    const handleDeleteConfirm = async () => {
+    const handleDeletePostConfirm = async () => {
         if (!postToDelete) return;
         try {
             await deletePost(postToDelete.id);
@@ -88,8 +100,21 @@ const AdminPage = () => {
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete post.", variant: "destructive" });
         }
-        setDeleteDialogOpen(false);
+        setPostDeleteDialogOpen(false);
         setPostToDelete(null);
+    };
+
+    const handleDeleteNotifConfirm = async () => {
+        if (!notificationToDelete) return;
+        try {
+            await deleteNotificationAction(notificationToDelete.id);
+            setAllNotifications(allNotifications.filter(n => n.id !== notificationToDelete!.id));
+            toast({ title: "Notification Deleted", description: `"${notificationToDelete.title}" has been deleted.` });
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to delete notification.", variant: "destructive" });
+        }
+        setNotifDeleteDialogOpen(false);
+        setNotificationToDelete(null);
     };
 
     const onNotificationSubmit = async (values: z.infer<typeof notificationSchema>) => {
@@ -97,6 +122,7 @@ const AdminPage = () => {
         await addNotificationAction(values);
         toast({ title: "Notification Sent!", description: "Your notification has been published to all users." });
         notificationForm.reset();
+        await fetchAllData(); // Refresh the list
       } catch (error) {
         toast({ title: "Error", description: "Failed to send notification.", variant: "destructive" });
       }
@@ -147,8 +173,8 @@ const AdminPage = () => {
                 </Link>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-                <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                <div className="xl:col-span-2">
                     <Card className="glass-card">
                         <CardHeader>
                             <CardTitle>Manage Posts</CardTitle>
@@ -178,7 +204,7 @@ const AdminPage = () => {
                                                 <Button asChild variant="ghost" size="icon">
                                                     <Link href={`/admin/edit-post/${post.slug}`}><Edit className="h-4 w-4" /></Link>
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(post)}>
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeletePostClick(post)}>
                                                     <Trash className="h-4 w-4 text-red-500" />
                                                 </Button>
                                             </TableCell>
@@ -190,14 +216,14 @@ const AdminPage = () => {
                     </Card>
                 </div>
 
-                <div>
+                <div className="space-y-8">
                     <Card className="glass-card">
                         <CardHeader>
                            <div className="flex items-center gap-2">
                             <BellRing className="h-5 w-5 text-primary" />
                             <CardTitle>Send Notification</CardTitle>
                            </div>
-                            <CardDescription>Publish an announcement to all users.</CardDescription>
+                            <CardDescription>Publish a new announcement to all users.</CardDescription>
                         </CardHeader>
                         <CardContent>
                           <Form {...notificationForm}>
@@ -248,11 +274,44 @@ const AdminPage = () => {
                           </Form>
                         </CardContent>
                     </Card>
+
+                    <Card className="glass-card">
+                        <CardHeader>
+                            <CardTitle>Manage Notifications</CardTitle>
+                            <CardDescription>Edit or delete sent notifications.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {allNotifications.length > 0 ? allNotifications.map((notif, index) => (
+                                    <div key={notif.id}>
+                                      <div className="flex justify-between items-start gap-4">
+                                          <div className="space-y-1 flex-1">
+                                              <p className="font-medium text-sm">{notif.title}</p>
+                                              <p className="text-xs text-muted-foreground">{notif.description}</p>
+                                               {notif.image && <ImageIcon className="h-4 w-4 inline-block text-muted-foreground" />}
+                                          </div>
+                                          <div className="flex items-center">
+                                              <Button asChild variant="ghost" size="icon">
+                                                  <Link href={`/admin/edit-notification/${notif.id}`}><Edit className="h-4 w-4" /></Link>
+                                              </Button>
+                                              <Button variant="ghost" size="icon" onClick={() => handleDeleteNotifClick(notif)}>
+                                                  <Trash className="h-4 w-4 text-red-500" />
+                                              </Button>
+                                          </div>
+                                      </div>
+                                      {index < allNotifications.length - 1 && <Separator className="mt-4" />}
+                                    </div>
+                                )) : (
+                                  <p className="text-sm text-muted-foreground text-center">No notifications sent yet.</p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
 
 
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setPostDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -263,7 +322,22 @@ const AdminPage = () => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                        <AlertDialogAction onClick={handleDeletePostConfirm} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={isNotifDeleteDialogOpen} onOpenChange={setNotifDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the notification
+                            <span className="font-bold"> &quot;{notificationToDelete?.title}&quot;</span>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteNotifConfirm} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

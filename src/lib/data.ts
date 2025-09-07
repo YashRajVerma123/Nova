@@ -13,6 +13,8 @@ import {
     collectionGroup,
     where,
     addDoc,
+    deleteDoc,
+    updateDoc,
 } from 'firebase/firestore';
 import { initialPostsData, initialNotificationsData } from '@/lib/data-store';
 
@@ -215,7 +217,7 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
 export const getNotifications = async (): Promise<Notification[]> => {
     await seedDatabase();
     const notificationsCollection = collection(db, 'notifications').withConverter(notificationConverter);
-    const q = query(notificationsCollection, orderBy('createdAt', 'desc'), limit(10));
+    const q = query(notificationsCollection, orderBy('createdAt', 'desc'), limit(50));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => doc.data());
 };
@@ -226,4 +228,23 @@ export async function addNotification(notification: { title: string; description
     ...notification,
     createdAt: Timestamp.now(),
   });
+}
+
+export async function deleteNotification(notificationId: string): Promise<void> {
+    const notifRef = doc(db, 'notifications', notificationId);
+    await deleteDoc(notifRef);
+}
+
+export async function updateNotification(notificationId: string, updates: { title: string; description: string, image?: string }) {
+    const notifRef = doc(db, 'notifications', notificationId);
+    await updateDoc(notifRef, updates);
+}
+
+export const getNotification = async (id: string): Promise<Notification | null> => {
+    const notifRef = doc(db, 'notifications', id).withConverter(notificationConverter);
+    const snapshot = await getDoc(notifRef);
+    if (snapshot.exists()) {
+        return snapshot.data();
+    }
+    return null;
 }

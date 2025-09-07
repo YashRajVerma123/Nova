@@ -2,7 +2,7 @@
 'use server'
 
 import { z } from 'zod';
-import { addNotification } from '@/lib/data';
+import { addNotification, deleteNotification, updateNotification } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
 
 const notificationSchema = z.object({
@@ -22,4 +22,19 @@ export async function addNotificationAction(values: z.infer<typeof notificationS
     // but it's good practice for data consistency on the current client
     // if we were showing notifications on the admin page.
     revalidatePath('/admin');
+}
+
+export async function deleteNotificationAction(notificationId: string) {
+    await deleteNotification(notificationId);
+    revalidatePath('/admin');
+}
+
+export async function updateNotificationAction(notificationId: string, values: z.infer<typeof notificationSchema>) {
+    await updateNotification(notificationId, {
+        title: values.title,
+        description: values.description,
+        image: values.image || undefined,
+    });
+    revalidatePath('/admin');
+    revalidatePath(`/admin/edit-notification/${notificationId}`);
 }
