@@ -1,3 +1,4 @@
+
 'use client';
 import { CreditCard, LogOut, User as UserIcon, Upload } from 'lucide-react';
 import {
@@ -18,24 +19,40 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 
+// Helper to convert file to Base64
+const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+});
+
 // This is the main component for the header.
 const UserNav = () => {
-  const { user, signIn, signOut, loading, updateUserProfile, uploadAvatar } = useAuth();
+  const { user, signIn, signOut, loading, updateUserProfile, isAdmin } = useAuth();
   const [isSignInOpen, setSignInOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [newUsername, setNewUsername] = useState(user?.name || '');
   const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(user?.avatar || '');
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+
+  useEffect(() => {
+    if (user) {
+        setNewUsername(user.name);
+        setPreviewUrl(user.avatar);
+    }
+  }, [user]);
 
   const handleSignIn = async () => {
     try {
@@ -55,11 +72,12 @@ const UserNav = () => {
     e.preventDefault();
     if (!user || !newUsername.trim()) return;
 
-    setIsUploading(true);
+    setIsSaving(true);
     try {
       let newAvatarUrl = user.avatar;
       if (newAvatarFile) {
-        newAvatarUrl = await uploadAvatar(newAvatarFile, user.id);
+        // Convert file to Base64 and update
+        newAvatarUrl = await toBase64(newAvatarFile);
       }
       
       await updateUserProfile({ name: newUsername.trim(), avatar: newAvatarUrl });
@@ -73,24 +91,28 @@ const UserNav = () => {
       console.error('Profile update failed', error);
        toast({
         title: 'Update Failed',
-        description: 'Could not update your profile. Please try again.',
+        description: (error as Error).message || 'Could not update your profile. Please try again.',
         variant: 'destructive',
       });
     } finally {
-      setIsUploading(false);
+      setIsSaving(false);
     }
   };
-  
-   // Update local state if user object changes (e.g. after login)
-  useState(() => {
-    if (user) {
-      setNewUsername(user.name);
-    }
-  });
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setNewAvatarFile(e.target.files[0]);
+        const file = e.target.files[0];
+        setNewAvatarFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+    }
+  }
+
+  const handleOpenProfile = () => {
+    if (user) {
+        setNewUsername(user.name);
+        setPreviewUrl(user.avatar);
+        setNewAvatarFile(null);
+        setProfileOpen(true);
     }
   }
 
@@ -105,8 +127,6 @@ const UserNav = () => {
     }
     return name.substring(0, 2);
   };
-
-  const previewUrl = newAvatarFile ? URL.createObjectURL(newAvatarFile) : user?.avatar;
 
   if (!user) {
     return (
@@ -154,7 +174,7 @@ const UserNav = () => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem onSelect={() => setProfileOpen(true)}>
+            <DropdownMenuItem onSelect={handleOpenProfile}>
               <UserIcon className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
@@ -214,8 +234,8 @@ const UserNav = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={isUploading}>
-                {isUploading ? 'Saving...' : 'Save changes'}
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save changes'}
               </Button>
             </DialogFooter>
           </form>
