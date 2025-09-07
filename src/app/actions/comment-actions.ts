@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { Author, Comment } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, doc, addDoc, updateDoc, deleteDoc, runTransaction, Timestamp, getDoc } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, deleteDoc, runTransaction, Timestamp, getDoc, writeBatch, where, query, getDocs } from 'firebase/firestore';
 
 export async function addComment(
     postId: string, 
@@ -112,7 +112,8 @@ export async function updateComment(postId: string, commentId: string, newConten
 
 export async function deleteComment(postId: string, commentId: string, authorId: string, isAdmin: boolean) {
     const postRef = doc(db, 'posts', postId);
-    const commentRef = doc(postRef, 'comments', commentId);
+    const commentsCollection = collection(postRef, 'comments');
+    const commentRef = doc(commentsCollection, commentId);
     
     const commentDoc = await getDoc(commentRef);
     if (!commentDoc.exists()) {
@@ -123,9 +124,21 @@ export async function deleteComment(postId: string, commentId: string, authorId:
     if (commentData.author.id !== authorId && !isAdmin) {
         return { error: 'You are not authorized to delete this comment.' };
     }
-
-    await deleteDoc(commentRef);
     
+    const batch = writeBatch(db);
+
+    // Find all replies to the comment
+    const repliesQuery = query(commentsCollection, where('parentId', '==', commentId));
+    const repliesSnapshot = await getDocs(repliesQuery);
+    repliesSnapshot.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    // Delete the main comment
+    batch.delete(commentRef);
+
+    await batch.commit();
+
     const postDoc = await getDoc(postRef);
     const postSlug = postDoc.data()?.slug;
     if (postSlug) {
