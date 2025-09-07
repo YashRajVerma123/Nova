@@ -7,16 +7,17 @@ const yashRaj: Author = { id: 'yash-raj', name: 'Yash Raj', avatar: 'https://i.p
 const janeDoe: Author = { id: 'jane-doe', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?u=jane-doe', email: 'jane.doe@example.com'};
 const johnSmith: Author = { id: 'john-smith', name: 'John Smith', avatar: 'https://i.pravatar.cc/150?u=john-smith', email: 'john.smith@example.com'};
 
-type StoredComment = Comment & { postSlug: string, parentId: string | null };
-
 // Using global to prevent data loss on hot-reloads in dev
 declare global {
   var __posts: Post[];
-  var __comments: StoredComment[];
 }
 
 
 if (!global.__posts) {
+    const initialComments: Comment[] = [
+        { id: '1', content: 'Great overview of the future of AI!', author: yashRaj, createdAt: '2024-07-28T12:00:00Z', likes: 15, replies: [], parentId: null },
+    ];
+
     global.__posts = [
         {
             slug: 'the-future-of-ai',
@@ -34,7 +35,7 @@ if (!global.__posts) {
             tags: ['AI', 'Technology', 'Future'],
             readTime: 10,
             featured: true,
-            comments: [],
+            comments: initialComments,
         },
         {
             slug: 'sustainable-living-guide',
@@ -110,12 +111,5 @@ if (!global.__posts) {
     ];
 }
 
-if (!global.__comments) {
-  global.__comments = [
-    { id: '1', postSlug: 'the-future-of-ai', parentId: null, content: 'Great overview of the future of AI!', author: yashRaj, createdAt: '2024-07-28T12:00:00Z', likes: 15, replies: [] },
-  ];
-}
-
 
 export const posts: Post[] = global.__posts;
-export const comments: StoredComment[] = global.__comments;

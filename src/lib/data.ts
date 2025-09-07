@@ -1,5 +1,5 @@
 
-import { posts, comments } from './data-store';
+import { posts } from './data-store';
 export type Author = {
   id: string;
   name: string;
@@ -16,7 +16,6 @@ export type Comment = {
   replies: Comment[];
   highlighted?: boolean;
   pinned?: boolean;
-  postSlug: string;
   parentId: string | null;
 };
 
@@ -49,60 +48,30 @@ const sortComments = (commentList: Comment[]) => {
 };
 
 export const getPosts = (): Post[] => {
-    const allPosts = [...posts];
-    const allComments = [...comments];
-    return allPosts.map(post => {
-        const postComments = allComments.filter(c => c.postSlug === post.slug);
-        return {
-            ...post,
-            comments: buildCommentTree(postComments),
-        }
-    });
+    // Sort comments within each post before returning
+    return posts.map(p => ({
+        ...p,
+        comments: sortComments(p.comments),
+    }));
 };
 
 export const getPost = (slug: string): Post | undefined => {
-    const allPosts = [...posts];
-    const allComments = [...comments];
-
-    const post = allPosts.find(p => p.slug === slug);
+    const post = posts.find(p => p.slug === slug);
     if (!post) return undefined;
     
-    const postComments = allComments.filter(c => c.postSlug === slug);
+    // Recursively sort all replies as well
+    const sortAllReplies = (comments: Comment[]): Comment[] => {
+        return sortComments(comments).map(c => ({
+            ...c,
+            replies: c.replies ? sortAllReplies(c.replies) : [],
+        }));
+    }
 
     return {
         ...post,
-        comments: buildCommentTree(postComments),
+        comments: sortAllReplies(post.comments),
     }
 }
-
-const buildCommentTree = (commentList: Comment[]): Comment[] => {
-    const commentMap = new Map(commentList.map(c => [c.id, {...c, replies: []}]));
-    const rootComments: Comment[] = [];
-
-    commentList.forEach(comment => {
-        const currentComment = commentMap.get(comment.id)!;
-        if (comment.parentId && commentMap.has(comment.parentId)) {
-            const parent = commentMap.get(comment.parentId)!;
-            // Ensure replies array exists
-            if (!parent.replies) {
-                parent.replies = [];
-            }
-            parent.replies.push(currentComment);
-        } else {
-            rootComments.push(currentComment);
-        }
-    });
-
-    // Sort replies within each comment as well
-    commentMap.forEach(comment => {
-        if(comment.replies && comment.replies.length > 0) {
-            comment.replies = sortComments(comment.replies);
-        }
-    });
-
-    return sortComments(rootComments);
-}
-
 
 export let notifications: Notification[] = [
     { id: 'n1', title: 'New Feature: Post Summaries', description: 'We\'ve added AI-powered summaries to our posts!', createdAt: '2024-07-28T12:00:00Z', read: false },
