@@ -3,7 +3,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { Post, Author } from '@/lib/data';
-import { posts } from '@/lib/data-store';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, getDocs, limit } from 'firebase/firestore';
 import { z } from 'zod';
 
 
@@ -24,9 +25,14 @@ const getAuthorDetails = (authorId: string): Author | null => {
         { id: 'jane-doe', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?u=jane-doe', email: 'jane.doe@example.com'},
         { id: 'john-smith', name: 'John Smith', avatar: 'https://i.pravatar.cc/150?u=john-smith', email: 'john.smith@example.com'},
     ];
-    return authors.find(a => a.id === authorId) || {
+    // In a real app, you'd have a users collection.
+    // For this demo, let's assume if the ID is a firebase UID, we create a user object
+    const found = authors.find(a => a.id === authorId);
+    if(found) return found;
+
+    return {
         id: authorId,
-        name: 'Anonymous',
+        name: 'New User', // You might want a better default
         avatar: `https://i.pravatar.cc/150?u=${authorId}`,
         email: 'no-email@example.com'
     };
@@ -43,12 +49,11 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
          throw new Error('Author details could not be found.');
     }
 
-
     const slug = values.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
     const tagsArray = values.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
     const readTime = Math.ceil(values.content.split(/\s+/).length / 200);
 
-    const newPost: Post = {
+    const newPost: Omit<Post, 'id' | 'comments'> = {
         slug,
         title: values.title,
         description: values.description,
@@ -59,32 +64,29 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
         author,
         publishedAt: new Date().toISOString(),
         readTime,
-        comments: [],
     };
     
-    posts.unshift(newPost);
+    const postsCollection = collection(db, 'posts');
+    const docRef = await addDoc(postsCollection, {
+        ...newPost,
+        publishedAt: new Date(newPost.publishedAt),
+    });
 
     revalidatePath('/');
     revalidatePath('/posts');
     revalidatePath('/admin');
     
-    return newPost.slug;
+    return slug;
 }
 
-export async function updatePost(slug: string, values: z.infer<typeof formSchema>): Promise<string> {
-  const postIndex = posts.findIndex(p => p.slug === slug);
-  if (postIndex === -1) {
-    throw new Error('Post not found.');
-  }
-
-  const post = posts[postIndex];
+export async function updatePost(postId: string, values: z.infer<typeof formSchema>): Promise<string> {
+  const postRef = doc(db, 'posts', postId);
 
   const newSlug = values.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
   const tagsArray = values.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
   const readTime = Math.ceil(values.content.split(/\s+/).length / 200);
 
-  const updatedPost: Post = {
-    ...post,
+  const updatedData = {
     slug: newSlug,
     title: values.title,
     description: values.description,
@@ -95,11 +97,13 @@ export async function updatePost(slug: string, values: z.infer<typeof formSchema
     readTime,
   };
 
-  posts[postIndex] = updatedPost;
+  await updateDoc(postRef, updatedData);
   
+  const oldSlug = (await getDoc(postRef)).data()?.slug;
+
   revalidatePath('/');
   revalidatePath('/posts');
-  revalidatePath(`/posts/${slug}`);
+  if (oldSlug) revalidatePath(`/posts/${oldSlug}`);
   revalidatePath(`/posts/${newSlug}`);
   revalidatePath('/admin');
 
@@ -107,13 +111,9 @@ export async function updatePost(slug: string, values: z.infer<typeof formSchema
 }
 
 
-export async function deletePost(slug: string): Promise<{ success: boolean }> {
-  const postIndex = posts.findIndex(p => p.slug === slug);
-  if (postIndex === -1) {
-    throw new Error('Post not found.');
-  }
-
-  posts.splice(postIndex, 1);
+export async function deletePost(postId: string): Promise<{ success: boolean }> {
+  const postRef = doc(db, 'posts', postId);
+  await deleteDoc(postRef);
   
   revalidatePath('/');
   revalidatePath('/posts');

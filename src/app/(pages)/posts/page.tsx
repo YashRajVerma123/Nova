@@ -1,26 +1,62 @@
 
 'use client'
 import { useSearchParams } from 'next/navigation';
-import { getPosts } from '@/lib/data';
+import { getPosts, Post } from '@/lib/data';
 import BlogPostCard from '@/components/blog-post-card';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
 const PostsPage = () => {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredPosts = useMemo(() => {
-    let allPosts = getPosts();
-    let sortedPosts = [...allPosts].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-    if (!searchQuery) {
-      return sortedPosts;
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      const allPosts = await getPosts();
+      setPosts(allPosts);
+      setLoading(false);
     }
-    return sortedPosts.filter(post => 
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  }, [searchQuery]);
+    fetchPosts();
+  }, []);
+
+  useEffect(() => {
+    let sortedPosts = [...posts].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    if (!searchQuery) {
+      setFilteredPosts(sortedPosts);
+    } else {
+      setFilteredPosts(sortedPosts.filter(post => 
+        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      ));
+    }
+  }, [searchQuery, posts]);
+  
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center mb-16">
+           <div className="h-10 w-1/2 bg-muted rounded-md animate-pulse mx-auto mb-4"></div>
+           <div className="h-6 w-2/3 bg-muted rounded-md animate-pulse mx-auto"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[...Array(6)].map((_, i) => (
+             <div key={i} className="glass-card h-full flex flex-col overflow-hidden">
+                <div className="relative aspect-[16/9] bg-muted animate-pulse"></div>
+                <div className="p-6 flex flex-col flex-grow">
+                  <div className="h-6 w-full bg-muted animate-pulse rounded-md mb-2"></div>
+                  <div className="h-6 w-3/4 bg-muted animate-pulse rounded-md mb-4"></div>
+                  <div className="h-10 w-full bg-muted animate-pulse rounded-md mt-auto"></div>
+                </div>
+              </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-16">

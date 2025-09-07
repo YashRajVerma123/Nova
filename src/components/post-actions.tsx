@@ -1,0 +1,93 @@
+
+'use client'
+
+import { Post } from "@/lib/data";
+import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import { Heart, Share2, Copy } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "./ui/input";
+import { useToast } from "@/hooks/use-toast";
+
+
+export default function PostActions({ post }: { post: Post }) {
+  const { toast } = useToast();
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 25) + 5);
+  const [currentUrl, setCurrentUrl] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentUrl(window.location.href);
+    }
+    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+    if (likedPosts[post.slug]) {
+      setLiked(true);
+    }
+  }, [post.slug]);
+
+  const handleLike = () => {
+    const newLikedState = !liked;
+    setLiked(newLikedState);
+    setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
+
+    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+    if (newLikedState) {
+      likedPosts[post.slug] = true;
+    } else {
+      delete likedPosts[post.slug];
+    }
+    localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+  };
+
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(currentUrl);
+    toast({ title: 'Link copied to clipboard!' });
+  };
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={handleLike}>
+          <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
+          {likeCount}
+        </Button>
+      </div>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share this post</DialogTitle>
+            <DialogDescription>
+              Anyone with this link will be able to view this post.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2">
+            <div className="grid flex-1 gap-2">
+              <Input
+                id="link"
+                defaultValue={currentUrl}
+                readOnly
+              />
+            </div>
+            <Button type="button" size="icon" onClick={handleCopyToClipboard}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

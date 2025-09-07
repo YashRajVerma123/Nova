@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter, notFound } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Post, getPost } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { updatePost } from '@/app/actions/post-actions';
@@ -32,8 +32,8 @@ export default function EditPostPage({ params }: { params: { slug: string } }) {
   const { toast } = useToast();
   const router = useRouter();
   const { isAdmin, loading: authLoading } = useAuth();
-  
-  const post = getPost(params.slug);
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,15 +46,22 @@ export default function EditPostPage({ params }: { params: { slug: string } }) {
       featured: false,
     },
   });
-  
+
   useEffect(() => {
-    if (post) {
-      form.reset({
-        ...post,
-        tags: post.tags.join(', '),
-      });
+    const fetchPost = async () => {
+      setLoading(true);
+      const fetchedPost = await getPost(params.slug);
+      if (fetchedPost) {
+        setPost(fetchedPost);
+        form.reset({
+          ...fetchedPost,
+          tags: fetchedPost.tags.join(', '),
+        });
+      }
+      setLoading(false);
     }
-  }, [post, form]);
+    fetchPost();
+  }, [params.slug, form]);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -62,7 +69,7 @@ export default function EditPostPage({ params }: { params: { slug: string } }) {
     }
   }, [isAdmin, authLoading, router]);
 
-  if (authLoading) {
+  if (authLoading || loading) {
       return (
           <div className="flex h-screen items-center justify-center">
               <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
@@ -76,7 +83,7 @@ export default function EditPostPage({ params }: { params: { slug: string } }) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-        const newSlug = await updatePost(params.slug, values);
+        const newSlug = await updatePost(post!.id, values);
         toast({
             title: 'Post Updated!',
             description: 'Your changes have been saved successfully.',

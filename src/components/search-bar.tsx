@@ -16,12 +16,12 @@ const SearchBar = () => {
   const [isFocused, setIsFocused] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  const performSearch = useCallback((searchQuery: string) => {
+  const performSearch = useCallback(async (searchQuery: string) => {
     if (searchQuery.trim() === '') {
       setResults([]);
       return;
     }
-    const posts = getPosts();
+    const posts = await getPosts();
     const filteredPosts = posts.filter(
       (post) =>
         post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

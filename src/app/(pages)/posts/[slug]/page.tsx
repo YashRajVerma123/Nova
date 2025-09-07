@@ -1,84 +1,34 @@
 
-'use client';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { Post, getPost, getPosts } from '@/lib/data';
+import { Post, getPost, getPosts, Comment as CommentType, getComments } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Heart, Share2, Copy } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
 import BlogPostCard from '@/components/blog-post-card';
-import { useEffect, useState, useMemo } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Input } from '@/components/ui/input';
+import PostActions from '@/components/post-actions';
 import CommentSection from '@/components/comment-section';
-import { posts as initialPosts } from '@/lib/data-store';
+import Link from 'next/link';
 
-const PostPage = ({ params }: { params: { slug: string } }) => {
-  const { toast } = useToast();
-  const router = useRouter();
-  const slug = params.slug;
-  
-  const post = useMemo(() => getPost(slug), [slug]);
-  
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 25) + 5);
-  const [currentUrl, setCurrentUrl] = useState('');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setCurrentUrl(window.location.href);
-    }
-    if (!post) return;
-    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
-    if (likedPosts[post.slug]) {
-      setLiked(true);
-    }
-  }, [post, slug]);
-
-  const handleLike = () => {
-    if (!post) return;
-    const newLikedState = !liked;
-    setLiked(newLikedState);
-    setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
-
-    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
-    if (newLikedState) {
-      likedPosts[post.slug] = true;
-    } else {
-      delete likedPosts[post.slug];
-    }
-    localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
-  };
-
-  const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(currentUrl);
-    toast({ title: 'Link copied to clipboard!' });
-  };
+// This becomes a server component that fetches all necessary data
+export default async function PostPage({ params }: { params: { slug: string } }) {
+  const post = await getPost(params.slug);
   
   if (!post) {
       return notFound();
   }
 
-  const allPosts = getPosts();
+  // Fetch comments on the server
+  const initialComments = await getComments(post.id);
+
+  // Fetch related posts
+  const allPosts = await getPosts();
   const relatedPosts = allPosts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   
   const getInitials = (name: string) => {
     const names = name.split(' ');
     return names.length > 1 ? `${names[0][0]}${names[1][0]}` : name.substring(0, 2);
-  };
-  
-  const handleTagClick = (tag: string) => {
-    router.push(`/posts?q=${encodeURIComponent(tag)}`);
   };
   
   const jsonLd = {
@@ -105,7 +55,9 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
           <header className="mb-8">
             <div className="flex flex-wrap gap-2 mb-4">
               {post.tags.map(tag => (
-                 <Badge key={tag} variant="secondary" className="cursor-pointer hover:bg-primary/20" onClick={() => handleTagClick(tag)}>{tag}</Badge>
+                 <Link href={`/posts?q=${encodeURIComponent(tag)}`} key={tag}>
+                   <Badge variant="secondary" className="cursor-pointer hover:bg-primary/20">{tag}</Badge>
+                 </Link>
               ))}
             </div>
             <h1 className="text-3xl md:text-5xl font-headline font-extrabold tracking-tight mb-4">{post.title}</h1>
@@ -147,48 +99,14 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
           />
 
           <Separator className="my-10" />
+          
+          <PostActions post={post} />
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleLike}>
-                <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
-                {likeCount}
-              </Button>
-            </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Share this post</DialogTitle>
-                  <DialogDescription>
-                    Anyone with this link will be able to view this post.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex items-center space-x-2">
-                  <div className="grid flex-1 gap-2">
-                    <Input
-                      id="link"
-                      defaultValue={currentUrl}
-                      readOnly
-                    />
-                  </div>
-                  <Button type="button" size="icon" onClick={handleCopyToClipboard}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
         </article>
 
         <Separator className="my-12" />
 
-        <CommentSection postSlug={slug} />
+        <CommentSection postId={post.id} initialComments={initialComments} />
 
         {relatedPosts.length > 0 && (
           <>
@@ -207,5 +125,3 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     </>
   );
 };
-
-export default PostPage;

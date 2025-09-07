@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { getPosts } from '@/lib/data';
+import { getPosts, Post } from '@/lib/data';
 import BlogPostCard from '@/components/blog-post-card';
 import {
   Carousel,
@@ -14,10 +14,10 @@ import {
 } from "@/components/ui/carousel"
 import { Separator } from '@/components/ui/separator';
 
-export default function HomePage() {
-  const posts = getPosts();
-  const featuredPosts = posts.filter(p => p.featured);
-  const recentPosts = posts
+export default async function HomePage() {
+  const allPosts: Post[] = await getPosts();
+  const featuredPosts = allPosts.filter(p => p.featured);
+  const recentPosts = allPosts
     .filter(p => !p.featured)
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
     .slice(0, 3);

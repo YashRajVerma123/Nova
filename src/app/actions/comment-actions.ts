@@ -3,175 +3,154 @@
 
 import { revalidatePath } from 'next/cache';
 import { Author, Comment } from '@/lib/data';
-import { posts } from '@/lib/data-store';
-
-// Helper to find a comment and its parent list within a nested structure
-const findCommentAndParentList = (
-  comments: Comment[],
-  commentId: string
-): { comment: Comment; list: Comment[] } | null => {
-  for (let i = 0; i < comments.length; i++) {
-    const comment = comments[i];
-    if (comment.id === commentId) {
-      return { comment, list: comments };
-    }
-    if (comment.replies && comment.replies.length > 0) {
-      const found = findCommentAndParentList(comment.replies, commentId);
-      if (found) {
-        return found;
-      }
-    }
-  }
-  return null;
-};
+import { db } from '@/lib/firebase';
+import { collection, doc, addDoc, updateDoc, deleteDoc, runTransaction, Timestamp, getDoc } from 'firebase/firestore';
 
 export async function addComment(
-    postSlug: string, 
+    postId: string, 
     content: string, 
     author: Author,
     parentId: string | null = null
 ) {
-    const post = posts.find(p => p.slug === postSlug);
-    if (!post) {
+    if (!postId) {
         return { error: 'Post not found.' };
     }
-
     if (!author) {
         return { error: 'You must be logged in to comment.' };
     }
     
-    const newComment: Comment = {
-        id: new Date().toISOString() + Math.random(),
+    const newCommentData = {
         content,
         author,
-        createdAt: new Date().toISOString(),
+        createdAt: Timestamp.now(),
         likes: 0,
-        replies: [],
+        highlighted: false,
+        pinned: false,
         parentId,
     };
     
-    if (parentId) {
-        const found = findCommentAndParentList(post.comments, parentId);
-        if (found) {
-            found.comment.replies.unshift(newComment);
-        } else {
-             return { error: 'Parent comment not found.' };
-        }
-    } else {
-        post.comments.unshift(newComment);
+    const postRef = doc(db, 'posts', postId);
+    const commentsCollection = collection(postRef, 'comments');
+    const newCommentRef = await addDoc(commentsCollection, newCommentData);
+    
+    const newComment = {
+        id: newCommentRef.id,
+        ...newCommentData,
+        createdAt: newCommentData.createdAt.toDate().toISOString(),
     }
 
-    revalidatePath(`/posts/${postSlug}`);
+    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
     return { comment: newComment };
 }
 
 
-export async function toggleCommentLike(postSlug: string, commentId: string, isLiked: boolean) {
-    const post = posts.find(p => p.slug === postSlug);
-    if (!post) {
-        return { error: 'Post not found.' };
-    }
+export async function toggleCommentLike(postId: string, commentId: string, isLiked: boolean) {
+    const postRef = doc(db, 'posts', postId);
+    const commentRef = doc(postRef, 'comments', commentId);
 
-    const found = findCommentAndParentList(post.comments, commentId);
-    if (!found) {
-        return { error: 'Comment not found.' };
-    }
-    
-    const { comment } = found;
-    if (isLiked) {
-        comment.likes = (comment.likes || 1) - 1;
-    } else {
-        comment.likes = (comment.likes || 0) + 1;
-    }
+    try {
+        const newLikes = await runTransaction(db, async (transaction) => {
+            const commentDoc = await transaction.get(commentRef);
+            if (!commentDoc.exists()) {
+                throw "Comment does not exist!";
+            }
+            const currentLikes = commentDoc.data().likes || 0;
+            const newLikeCount = isLiked ? currentLikes - 1 : currentLikes + 1;
+            transaction.update(commentRef, { likes: newLikeCount });
+            return newLikeCount;
+        });
+        revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+        return { success: true, newLikes };
 
-    revalidatePath(`/posts/${postSlug}`);
-    return { success: true, newLikes: comment.likes };
+    } catch (error) {
+        console.error("Like transaction failed: ", error);
+        return { error: 'Failed to update like count.' };
+    }
 }
 
-export async function updateComment(postSlug: string, commentId: string, newContent: string, authorId: string, isAdmin: boolean) {
-    const post = posts.find(p => p.slug === postSlug);
-    if (!post) {
-        return { error: 'Post not found.' };
-    }
-    
-    const found = findCommentAndParentList(post.comments, commentId);
-     if (!found) {
-        return { error: 'Comment not found.' };
+export async function updateComment(postId: string, commentId: string, newContent: string, authorId: string, isAdmin: boolean) {
+    const postRef = doc(db, 'posts', postId);
+    const commentRef = doc(postRef, 'comments', commentId);
+
+    const commentDoc = await getDoc(commentRef);
+    if (!commentDoc.exists()) {
+       return { error: 'Comment not found.' };
     }
 
-    const { comment } = found;
-    if (comment.author.id !== authorId && !isAdmin) {
+    const commentData = commentDoc.data();
+    if (commentData.author.id !== authorId && !isAdmin) {
         return { error: 'You are not authorized to edit this comment.' };
     }
 
-    comment.content = newContent;
-    revalidatePath(`/posts/${postSlug}`);
-    return { success: true, updatedComment: comment };
+    await updateDoc(commentRef, { content: newContent });
+    
+    const updatedComment = { ...commentData, id: commentId, content: newContent, createdAt: (commentData.createdAt as Timestamp).toDate().toISOString() } as Comment;
+
+    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+    return { success: true, updatedComment };
 }
 
-export async function deleteComment(postSlug: string, commentId: string, authorId: string, isAdmin: boolean) {
-    const post = posts.find(p => p.slug === postSlug);
-    if (!post) {
-        return { error: 'Post not found.' };
+export async function deleteComment(postId: string, commentId: string, authorId: string, isAdmin: boolean) {
+    const postRef = doc(db, 'posts', postId);
+    const commentRef = doc(postRef, 'comments', commentId);
+    
+    const commentDoc = await getDoc(commentRef);
+    if (!commentDoc.exists()) {
+       return { error: 'Comment not found.' };
     }
-
-    const found = findCommentAndParentList(post.comments, commentId);
-    if (!found) {
-        return { error: 'Comment not found.' };
-    }
-
-    const { comment, list } = found;
-
-    if (comment.author.id !== authorId && !isAdmin) {
+    
+    const commentData = commentDoc.data();
+    if (commentData.author.id !== authorId && !isAdmin) {
         return { error: 'You are not authorized to delete this comment.' };
     }
 
-    const commentIndex = list.findIndex(c => c.id === commentId);
-    if (commentIndex > -1) {
-        list.splice(commentIndex, 1);
-    }
+    await deleteDoc(commentRef);
     
-    revalidatePath(`/posts/${postSlug}`);
+    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
     return { success: true };
 }
 
 
-export async function toggleCommentHighlight(postSlug: string, commentId: string, isAdmin: boolean) {
+export async function toggleCommentHighlight(postId: string, commentId: string, isAdmin: boolean) {
     if (!isAdmin) {
         return { error: "You are not authorized to perform this action." };
     }
-    const post = posts.find(p => p.slug === postSlug);
-    if (!post) {
-        return { error: 'Post not found.' };
-    }
+    const postRef = doc(db, 'posts', postId);
+    const commentRef = doc(postRef, 'comments', commentId);
 
-    const found = findCommentAndParentList(post.comments, commentId);
-     if (!found) {
-        return { error: 'Comment not found.' };
+    const commentDoc = await getDoc(commentRef);
+    if (!commentDoc.exists()) {
+       return { error: 'Comment not found.' };
     }
+    
+    const commentData = commentDoc.data();
+    const newHighlightedState = !commentData.highlighted;
+    await updateDoc(commentRef, { highlighted: newHighlightedState });
+    
+    const updatedComment = { ...commentData, id: commentId, highlighted: newHighlightedState, createdAt: (commentData.createdAt as Timestamp).toDate().toISOString() } as Comment;
 
-    const { comment } = found;
-    comment.highlighted = !comment.highlighted;
-    revalidatePath(`/posts/${postSlug}`);
-    return { success: true, updatedComment: comment };
+    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+    return { success: true, updatedComment };
 }
 
-export async function toggleCommentPin(postSlug: string, commentId: string, isAdmin: boolean) {
+export async function toggleCommentPin(postId: string, commentId: string, isAdmin: boolean) {
      if (!isAdmin) {
         return { error: "You are not authorized to perform this action." };
     }
-    const post = posts.find(p => p.slug === postSlug);
-    if (!post) {
-        return { error: 'Post not found.' };
+    const postRef = doc(db, 'posts', postId);
+    const commentRef = doc(postRef, 'comments', commentId);
+
+    const commentDoc = await getDoc(commentRef);
+    if (!commentDoc.exists()) {
+       return { error: 'Comment not found.' };
     }
     
-    const found = findCommentAndParentList(post.comments, commentId);
-     if (!found) {
-        return { error: 'Comment not found.' };
-    }
+    const commentData = commentDoc.data();
+    const newPinnedState = !commentData.pinned;
+    await updateDoc(commentRef, { pinned: newPinnedState });
 
-    const { comment } = found;
-    comment.pinned = !comment.pinned;
-    revalidatePath(`/posts/${postSlug}`);
-    return { success: true, updatedComment: comment };
+    const updatedComment = { ...commentData, id: commentId, pinned: newPinnedState, createdAt: (commentData.createdAt as Timestamp).toDate().toISOString() } as Comment;
+    
+    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+    return { success: true, updatedComment };
 }

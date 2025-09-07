@@ -35,8 +35,11 @@ const AdminPage = () => {
         if (!loading && !isAdmin) {
             router.push('/');
         }
-        const posts = getPosts();
-        setAllPosts(posts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
+        const fetchPosts = async () => {
+            const posts = await getPosts();
+            setAllPosts(posts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
+        }
+        fetchPosts();
     }, [user, isAdmin, loading, router]);
     
     if (loading || !isAdmin) {
@@ -55,8 +58,8 @@ const AdminPage = () => {
     const handleDeleteConfirm = async () => {
         if (!postToDelete) return;
         try {
-            await deletePost(postToDelete.slug);
-            setAllPosts(allPosts.filter(p => p.slug !== postToDelete.slug));
+            await deletePost(postToDelete.id);
+            setAllPosts(allPosts.filter(p => p.id !== postToDelete!.id));
             toast({ title: "Post Deleted", description: `"${postToDelete.title}" has been deleted.` });
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete post.", variant: "destructive" });
@@ -127,7 +130,7 @@ const AdminPage = () => {
                         </TableHeader>
                         <TableBody>
                             {allPosts.map(post => (
-                                <TableRow key={post.slug}>
+                                <TableRow key={post.id}>
                                     <TableCell className="font-medium">{post.title}</TableCell>
                                     <TableCell>
                                         <Badge variant={post.featured ? "default" : "secondary"}>
