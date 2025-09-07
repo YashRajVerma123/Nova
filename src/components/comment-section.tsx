@@ -25,14 +25,14 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { user, firebaseUser, signIn } = useAuth();
+  const { user, signIn } = useAuth();
   const { toast } = useToast();
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    if (!user || !firebaseUser) {
+    if (!user) {
         toast({
             title: 'Please sign in',
             description: 'You need to be signed in to post a comment.',
@@ -44,8 +44,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
     setIsSubmitting(true);
     
     try {
-      const idToken = await firebaseUser.getIdToken();
-      const result = await addComment(postSlug, newComment, idToken);
+      const result = await addComment(postSlug, newComment, user);
       
       if (result.error) {
         throw new Error(result.error);
@@ -57,9 +56,10 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
       }
 
     } catch (error) {
+      const errorMessage = (error instanceof Error) ? error.message : 'Failed to post comment. Please try again.';
       toast({
         title: 'Error',
-        description: 'Failed to post comment. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
