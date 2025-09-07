@@ -11,6 +11,8 @@ export type Comment = {
   content: string;
   author: Author;
   createdAt: string;
+  likes: number;
+  replies: Comment[];
 };
 
 export type Post = {
@@ -61,7 +63,7 @@ export let posts: Post[] = [
     readTime: 10,
     featured: true,
     comments: [
-      { id: '1', content: 'Great overview of the future of AI!', author: yashRaj, createdAt: '2024-07-28T12:00:00Z' },
+      { id: '1', content: 'Great overview of the future of AI!', author: yashRaj, createdAt: '2024-07-28T12:00:00Z', likes: 15, replies: [] },
     ]
   },
   {
