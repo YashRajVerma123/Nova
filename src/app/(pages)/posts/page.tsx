@@ -28,11 +28,19 @@ const PostsPage = () => {
       setFilteredPosts(sortedPosts);
     } else {
       const lowercasedQuery = searchQuery.toLowerCase();
-      setFilteredPosts(sortedPosts.filter(post => 
-        post.title.toLowerCase().includes(lowercasedQuery) ||
-        post.description.toLowerCase().includes(lowercasedQuery) ||
-        post.tags.some(tag => tag.toLowerCase() === lowercasedQuery)
-      ));
+      const isTagSearch = posts.some(post => post.tags.some(tag => tag.toLowerCase() === lowercasedQuery));
+
+      setFilteredPosts(sortedPosts.filter(post => {
+        const titleMatch = post.title.toLowerCase().includes(lowercasedQuery);
+        const descriptionMatch = post.description.toLowerCase().includes(lowercasedQuery);
+        const tagMatch = post.tags.some(tag => tag.toLowerCase() === lowercasedQuery);
+
+        if (isTagSearch) {
+            return tagMatch;
+        }
+        
+        return titleMatch || descriptionMatch || tagMatch;
+      }));
     }
   }, [searchQuery, posts]);
   
