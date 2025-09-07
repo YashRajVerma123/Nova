@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { Post, Author } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, getDocs, limit, getDoc, setDoc } from 'firebase/firestore';
 import { z } from 'zod';
 
 
@@ -18,24 +18,30 @@ const formSchema = z.object({
 });
 
 // A mock function to get author details. In a real app this might involve a database lookup.
-const getAuthorDetails = (authorId: string): Author | null => {
-    // This is a simplified lookup. In a real app, you might query a database.
-    const authors: Author[] = [
-        { id: 'yash-raj', name: 'Yash Raj', avatar: 'https://i.pravatar.cc/150?u=yash-raj', email: 'yashrajverma916@gmail.com'},
-        { id: 'jane-doe', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?u=jane-doe', email: 'jane.doe@example.com'},
-        { id: 'john-smith', name: 'John Smith', avatar: 'https://i.pravatar.cc/150?u=john-smith', email: 'john.smith@example.com'},
-    ];
+const getAuthorDetails = async (authorId: string): Promise<Author | null> => {
     // In a real app, you'd have a users collection.
-    // For this demo, let's assume if the ID is a firebase UID, we create a user object
-    const found = authors.find(a => a.id === authorId);
-    if(found) return found;
+    // Let's get the user from our 'users' collection in firestore
+    const userRef = doc(db, 'users', authorId);
+    const userDoc = await getDoc(userRef);
 
-    return {
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return {
         id: authorId,
-        name: 'New User', // You might want a better default
-        avatar: `https://i.pravatar.cc/150?u=${authorId}`,
-        email: 'no-email@example.com'
-    };
+        name: userData.name || 'New User',
+        avatar: userData.avatar || `https://i.pravatar.cc/150?u=${authorId}`,
+        email: userData.email || 'no-email@example.com'
+      }
+    }
+    
+    // Fallback for the initial admin user that might not be in the users collection yet.
+    if(authorId === 'yash-raj') {
+        const adminAuthor = { id: 'yash-raj', name: 'Yash Raj', avatar: 'https://i.pravatar.cc/150?u=yash-raj', email: 'yashrajverma916@gmail.com'};
+        await setDoc(doc(db, "users", "yash-raj"), adminAuthor, { merge: true });
+        return adminAuthor;
+    }
+
+    return null;
 }
 
 
@@ -44,7 +50,7 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
         throw new Error('You must be logged in to create a post.');
     }
 
-    const author = getAuthorDetails(authorId);
+    const author = await getAuthorDetails(authorId);
     if (!author) {
          throw new Error('Author details could not be found.');
     }
@@ -81,6 +87,7 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
 
 export async function updatePost(postId: string, values: z.infer<typeof formSchema>): Promise<string> {
   const postRef = doc(db, 'posts', postId);
+  const oldSlug = (await getDoc(postRef)).data()?.slug;
 
   const newSlug = values.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
   const tagsArray = values.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
@@ -99,7 +106,6 @@ export async function updatePost(postId: string, values: z.infer<typeof formSche
 
   await updateDoc(postRef, updatedData);
   
-  const oldSlug = (await getDoc(postRef)).data()?.slug;
 
   revalidatePath('/');
   revalidatePath('/posts');
