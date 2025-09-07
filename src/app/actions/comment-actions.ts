@@ -33,13 +33,21 @@ export async function addComment(
     const commentsCollection = collection(postRef, 'comments');
     const newCommentRef = await addDoc(commentsCollection, newCommentData);
     
-    const newComment = {
-        id: newCommentRef.id,
-        ...newCommentData,
-        createdAt: newCommentData.createdAt.toDate().toISOString(),
-    }
+    const postDoc = await getDoc(postRef);
+    const postSlug = postDoc.data()?.slug;
 
-    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+    // Fetch the newly created comment to return it with the ID and converted timestamp
+    const newCommentSnapshot = await getDoc(newCommentRef);
+    const newComment = {
+        id: newCommentSnapshot.id,
+        ...newCommentSnapshot.data(),
+        createdAt: (newCommentSnapshot.data()?.createdAt as Timestamp).toDate().toISOString(),
+    } as Comment;
+
+    if (postSlug) {
+      revalidatePath(`/posts/${postSlug}`);
+    }
+    
     return { comment: newComment };
 }
 
@@ -56,10 +64,16 @@ export async function toggleCommentLike(postId: string, commentId: string, isLik
             }
             const currentLikes = commentDoc.data().likes || 0;
             const newLikeCount = isLiked ? currentLikes - 1 : currentLikes + 1;
-            transaction.update(commentRef, { likes: newLikeCount });
-            return newLikeCount;
+            transaction.update(commentRef, { likes: newLikeCount < 0 ? 0 : newLikeCount });
+            return newLikeCount < 0 ? 0 : newLikeCount;
         });
-        revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+        
+        const postDoc = await getDoc(postRef);
+        const postSlug = postDoc.data()?.slug;
+        if (postSlug) {
+            revalidatePath(`/posts/${postSlug}`);
+        }
+
         return { success: true, newLikes };
 
     } catch (error) {
@@ -84,9 +98,15 @@ export async function updateComment(postId: string, commentId: string, newConten
 
     await updateDoc(commentRef, { content: newContent });
     
+    const postDoc = await getDoc(postRef);
+    const postSlug = postDoc.data()?.slug;
+
     const updatedComment = { ...commentData, id: commentId, content: newContent, createdAt: (commentData.createdAt as Timestamp).toDate().toISOString() } as Comment;
 
-    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+    if (postSlug) {
+        revalidatePath(`/posts/${postSlug}`);
+    }
+    
     return { success: true, updatedComment };
 }
 
@@ -106,7 +126,11 @@ export async function deleteComment(postId: string, commentId: string, authorId:
 
     await deleteDoc(commentRef);
     
-    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+    const postDoc = await getDoc(postRef);
+    const postSlug = postDoc.data()?.slug;
+    if (postSlug) {
+        revalidatePath(`/posts/${postSlug}`);
+    }
     return { success: true };
 }
 
@@ -127,9 +151,14 @@ export async function toggleCommentHighlight(postId: string, commentId: string, 
     const newHighlightedState = !commentData.highlighted;
     await updateDoc(commentRef, { highlighted: newHighlightedState });
     
+    const postDoc = await getDoc(postRef);
+    const postSlug = postDoc.data()?.slug;
+
     const updatedComment = { ...commentData, id: commentId, highlighted: newHighlightedState, createdAt: (commentData.createdAt as Timestamp).toDate().toISOString() } as Comment;
 
-    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+    if (postSlug) {
+        revalidatePath(`/posts/${postSlug}`);
+    }
     return { success: true, updatedComment };
 }
 
@@ -148,9 +177,14 @@ export async function toggleCommentPin(postId: string, commentId: string, isAdmi
     const commentData = commentDoc.data();
     const newPinnedState = !commentData.pinned;
     await updateDoc(commentRef, { pinned: newPinnedState });
+    
+    const postDoc = await getDoc(postRef);
+    const postSlug = postDoc.data()?.slug;
 
     const updatedComment = { ...commentData, id: commentId, pinned: newPinnedState, createdAt: (commentData.createdAt as Timestamp).toDate().toISOString() } as Comment;
     
-    revalidatePath(`/posts/${(await getDoc(postRef)).data()?.slug}`);
+    if (postSlug) {
+        revalidatePath(`/posts/${postSlug}`);
+    }
     return { success: true, updatedComment };
 }

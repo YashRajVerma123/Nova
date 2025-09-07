@@ -127,12 +127,12 @@ const CommentForm = ({
         }
     };
     
-     if (!user) return null;
+     if (!user && !isEditing) return null;
 
     return (
         <div className="flex flex-col gap-4">
             <div className="flex items-start gap-4">
-                {!isEditing && (
+                {!isEditing && user && (
                     <Avatar>
                         <AvatarImage src={user.avatar} alt={user.name} />
                         <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
@@ -145,7 +145,7 @@ const CommentForm = ({
                     onChange={(e) => setContent(e.target.value)}
                     onKeyDown={handleKeyDown}
                     rows={2}
-                    className={isEditing ? 'ml-14' : ''}
+                    className={cn(isEditing && 'ml-14')}
                 />
             </div>
             <div className="flex justify-end gap-2">
@@ -162,44 +162,45 @@ const CommentForm = ({
 const Comment = ({ 
     comment, 
     postId, 
-    onReply,
     onUpdate,
     onDelete,
     onAdminAction,
     likedComments,
-    onLikeToggle
+    onLikeToggle,
+    replies = [],
+    onReply,
 }: { 
     comment: CommentType, 
     postId: string,
-    onReply: (newReply: CommentType, parentId: string) => void,
     onUpdate: (updatedComment: CommentType) => void,
     onDelete: (commentId: string) => void,
     onAdminAction: (updatedComment: CommentType) => void,
     likedComments: { [key: string]: boolean },
-    onLikeToggle: (commentId: string, isLiked: boolean) => void
+    onLikeToggle: (commentId: string, isLiked: boolean) => void,
+    replies: CommentType[],
+    onReply: (newReply: CommentType, parentId: string) => void,
 }) => {
     const [showReplyForm, setShowReplyForm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const { user, isAdmin } = useAuth();
-    const [replies, setReplies] = useState<CommentType[]>([]);
 
     const isLiked = likedComments[comment.id] || false;
     const canModify = user && (user.id === comment.author.id || isAdmin);
 
     const handleLikeClick = async () => {
-        const result = await toggleCommentLike(postId, comment.id, isLiked);
-        if (result.success) {
-            onLikeToggle(comment.id, isLiked);
-        }
+        onLikeToggle(comment.id, isLiked);
+        await toggleCommentLike(postId, comment.id, isLiked);
     }
     
     const handleDelete = async () => {
         if (!canModify || !user) return;
-        const result = await deleteComment(postId, comment.id, user.id, isAdmin);
         setDeleteDialogOpen(false);
+        const result = await deleteComment(postId, comment.id, user.id, isAdmin);
         if(result.success) {
             onDelete(comment.id);
+        } else {
+             toast({ title: 'Error', description: result.error, variant: 'destructive' });
         }
     }
 
@@ -218,12 +219,14 @@ const Comment = ({
             onAdminAction(result.updatedComment);
         }
     }
+    
+    const { toast } = useToast();
 
     return (
-       <div className={cn("flex items-start gap-4 p-4 rounded-lg transition-colors duration-300 relative", {
-           "bg-primary/10 border-l-4 border-primary": comment.highlighted,
-           "border-amber-500/30": comment.highlighted,
-       })}>
+       <div className={cn("flex flex-col gap-4 ")}>
+        <div className={cn("flex items-start gap-4 p-4 rounded-lg transition-colors duration-300 relative", {
+           "bg-primary/5 border-l-4 border-primary": comment.highlighted,
+        })}>
             <Avatar>
               <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
               <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
@@ -231,7 +234,7 @@ const Comment = ({
             <div className="flex-1">
               {!isEditing ? (
                 <>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                     <div className="flex items-baseline gap-2">
                         <p className="font-semibold">{comment.author.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -239,7 +242,7 @@ const Comment = ({
                         </p>
                     </div>
                     {comment.pinned && <Badge variant="secondary"><Pin className="h-3 w-3 mr-1" /> Pinned</Badge>}
-                    {comment.highlighted && <Badge variant="default" className="bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30"><Star className="h-3 w-3 mr-1" /> Highlighted</Badge>}
+                    {comment.highlighted && <Badge variant="default" className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"><Star className="h-3 w-3 mr-1" /> Highlighted</Badge>}
                 </div>
                 <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{comment.content}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
@@ -247,7 +250,10 @@ const Comment = ({
                         <Heart className={cn("h-4 w-4 transition-all transform", { 'fill-current scale-110': isLiked })} />
                         <span>{comment.likes}</span>
                     </button>
-                    {/* Reply functionality for nested comments would be more complex and require recursive fetching */}
+                    <button onClick={() => setShowReplyForm(!showReplyForm)} className="flex items-center gap-1 hover:text-primary transition-colors">
+                        <MessageSquare className="h-4 w-4"/>
+                        <span>Reply</span>
+                    </button>
                 </div>
                 </>
               ) : (
@@ -314,11 +320,51 @@ const Comment = ({
                 </AlertDialogContent>
             </AlertDialog>
           </div>
+
+        {showReplyForm && (
+            <div className="pl-14">
+                <CommentForm
+                    postId={postId}
+                    parentId={comment.id}
+                    onCommentAdded={(newReply) => {
+                        onReply(newReply, comment.id);
+                        setShowReplyForm(false);
+                    }}
+                    onCancel={() => setShowReplyForm(false)}
+                    buttonText="Post Reply"
+                />
+            </div>
+        )}
+
+        {replies.length > 0 && (
+            <Collapsible className="pl-14">
+                <CollapsibleTrigger asChild>
+                    <Button variant="link" size="sm" className="text-xs">View {replies.length} replies</Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-2">
+                    {replies.map(reply => (
+                        <Comment
+                            key={reply.id}
+                            comment={reply}
+                            postId={postId}
+                            onUpdate={onUpdate}
+                            onDelete={onDelete}
+                            onAdminAction={onAdminAction}
+                            likedComments={likedComments}
+                            onLikeToggle={onLikeToggle}
+                            onReply={onReply}
+                            replies={[]} // Nested replies not supported in this UI level
+                        />
+                    ))}
+                </CollapsibleContent>
+            </Collapsible>
+        )}
+       </div>
     )
 }
 
 export default function CommentSection({ postId, initialComments }: CommentSectionProps) {
-  const [comments, setComments] = useState<CommentType[]>(initialComments);
+  const [comments, setComments] = useState<CommentType[]>(sortComments(initialComments));
   const [likedComments, setLikedComments] = useState<{ [key: string]: boolean }>({});
   const { user, signIn } = useAuth();
   
@@ -327,15 +373,38 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
     const postLikes = storedLikes[postId] || {};
     setLikedComments(postLikes);
   }, [postId]);
+
+  const commentsWithReplies = useMemo(() => {
+    const commentMap = new Map<string, CommentType & { replies: CommentType[] }>();
+    const topLevelComments: (CommentType & { replies: CommentType[] })[] = [];
+
+    comments.forEach(comment => {
+        commentMap.set(comment.id, { ...comment, replies: [] });
+    });
+
+    comments.forEach(comment => {
+        if (comment.parentId && commentMap.has(comment.parentId)) {
+            commentMap.get(comment.parentId)?.replies.push(commentMap.get(comment.id)!);
+        } else {
+            topLevelComments.push(commentMap.get(comment.id)!);
+        }
+    });
+    
+    return topLevelComments;
+  }, [comments]);
   
-  const commentCount = comments.length; // Simplification: doesn't count nested replies
+  const commentCount = comments.length;
 
   const updateCommentsState = (list: CommentType[], updatedComment: CommentType): CommentType[] => {
-      return list.map(c => c.id === updatedComment.id ? updatedComment : c);
+      const exists = list.some(c => c.id === updatedComment.id);
+      if (exists) {
+          return list.map(c => c.id === updatedComment.id ? updatedComment : c);
+      }
+      return [updatedComment, ...list];
   }
   
   const deleteCommentFromState = (list: CommentType[], commentId: string): CommentType[] => {
-    return list.filter(c => c.id !== commentId);
+    return list.filter(c => c.id !== commentId && c.parentId !== commentId);
   }
 
   const handleLikeToggle = (commentId: string, isLiked: boolean) => {
@@ -357,9 +426,13 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
   const addCommentToState = (newComment: CommentType) => {
       setComments(prev => sortComments([newComment, ...prev]));
   }
+
+  const handleReplyToComment = (newReply: CommentType, parentId: string) => {
+      setComments(prev => sortComments([newReply, ...prev]));
+  }
   
   const handleUpdateComment = (updatedComment: CommentType) => {
-      setComments(prev => updateCommentsState(prev, updatedComment));
+      setComments(prev => sortComments(updateCommentsState(prev, updatedComment)));
   }
   
   const handleAdminAction = (updatedComment: CommentType) => {
@@ -385,19 +458,19 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
       </div>
 
       <div className="mt-8 space-y-6">
-        {comments.map((comment) => (
-          <div className="relative" key={comment.id}>
+        {commentsWithReplies.map((comment) => (
             <Comment 
+                key={comment.id}
                 comment={comment}
                 postId={postId}
-                onReply={(newReply, parentId) => {}} // Not implemented
                 onUpdate={handleUpdateComment}
                 onDelete={handleDeleteComment}
                 onAdminAction={handleAdminAction}
                 likedComments={likedComments}
                 onLikeToggle={handleLikeToggle}
+                replies={comment.replies}
+                onReply={handleReplyToComment}
             />
-           </div>
         ))}
       </div>
     </section>

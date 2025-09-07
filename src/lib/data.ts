@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase';
 import { 
     collection, 
@@ -117,10 +118,12 @@ const seedDatabase = async () => {
             const postRef = doc(collection(db, 'posts')).withConverter(postConverter);
             batch.set(postRef, post);
             
-            comments?.forEach(commentData => {
-                const commentRef = doc(collection(postRef, 'comments')).withConverter(commentConverter);
-                batch.set(commentRef, commentData);
-            });
+            if (comments) {
+              comments.forEach(commentData => {
+                  const commentRef = doc(collection(postRef, 'comments')).withConverter(commentConverter);
+                  batch.set(commentRef, commentData);
+              });
+            }
         });
         await batch.commit();
         console.log("Database seeded successfully.");
@@ -161,17 +164,15 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
     if (!postId) return [];
     
     const commentsCollection = collection(db, 'posts', postId, 'comments').withConverter(commentConverter);
-    const q = query(commentsCollection, orderBy('pinned', 'desc'), orderBy('createdAt', 'desc'));
+    // Firestore does not allow multiple inequality filters on different fields,
+    // so we sort by pinned on the client after fetching.
+    // The query below is to get all comments sorted by creation time.
+    const q = query(commentsCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     
     let comments = snapshot.docs.map(doc => doc.data());
-
-    // In Firestore, you can't have nested subcollections on a document,
-    // so we model replies with a parentId and fetch them separately.
-    // For simplicity here, we'll fetch only top-level comments.
-    // A more complex app would fetch replies recursively.
     
-    return sortComments(comments.filter(c => c.parentId === null));
+    return sortComments(comments);
 };
 
 
