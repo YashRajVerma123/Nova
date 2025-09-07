@@ -27,10 +27,11 @@ const PostsPage = () => {
     if (!searchQuery) {
       setFilteredPosts(sortedPosts);
     } else {
+      const lowercasedQuery = searchQuery.toLowerCase();
       setFilteredPosts(sortedPosts.filter(post => 
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+        post.title.toLowerCase().includes(lowercasedQuery) ||
+        post.description.toLowerCase().includes(lowercasedQuery) ||
+        post.tags.some(tag => tag.toLowerCase() === lowercasedQuery)
       ));
     }
   }, [searchQuery, posts]);
