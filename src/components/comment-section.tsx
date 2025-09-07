@@ -187,6 +187,8 @@ const Comment = ({
 
     const isLiked = likedComments[comment.id] || false;
     const canModify = user && (user.id === comment.author.id || isAdmin);
+    const isTopLevelComment = !comment.parentId;
+
 
     const handleLikeClick = async () => {
         onLikeToggle(comment.id, isLiked);
@@ -250,10 +252,12 @@ const Comment = ({
                         <Heart className={cn("h-4 w-4 transition-all transform", { 'fill-current scale-110': isLiked })} />
                         <span>{comment.likes}</span>
                     </button>
-                    <button onClick={() => setShowReplyForm(!showReplyForm)} className="flex items-center gap-1 hover:text-primary transition-colors">
-                        <MessageSquare className="h-4 w-4"/>
-                        <span>Reply</span>
-                    </button>
+                     {isTopLevelComment && (
+                        <button onClick={() => setShowReplyForm(!showReplyForm)} className="flex items-center gap-1 hover:text-primary transition-colors">
+                            <MessageSquare className="h-4 w-4"/>
+                            <span>Reply</span>
+                        </button>
+                     )}
                 </div>
                 </>
               ) : (
