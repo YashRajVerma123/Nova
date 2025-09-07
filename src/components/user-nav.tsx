@@ -1,5 +1,5 @@
 'use client';
-import { CreditCard, LogOut, User as UserIcon } from 'lucide-react';
+import { CreditCard, LogOut, User as UserIcon, Upload } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +18,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from './ui/input';
@@ -27,11 +27,13 @@ import { useToast } from '@/hooks/use-toast';
 
 // This is the main component for the header.
 const UserNav = () => {
-  const { user, signIn, signOut, loading, updateUserProfile, isAdmin } = useAuth();
+  const { user, signIn, signOut, loading, updateUserProfile, uploadAvatar } = useAuth();
   const [isSignInOpen, setSignInOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [newUsername, setNewUsername] = useState(user?.name || '');
-  const [newAvatarUrl, setNewAvatarUrl] = useState(user?.avatar || '');
+  const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
 
@@ -53,12 +55,19 @@ const UserNav = () => {
     e.preventDefault();
     if (!user || !newUsername.trim()) return;
 
+    setIsUploading(true);
     try {
-      await updateUserProfile({ name: newUsername.trim(), avatar: newAvatarUrl.trim() });
+      let newAvatarUrl = user.avatar;
+      if (newAvatarFile) {
+        newAvatarUrl = await uploadAvatar(newAvatarFile, user.id);
+      }
+      
+      await updateUserProfile({ name: newUsername.trim(), avatar: newAvatarUrl });
       toast({
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
       });
+      setNewAvatarFile(null);
       setProfileOpen(false);
     } catch (error) {
       console.error('Profile update failed', error);
@@ -67,6 +76,8 @@ const UserNav = () => {
         description: 'Could not update your profile. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setIsUploading(false);
     }
   };
   
@@ -74,9 +85,14 @@ const UserNav = () => {
   useState(() => {
     if (user) {
       setNewUsername(user.name);
-      setNewAvatarUrl(user.avatar);
     }
   });
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setNewAvatarFile(e.target.files[0]);
+    }
+  }
 
   if (loading) {
     return <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />;
@@ -89,6 +105,8 @@ const UserNav = () => {
     }
     return name.substring(0, 2);
   };
+
+  const previewUrl = newAvatarFile ? URL.createObjectURL(newAvatarFile) : user?.avatar;
 
   if (!user) {
     return (
@@ -165,11 +183,23 @@ const UserNav = () => {
           </DialogHeader>
           <form onSubmit={handleProfileUpdate}>
             <div className="grid gap-4 py-4">
-               <div className="flex justify-center">
+               <div className="flex flex-col items-center gap-4">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={newAvatarUrl} alt={newUsername} />
+                    <AvatarImage src={previewUrl} alt={newUsername} />
                     <AvatarFallback>{getInitials(newUsername)}</AvatarFallback>
                   </Avatar>
+                  <Input 
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    ref={fileInputRef}
+                    className="hidden"
+                  />
+                  <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Photo
+                  </Button>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right">
@@ -182,20 +212,11 @@ const UserNav = () => {
                   className="col-span-3"
                 />
               </div>
-               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="avatar" className="text-right">
-                  Avatar URL
-                </Label>
-                <Input
-                  id="avatar"
-                  value={newAvatarUrl}
-                  onChange={(e) => setNewAvatarUrl(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
             </div>
             <DialogFooter>
-              <Button type="submit">Save changes</Button>
+              <Button type="submit" disabled={isUploading}>
+                {isUploading ? 'Saving...' : 'Save changes'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

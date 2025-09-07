@@ -2,8 +2,9 @@
 
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, updateProfile, User as FirebaseUser } from 'firebase/auth';
-import { app } from '@/lib/firebase';
+import { app, storage } from '@/lib/firebase';
 import type { Author } from '@/lib/data';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 interface AuthContextType {
   user: Author | null;
@@ -12,6 +13,7 @@ interface AuthContextType {
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   updateUserProfile: (updates: { name?: string; avatar?: string }) => Promise<void>;
+  uploadAvatar: (file: File, userId: string) => Promise<string>;
   loading: boolean;
 }
 
@@ -62,6 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const uploadAvatar = useCallback(async (file: File, userId: string): Promise<string> => {
+    if (!userId) throw new Error("User not authenticated for upload");
+    const storageRef = ref(storage, `avatars/${userId}/${file.name}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+  }, []);
+
+
   const updateUserProfile = useCallback(async (updates: { name?: string; avatar?: string }) => {
     if (!auth.currentUser) throw new Error("Not authenticated");
     
@@ -81,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = user?.email === 'yashrajverma916@gmail.com';
 
-  const value = { user, firebaseUser, isAdmin, signIn, signOut, updateUserProfile, loading };
+  const value = { user, firebaseUser, isAdmin, signIn, signOut, updateUserProfile, uploadAvatar, loading };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
