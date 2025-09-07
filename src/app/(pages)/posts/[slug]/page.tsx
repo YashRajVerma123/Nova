@@ -22,10 +22,9 @@ import {
 import { Input } from '@/components/ui/input';
 import CommentSection from '@/components/comment-section';
 
-const PostPage = ({ params }: { params: { slug: string } }) => {
+const PostPage = ({ params: { slug } }: { params: { slug: string } }) => {
   const { toast } = useToast();
   const router = useRouter();
-  const slug = params.slug;
   
   const post = useMemo(() => initialPosts.find(p => p.slug === slug), [slug]);
   
