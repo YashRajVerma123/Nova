@@ -2,6 +2,7 @@
 import { useState, useEffect, ReactNode } from 'react';
 import Preloader from '@/components/preloader';
 import { AuthProvider } from '@/contexts/auth-context';
+import { ThemeProvider } from 'next-themes';
 
 export function ClientProviders({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -15,5 +16,9 @@ export function ClientProviders({ children }: { children: ReactNode }) {
     return <Preloader />;
   }
 
-  return <AuthProvider>{children}</AuthProvider>;
+  return (
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <AuthProvider>{children}</AuthProvider>
+    </ThemeProvider>
+  );
 }

@@ -1,6 +1,6 @@
 
 'use client';
-import { CreditCard, LogOut, User as UserIcon, Upload } from 'lucide-react';
+import { CreditCard, LogOut, User as UserIcon, Upload, Moon, Sun } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from 'next-themes';
+import { Switch } from './ui/switch';
 
 // Helper to convert file to Base64
 const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
@@ -45,6 +47,12 @@ const UserNav = () => {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
 
   useEffect(() => {
@@ -116,7 +124,7 @@ const UserNav = () => {
     }
   }
 
-  if (loading) {
+  if (loading || !isMounted) {
     return <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />;
   }
 
@@ -184,6 +192,15 @@ const UserNav = () => {
                 <span>Admin Panel</span>
               </DropdownMenuItem>
             )}
+             <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="flex-1 ml-2">Theme</span>
+                <Switch
+                    checked={theme === 'dark'}
+                    onCheckedChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                />
+            </div>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={signOut}>
