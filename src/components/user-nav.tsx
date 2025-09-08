@@ -67,6 +67,7 @@ const UserNav = () => {
     setIsSigningIn(true);
     try {
       await signIn();
+      // Only close the dialog on successful sign-in
       setSignInOpen(false);
     } catch (error) {
       console.error('Sign in failed', error);
