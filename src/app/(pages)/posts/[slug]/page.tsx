@@ -103,12 +103,8 @@ export default async function PostPage({ params }: { params: { slug: string } })
           
           <PostActions post={post} />
 
-          {post.author.id === 'yash-raj' && (
-            <>
-                <Separator className="my-12" />
-                <AboutTheAuthor />
-            </>
-           )}
+          <Separator className="my-12" />
+          <AboutTheAuthor />
 
         </article>
 
