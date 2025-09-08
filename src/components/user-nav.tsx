@@ -1,6 +1,6 @@
 
 'use client';
-import { CreditCard, LogOut, User as UserIcon, Upload, Moon, Sun } from 'lucide-react';
+import { CreditCard, LogOut, User as UserIcon, Upload, Moon, Sun, Loader2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +40,7 @@ const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) 
 const UserNav = () => {
   const { user, signIn, signOut, loading, updateUserProfile, isAdmin } = useAuth();
   const [isSignInOpen, setSignInOpen] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [newUsername, setNewUsername] = useState(user?.name || '');
   const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
@@ -63,16 +64,22 @@ const UserNav = () => {
   }, [user]);
 
   const handleSignIn = async () => {
+    setIsSigningIn(true);
     try {
       await signIn();
       setSignInOpen(false);
     } catch (error) {
       console.error('Sign in failed', error);
-      toast({
-        title: 'Sign In Failed',
-        description: 'Could not sign you in with Google. Please try again.',
-        variant: 'destructive',
-      });
+      // Don't show a toast for user-closed popups
+      if ((error as any).code !== 'auth/popup-closed-by-user') {
+          toast({
+            title: 'Sign In Failed',
+            description: 'Could not sign you in with Google. Please try again.',
+            variant: 'destructive',
+          });
+      }
+    } finally {
+        setIsSigningIn(false);
     }
   };
 
@@ -151,9 +158,13 @@ const UserNav = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center space-x-2">
-              <Button onClick={handleSignIn} className="w-full">
-                <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-72.2 72.2C297.1 114.5 273.5 104 248 104c-73.8 0-134.3 60.5-134.3 134.3s60.5 134.3 134.3 134.3c84.1 0 115.3-63.8 119.9-95.2H248v-85.3h236.1c2.3 12.7 3.9 26.9 3.9 41.4z"></path></svg>
-                Sign in with Google
+              <Button onClick={handleSignIn} className="w-full" disabled={isSigningIn}>
+                {isSigningIn ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-72.2 72.2C297.1 114.5 273.5 104 248 104c-73.8 0-134.3 60.5-134.3 134.3s60.5 134.3 134.3 134.3c84.1 0 115.3-63.8 119.9-95.2H248v-85.3h236.1c2.3 12.7 3.9 26.9 3.9 41.4z"></path></svg>
+                )}
+                {isSigningIn ? 'Signing In...' : 'Sign in with Google'}
               </Button>
             </div>
           </DialogContent>
@@ -263,3 +274,5 @@ const UserNav = () => {
 };
 
 export default UserNav;
+
+    
