@@ -76,25 +76,17 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    background-color: hsl(var(--background));
+    @apply bg-background text-foreground animate-background-pan;
     background-image:
       radial-gradient(at 20% 80%, hsla(var(--primary), 0.1) 0px, transparent 50%),
       radial-gradient(at 80% 20%, hsla(207, 44%, 49%, 0.1) 0px, transparent 50%);
     min-height: 100vh;
     font-feature-settings: "ss01";
-    animation: background-pan 15s ease-in-out infinite;
   }
 
   .dark body {
      background-color: hsl(240, 10%, 3.9%);
   }
-}
-
-@keyframes background-pan {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 
