@@ -10,6 +10,7 @@ import BlogPostCard from '@/components/blog-post-card';
 import PostActions from '@/components/post-actions';
 import CommentSection from '@/components/comment-section';
 import Link from 'next/link';
+import AboutTheAuthor from '@/components/about-the-author';
 
 // This becomes a server component that fetches all necessary data
 export default async function PostPage({ params }: { params: { slug: string } }) {
@@ -101,6 +102,13 @@ export default async function PostPage({ params }: { params: { slug: string } })
           <Separator className="my-10" />
           
           <PostActions post={post} />
+
+          {post.author.id === 'yash-raj' && (
+            <>
+                <Separator className="my-12" />
+                <AboutTheAuthor />
+            </>
+           )}
 
         </article>
 

@@ -1,5 +1,6 @@
+
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, Space_Grotesk, Dancing_Script } from "next/font/google";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { ClientProviders } from "@/components/client-providers";
@@ -20,6 +21,12 @@ const spaceGrotesk = Space_Grotesk({
   variable: '--font-space-grotesk',
 });
 
+const dancingScript = Dancing_Script({
+  subsets: ['latin'],
+  variable: '--font-dancing-script',
+  weight: '700'
+});
+
 
 export const metadata: Metadata = {
   title: "Nova - Cutting through the noise",
@@ -38,6 +45,7 @@ export default function RootLayout({
           "min-h-screen bg-background font-body text-foreground antialiased",
           inter.variable,
           spaceGrotesk.variable,
+          dancingScript.variable,
         )}
       >
         <ClientProviders>
