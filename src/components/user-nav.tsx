@@ -1,6 +1,6 @@
 
 'use client';
-import { CreditCard, LogOut, User as UserIcon, Upload, Moon, Sun, Loader2 } from 'lucide-react';
+import { CreditCard, LogOut, User as UserIcon, Upload, Moon, Sun, Loader2, PanelRightOpen, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,7 @@ import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
 import { Switch } from './ui/switch';
+import { usePathname } from 'next/navigation';
 
 // Helper to convert file to Base64
 const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
@@ -50,6 +51,7 @@ const UserNav = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
   
   useEffect(() => {
     setIsMounted(true);
@@ -131,6 +133,11 @@ const UserNav = () => {
         setProfileOpen(true);
     }
   }
+  
+  // For mobile sheet
+   if (pathname.startsWith('/admin')) {
+      return null;
+  }
 
   if (loading || !isMounted) {
     return <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />;
@@ -143,6 +150,60 @@ const UserNav = () => {
     }
     return name.substring(0, 2);
   };
+  
+  // Full component for mobile sheet
+  const FullUserNav = () => {
+      if (!user) {
+          return (
+             <Button variant="default" size="lg" className="w-full" onClick={() => setSignInOpen(true)}>
+              Sign In
+            </Button>
+          )
+      }
+      return (
+          <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                      <p className="font-semibold text-lg">{user.name}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                  </div>
+              </div>
+              <Button variant="outline" onClick={handleOpenProfile}>
+                  <Settings className="mr-2" /> Edit Profile
+              </Button>
+               {isAdmin && (
+                  <Button asChild variant="outline">
+                      <a href="/admin">
+                          <PanelRightOpen className="mr-2" /> Admin Dashboard
+                      </a>
+                  </Button>
+                )}
+               <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-2">
+                    <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span className="ml-2">Theme</span>
+                  </div>
+                  <Switch
+                      checked={theme === 'dark'}
+                      onCheckedChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  />
+               </div>
+              <Button variant="destructive" onClick={signOut}>
+                <LogOut className="mr-2" /> Log Out
+              </Button>
+          </div>
+      )
+  }
+  
+  if (pathname.startsWith('/mobile-sheet')) {
+      return <FullUserNav />
+  }
+
 
   if (!user) {
     return (
@@ -275,5 +336,3 @@ const UserNav = () => {
 };
 
 export default UserNav;
-
-    

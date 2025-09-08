@@ -7,6 +7,7 @@ import { File, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Post, getPosts } from '@/lib/data';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 const SearchBar = () => {
   const router = useRouter();
@@ -70,19 +71,21 @@ const SearchBar = () => {
 
 
   return (
-    <div className="relative w-full max-w-xs md:max-w-sm" ref={searchContainerRef}>
+    <div className={cn("relative w-full max-w-xs md:max-w-sm", {
+      "w-40 md:w-full": !isFocused && !query
+    })} ref={searchContainerRef}>
       <form onSubmit={handleSearchSubmit}>
         <div className="relative">
           <Input
             type="search"
-            placeholder="Search articles..."
-            className="pr-10 h-10 w-full bg-secondary text-base md:text-sm"
+            placeholder="Search..."
+            className="pr-10 h-9 sm:h-10 w-full bg-secondary"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
           />
           <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
-            <Search className="h-5 w-5 text-muted-foreground" />
+            <Search className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
           </button>
         </div>
       </form>

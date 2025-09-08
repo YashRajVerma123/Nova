@@ -65,49 +65,54 @@ const Header = () => {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <SearchBar />
+        <div className="flex items-center gap-2 sm:gap-4">
+           <div className="hidden sm:block">
+            <SearchBar />
+          </div>
           <div className="hidden md:flex items-center gap-2">
             <NotificationBell />
             <UserNav />
           </div>
         </div>
 
-        <div className="md:hidden flex items-center gap-2">
+        <div className="md:hidden flex items-center gap-1">
+            <SearchBar />
             <NotificationBell />
-            <UserNav />
             <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full bg-background/95 backdrop-blur-xl">
+              <SheetContent side="right" className="w-full max-w-sm bg-background/95 backdrop-blur-xl p-0">
                  <div className="flex flex-col h-full">
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex justify-between items-center p-6 border-b border-border/10">
                       <div className="[&>a]:text-foreground">
                         <Logo />
                       </div>
                        <SheetTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <X className="h-6 w-6" />
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <X className="h-5 w-5" />
                           </Button>
                        </SheetTrigger>
                     </div>
-                    <nav className="flex flex-col items-start gap-6">
+                    <nav className="flex flex-col items-start gap-2 p-6">
                       {navLinks.map((link) => (
                         <Link
                           key={link.href}
                           href={link.href}
                           className={cn(
-                            'text-xl font-medium transition-colors hover:text-primary',
-                            pathname === link.href ? 'text-primary' : 'text-foreground'
+                            'text-2xl font-medium transition-colors hover:text-primary w-full p-3 rounded-md',
+                            pathname === link.href ? 'text-primary bg-secondary' : 'text-foreground/80'
                           )}
                         >
                           {link.label}
                         </Link>
                       ))}
                     </nav>
+                    <div className="mt-auto p-6 border-t border-border/10">
+                        <UserNav />
+                    </div>
                  </div>
               </SheetContent>
             </Sheet>
