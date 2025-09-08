@@ -76,20 +76,26 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground animate-background-pan;
-    background-image:
-      radial-gradient(at 20% 80%, hsla(var(--primary), 0.1) 0px, transparent 50%),
-      radial-gradient(at 80% 20%, hsla(207, 44%, 49%, 0.1) 0px, transparent 50%),
-      radial-gradient(at 75% 75%, hsla(339, 79%, 60%, 0.1) 0px, transparent 50%),
-      radial-gradient(at 20% 20%, hsla(140, 70%, 55%, 0.1) 0px, transparent 50%);
-    background-size: 200% 200%;
+    @apply bg-background text-foreground;
     min-height: 100vh;
     font-feature-settings: "ss01";
   }
+}
 
-  .dark body {
-     background-color: hsl(240, 10%, 3.9%);
-  }
+@keyframes move-circle-1 {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(100px, 50px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes move-circle-2 {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(-80px, -40px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes move-circle-3 {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(50px, -100px); }
+  100% { transform: translate(0, 0); }
 }
 
 

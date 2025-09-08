@@ -6,6 +6,7 @@ import { ClientProviders } from "@/components/client-providers";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
+import BackgroundAnimation from "@/components/background-animation";
 
 const inter = Inter({ 
   subsets: ["latin"], 
@@ -39,7 +40,8 @@ export default function RootLayout({
         )}
       >
         <ClientProviders>
-          <div className="flex flex-col min-h-screen">
+          <BackgroundAnimation />
+          <div className="relative z-10 flex flex-col min-h-screen">
             <Header />
             <main className="flex-grow pt-20">{children}</main>
             <Footer />
