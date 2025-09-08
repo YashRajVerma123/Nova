@@ -162,6 +162,22 @@ const commentConverter = {
     }
 };
 
+const authorConverter = {
+    fromFirestore: (snapshot: any, options: any): Author => {
+        const data = snapshot.data(options);
+        return {
+            id: snapshot.id,
+            name: data.name,
+            avatar: data.avatar,
+            email: data.email,
+        };
+    },
+    toFirestore: (author: Omit<Author, 'id'>) => {
+        return author;
+    }
+};
+
+
 const seedDatabase = async () => {
     const postsCollection = collection(db, 'posts');
     const postsSnapshot = await getDocs(query(postsCollection, limit(1)));
@@ -339,3 +355,14 @@ export async function deleteBulletin(bulletinId: string) {
     const bulletinRef = doc(db, 'bulletins', bulletinId);
     await deleteDoc(bulletinRef);
 }
+
+export const getAuthorByEmail = async (email: string): Promise<Author | null> => {
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, where('email', '==', email), limit(1)).withConverter(authorConverter);
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+        return null;
+    }
+    return snapshot.docs[0].data();
+};
