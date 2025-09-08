@@ -3,9 +3,9 @@
 'use client';
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Edit, PlusCircle, Trash, Users, BellRing, Image as ImageIcon, Megaphone, User as UserIcon } from "lucide-react";
+import { BarChart, Edit, PlusCircle, Trash, Users, BellRing, Image as ImageIcon, Megaphone, User as UserIcon, Upload } from "lucide-react";
 import { Post, getPosts, Notification, getNotifications, Bulletin, getBulletins, Author } from "@/lib/data";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -33,7 +33,14 @@ import { addNotificationAction, deleteNotificationAction } from "@/app/actions/n
 import { addBulletin, deleteBulletin } from "@/lib/data";
 import { Separator } from "@/components/ui/separator";
 import { updateAuthorProfile } from "@/app/actions/user-actions";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
+const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+});
 
 const notificationSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -68,6 +75,9 @@ const AdminPage = () => {
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
     const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
     const [bulletinToDelete, setBulletinToDelete] = useState<Bulletin | null>(null);
+    const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState(user?.avatar || '');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const notificationForm = useForm<z.infer<typeof notificationSchema>>({
       resolver: zodResolver(notificationSchema),
@@ -104,7 +114,8 @@ const AdminPage = () => {
                 bio: user.bio || '',
                 instagramUrl: user.instagramUrl || '',
                 signature: user.signature || '',
-            })
+            });
+            setPreviewUrl(user.avatar);
         }
     }, [user, profileForm]);
 
@@ -131,6 +142,14 @@ const AdminPage = () => {
             </div>
         );
     }
+
+    const getInitials = (name: string) => {
+        const names = name.split(' ');
+        if (names.length > 1 && names[0] && names[1]) {
+        return `${names[0][0]}${names[1][0]}`;
+        }
+        return name.substring(0, 2);
+    };
 
     const handleDeletePostClick = (post: Post) => {
         setPostToDelete(post);
@@ -208,18 +227,32 @@ const AdminPage = () => {
       }
     }
 
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setNewAvatarFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+        }
+    }
+
     const onProfileSubmit = async (values: z.infer<typeof profileSchema>) => {
         if (!user) return;
         try {
-            await updateAuthorProfile(user.id, values);
-            // We also need to update the local auth context state
-            await updateUserProfile({
-                name: values.name,
-                bio: values.bio,
-                instagramUrl: values.instagramUrl,
-                signature: values.signature,
-            });
+             let newAvatarUrl = user.avatar;
+            if (newAvatarFile) {
+                newAvatarUrl = await toBase64(newAvatarFile);
+            }
+
+            const updates = {
+                ...values,
+                avatar: newAvatarUrl,
+            }
+
+            await updateAuthorProfile(user.id, updates);
+            await updateUserProfile(updates);
+            
             toast({ title: "Profile Updated!", description: "Your author profile has been saved."});
+            setNewAvatarFile(null);
         } catch (error) {
             toast({ title: "Error", description: "Failed to update profile.", variant: "destructive" });
         }
@@ -366,6 +399,24 @@ const AdminPage = () => {
                         <CardContent>
                           <Form {...profileForm}>
                             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+                                <div className="flex flex-col items-center gap-4">
+                                    <Avatar className="h-24 w-24">
+                                        <AvatarImage src={previewUrl} alt={user?.name} />
+                                        <AvatarFallback>{getInitials(user?.name || '')}</AvatarFallback>
+                                    </Avatar>
+                                    <Input 
+                                        id="avatar-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleAvatarChange}
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                    />
+                                    <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Change Photo
+                                    </Button>
+                                </div>
                                 <FormField
                                     control={profileForm.control}
                                     name="name"
@@ -628,3 +679,5 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
+
+    

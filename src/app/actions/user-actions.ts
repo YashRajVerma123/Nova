@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -11,6 +12,7 @@ const profileSchema = z.object({
   bio: z.string().min(20, 'Bio must be at least 20 characters.'),
   instagramUrl: z.string().url('Please enter a valid Instagram URL.'),
   signature: z.string().min(2, 'Signature must be at least 2 characters.'),
+  avatar: z.string().optional(),
 });
 
 export async function updateAuthorProfile(authorId: string, values: z.infer<typeof profileSchema>): Promise<{ success: boolean }> {
@@ -20,12 +22,15 @@ export async function updateAuthorProfile(authorId: string, values: z.infer<type
 
   const authorRef = doc(db, 'users', authorId);
   
-  await updateDoc(authorRef, {
-    name: values.name,
-    bio: values.bio,
-    instagramUrl: values.instagramUrl,
-    signature: values.signature,
-  });
+  // Construct object with only defined values to avoid overwriting fields with undefined
+  const updateData: { [key: string]: any } = {};
+  if (values.name) updateData.name = values.name;
+  if (values.bio) updateData.bio = values.bio;
+  if (values.instagramUrl) updateData.instagramUrl = values.instagramUrl;
+  if (values.signature) updateData.signature = values.signature;
+  if (values.avatar) updateData.avatar = values.avatar;
+
+  await updateDoc(authorRef, updateData);
 
   // Revalidate paths where author info is shown
   revalidatePath('/admin');
@@ -33,3 +38,5 @@ export async function updateAuthorProfile(authorId: string, values: z.infer<type
   
   return { success: true };
 }
+
+    
