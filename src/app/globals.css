@@ -80,6 +80,7 @@
     background-image:
       radial-gradient(at 20% 80%, hsla(var(--primary), 0.1) 0px, transparent 50%),
       radial-gradient(at 80% 20%, hsla(207, 44%, 49%, 0.1) 0px, transparent 50%);
+    background-size: 200% 200%;
     min-height: 100vh;
     font-feature-settings: "ss01";
   }
