@@ -14,17 +14,18 @@ import AboutTheAuthor from '@/components/about-the-author';
 
 // This becomes a server component that fetches all necessary data
 export default async function PostPage({ params }: { params: { slug: string } }) {
-  const post = await getPost(params.slug);
+  // Fetch data in parallel for better performance
+  const [post, allPosts, initialComments] = await Promise.all([
+    getPost(params.slug),
+    getPosts(),
+    getPost(params.slug).then(p => p ? getComments(p.id) : [])
+  ]);
   
   if (!post) {
       return notFound();
   }
 
-  // Fetch comments on the server
-  const initialComments = await getComments(post.id);
-
-  // Fetch related posts
-  const allPosts = await getPosts();
+  // Filter related posts after fetching
   const relatedPosts = allPosts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   
   const getInitials = (name: string) => {
