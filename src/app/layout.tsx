@@ -8,6 +8,7 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
 import BackgroundAnimation from "@/components/background-animation";
+import PageLoader from "@/components/page-loader";
 
 const inter = Inter({ 
   subsets: ["latin"], 
@@ -48,6 +49,7 @@ export default function RootLayout({
         )}
       >
         <ClientProviders>
+          <PageLoader />
           <BackgroundAnimation />
           <div className="relative z-10 flex flex-col min-h-screen">
             <Header />
