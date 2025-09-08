@@ -26,6 +26,9 @@ export type Author = {
   name: string;
   avatar: string;
   email: string;
+  bio?: string;
+  instagramUrl?: string;
+  signature?: string;
 };
 
 export type Comment = {
@@ -170,6 +173,9 @@ const authorConverter = {
             name: data.name,
             avatar: data.avatar,
             email: data.email,
+            bio: data.bio,
+            instagramUrl: data.instagramUrl,
+            signature: data.signature,
         };
     },
     toFirestore: (author: Omit<Author, 'id'>) => {

@@ -5,8 +5,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Edit, PlusCircle, Trash, Users, BellRing, Image as ImageIcon, Megaphone } from "lucide-react";
-import { Post, getPosts, Notification, getNotifications, Bulletin, getBulletins } from "@/lib/data";
+import { BarChart, Edit, PlusCircle, Trash, Users, BellRing, Image as ImageIcon, Megaphone, User as UserIcon } from "lucide-react";
+import { Post, getPosts, Notification, getNotifications, Bulletin, getBulletins, Author } from "@/lib/data";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { addNotificationAction, deleteNotificationAction } from "@/app/actions/notification-actions";
 import { addBulletin, deleteBulletin } from "@/lib/data";
 import { Separator } from "@/components/ui/separator";
+import { updateAuthorProfile } from "@/app/actions/user-actions";
 
 
 const notificationSchema = z.object({
@@ -46,9 +47,16 @@ const bulletinSchema = z.object({
   coverImage: z.string().url('Please enter a valid image URL.'),
 });
 
+const profileSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters.'),
+  bio: z.string().min(20, 'Bio must be at least 20 characters.'),
+  instagramUrl: z.string().url('Please enter a valid Instagram URL.'),
+  signature: z.string().min(2, 'Signature must be at least 2 characters.'),
+});
+
 
 const AdminPage = () => {
-    const { user, isAdmin, loading } = useAuth();
+    const { user, isAdmin, loading, updateUserProfile } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [allPosts, setAllPosts] = useState<Post[]>([]);
@@ -78,6 +86,27 @@ const AdminPage = () => {
         coverImage: 'https://picsum.photos/1200/800',
       },
     });
+
+    const profileForm = useForm<z.infer<typeof profileSchema>>({
+        resolver: zodResolver(profileSchema),
+        defaultValues: {
+            name: user?.name || '',
+            bio: user?.bio || '',
+            instagramUrl: user?.instagramUrl || '',
+            signature: user?.signature || '',
+        }
+    });
+
+    useEffect(() => {
+        if (user) {
+            profileForm.reset({
+                name: user.name,
+                bio: user.bio || '',
+                instagramUrl: user.instagramUrl || '',
+                signature: user.signature || '',
+            })
+        }
+    }, [user, profileForm]);
 
     const fetchAllData = async () => {
         const posts = await getPosts();
@@ -177,6 +206,23 @@ const AdminPage = () => {
       } catch (error) {
         toast({ title: "Error", description: "Failed to publish bulletin.", variant: "destructive" });
       }
+    }
+
+    const onProfileSubmit = async (values: z.infer<typeof profileSchema>) => {
+        if (!user) return;
+        try {
+            await updateAuthorProfile(user.id, values);
+            // We also need to update the local auth context state
+            await updateUserProfile({
+                name: values.name,
+                bio: values.bio,
+                instagramUrl: values.instagramUrl,
+                signature: values.signature,
+            });
+            toast({ title: "Profile Updated!", description: "Your author profile has been saved."});
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to update profile.", variant: "destructive" });
+        }
     }
 
     return (
@@ -310,6 +356,77 @@ const AdminPage = () => {
 
                 <div className="space-y-8">
                      <Card className="glass-card">
+                        <CardHeader>
+                           <div className="flex items-center gap-2">
+                            <UserIcon className="h-5 w-5 text-primary" />
+                            <CardTitle>Edit Author Profile</CardTitle>
+                           </div>
+                            <CardDescription>Update your public author information.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <Form {...profileForm}>
+                            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+                                <FormField
+                                    control={profileForm.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Author Name</FormLabel>
+                                        <FormControl>
+                                        <Input placeholder="Yash Raj Verma" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={profileForm.control}
+                                    name="bio"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Author Bio</FormLabel>
+                                        <FormControl>
+                                        <Textarea placeholder="A short bio about yourself..." {...field} rows={4} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={profileForm.control}
+                                    name="instagramUrl"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Instagram URL</FormLabel>
+                                        <FormControl>
+                                        <Input placeholder="https://instagram.com/..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={profileForm.control}
+                                    name="signature"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Signature Text</FormLabel>
+                                        <FormControl>
+                                        <Input placeholder="Y. R. Verma" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                              <Button type="submit" className="w-full" disabled={profileForm.formState.isSubmitting}>
+                                {profileForm.formState.isSubmitting ? 'Saving...' : 'Save Profile'}
+                              </Button>
+                            </form>
+                          </Form>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="glass-card">
                         <CardHeader>
                            <div className="flex items-center gap-2">
                             <Megaphone className="h-5 w-5 text-primary" />

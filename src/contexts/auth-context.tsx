@@ -13,7 +13,13 @@ interface AuthContextType {
   isAdmin: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
-  updateUserProfile: (updates: { name?: string; avatar?: string }) => Promise<void>;
+  updateUserProfile: (updates: { 
+      name?: string; 
+      avatar?: string;
+      bio?: string;
+      instagramUrl?: string;
+      signature?: string;
+  }) => Promise<void>;
   loading: boolean;
 }
 
@@ -27,7 +33,10 @@ const formatUser = (user: FirebaseUser, firestoreData?: any): Author => {
         id: user.uid,
         name: firestoreData?.name || user.displayName || "No Name",
         email: user.email || "no-email@example.com",
-        avatar: firestoreData?.avatar || user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`
+        avatar: firestoreData?.avatar || user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+        bio: firestoreData?.bio,
+        instagramUrl: firestoreData?.instagramUrl,
+        signature: firestoreData?.signature,
     };
 };
 
@@ -91,33 +100,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const updateUserProfile = useCallback(async (updates: { name?: string; avatar?: string }) => {
+  const updateUserProfile = useCallback(async (updates: { 
+      name?: string; 
+      avatar?: string;
+      bio?: string;
+      instagramUrl?: string;
+      signature?: string;
+  }) => {
     if (!auth.currentUser) throw new Error("Not authenticated");
     
-    // We only update the displayName in the Auth profile, as it's small.
     await updateProfile(auth.currentUser, {
         displayName: updates.name,
     });
     
-    // We store the (potentially large) avatar and other custom info in Firestore.
     const userRef = doc(db, 'users', auth.currentUser.uid);
-    const userDoc = await getDoc(userRef);
-    const currentData = userDoc.data() || {};
     
-    const newData = {
-      ...currentData,
-      name: updates.name || currentData.name,
-      avatar: updates.avatar || currentData.avatar,
-    };
+    // We construct a new object with only the fields that are being updated
+    // to avoid accidentally wiping fields.
+    const updateData: { [key: string]: any } = {};
+    if (updates.name) updateData.name = updates.name;
+    if (updates.avatar) updateData.avatar = updates.avatar;
+    if (updates.bio) updateData.bio = updates.bio;
+    if (updates.instagramUrl) updateData.instagramUrl = updates.instagramUrl;
+    if (updates.signature) updateData.signature = updates.signature;
     
-    await setDoc(userRef, newData, { merge: true });
+    await setDoc(userRef, updateData, { merge: true });
 
     // Force a refresh of the user object to get the latest profile
     await auth.currentUser.reload();
     const updatedFbUser = auth.currentUser;
     if (updatedFbUser) {
-      setFirebaseUser(updatedFbUser);
-      setUser(formatUser(updatedFbUser, newData));
+        const firestoreData = await fetchUserFromFirestore(updatedFbUser);
+        setFirebaseUser(updatedFbUser);
+        setUser(formatUser(updatedFbUser, firestoreData));
     }
   }, []);
 

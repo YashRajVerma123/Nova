@@ -6,10 +6,15 @@ import { Instagram } from "lucide-react";
 import { getAuthorByEmail } from "@/lib/data";
 
 const AboutTheAuthor = async () => {
+  // Fetch the author details from the database
   const author = await getAuthorByEmail("yashrajverma916@gmail.com");
-  
+
+  // Provide default fallback values in case the author data is not yet available
   const authorAvatar = author?.avatar || "https://i.pravatar.cc/150?u=yash-raj";
   const authorName = author?.name || "Yash Raj Verma";
+  const authorBio = author?.bio || "Hi, I'm Yash Raj Verma. Welcome to Nova, my personal blog where I explore the rapidly evolving worlds of technology, AI, space, and breaking news. I break down complex topics into clear, engaging insights. Thanks for reading.";
+  const instagramUrl = author?.instagramUrl || "https://instagram.com/v.yash.raj";
+  const signature = author?.signature || "V.Yash.Raj";
   
   return (
     <section>
@@ -24,15 +29,15 @@ const AboutTheAuthor = async () => {
             <div className="flex-1 text-center md:text-left">
                 <h3 className="text-2xl font-headline font-bold">{authorName}</h3>
                 <p className="text-muted-foreground mt-2 mb-4">
-                  Hi, I'm Yash Raj Verma. Welcome to Nova, my personal blog where I explore the rapidly evolving worlds of technology, AI, space, and breaking news. I break down complex topics into clear, engaging insights. Thanks for reading.
+                  {authorBio}
                 </p>
-                 <Link href="https://instagram.com/v.yash.raj" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                 <Link href={instagramUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
                     <Instagram className="h-4 w-4" />
                     Follow on Instagram
                  </Link>
             </div>
              <div className="self-end">
-                <p className="font-signature text-4xl text-primary/80">V.Yash.Raj</p>
+                <p className="font-signature text-4xl text-primary/80">{signature}</p>
              </div>
         </div>
     </section>
