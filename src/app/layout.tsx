@@ -7,6 +7,7 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
 import BackgroundAnimation from "@/components/background-animation";
+import ThoughtOfTheDay from "@/components/thought-of-the-day";
 
 const inter = Inter({ 
   subsets: ["latin"], 
@@ -47,6 +48,7 @@ export default function RootLayout({
             <Footer />
           </div>
           <Toaster />
+          <ThoughtOfTheDay />
         </ClientProviders>
       </body>
     </html>
