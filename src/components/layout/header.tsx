@@ -45,7 +45,9 @@ const Header = () => {
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Logo />
+          <div className="[&>a]:text-foreground">
+            <Logo />
+          </div>
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
@@ -82,7 +84,9 @@ const Header = () => {
               <SheetContent side="right" className="w-full bg-background/95 backdrop-blur-xl">
                  <div className="flex flex-col h-full">
                     <div className="flex justify-between items-center mb-8">
-                      <Logo />
+                      <div className="[&>a]:text-foreground">
+                        <Logo />
+                      </div>
                        <SheetTrigger asChild>
                           <Button variant="ghost" size="icon">
                             <X className="h-6 w-6" />
