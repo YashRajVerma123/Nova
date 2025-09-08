@@ -1,3 +1,4 @@
+
 import Logo from "@/components/logo";
 
 const Preloader = () => {

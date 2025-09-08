@@ -8,7 +8,6 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
 import BackgroundAnimation from "@/components/background-animation";
-import ThoughtOfTheDay from "@/components/thought-of-the-day";
 import PageLoader from "@/components/page-loader";
 
 const inter = Inter({ 
@@ -58,7 +57,6 @@ export default function RootLayout({
             <Footer />
           </div>
           <Toaster />
-          <ThoughtOfTheDay />
         </ClientProviders>
       </body>
     </html>

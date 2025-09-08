@@ -1,8 +1,10 @@
+
 'use client';
 import { useState, useEffect, ReactNode } from 'react';
 import Preloader from '@/components/preloader';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ThemeProvider } from 'next-themes';
+import ThoughtOfTheDay from './thought-of-the-day';
 
 export function ClientProviders({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,10 @@ export function ClientProviders({ children }: { children: ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        {children}
+        <ThoughtOfTheDay />
+      </AuthProvider>
     </ThemeProvider>
   );
 }
