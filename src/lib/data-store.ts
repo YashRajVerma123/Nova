@@ -1,5 +1,6 @@
+
 // This file now only contains the initial raw data for seeding the database.
-import { Post, Comment, Author, Notification } from './data';
+import { Post, Comment, Author, Notification, Bulletin } from './data';
 
 const yashRaj: Author = { id: 'yash-raj', name: 'Yash Raj', avatar: 'https://i.pravatar.cc/150?u=yash-raj', email: 'yashrajverma916@gmail.com'};
 const janeDoe: Author = { id: 'jane-doe', name: 'Jane Doe', avatar: 'https://i.pravatar.cc/150?u=jane-doe', email: 'jane.doe@example.com'};
@@ -104,4 +105,38 @@ export const initialPostsData: PostSeedData[] = [
 export const initialNotificationsData: Omit<Notification, 'id' | 'read'>[] = [
     { title: 'New Feature: Post Summaries', description: 'We\'ve added AI-powered summaries to our posts!', createdAt: '2024-07-28T12:00:00Z' },
     { title: 'Welcome to the new Nova!', description: 'Our new website is live. We hope you enjoy the new design and features.', createdAt: '2024-07-27T09:00:00Z' },
+];
+
+
+export const initialBulletinsData: Omit<Bulletin, 'id'>[] = [
+    {
+        title: 'Daily Market Wrap-Up',
+        content: 'Markets closed mixed today after a volatile session. The tech sector saw modest gains, while energy stocks lagged behind. Investors are eagerly awaiting tomorrow\'s inflation report.',
+        coverImage: 'https://picsum.photos/1200/800?random=6',
+        publishedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    },
+    {
+        title: 'New AI Breakthrough Announced',
+        content: 'A leading research lab has unveiled a new generative AI model capable of creating realistic video from simple text prompts, marking a significant leap forward in creative technology.',
+        coverImage: 'https://picsum.photos/1200/800?random=7',
+        publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    },
+    {
+        title: 'Global Climate Summit Concludes',
+        content: 'The international climate summit ended today with a landmark agreement to accelerate the transition to renewable energy sources. Several nations have pledged to double their efforts in reducing carbon emissions by 2030.',
+        coverImage: 'https://picsum.photos/1200/800?random=8',
+        publishedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    },
+    {
+        title: 'Space Agency Plans Lunar Mission',
+        content: 'The national space agency announced its most ambitious project yet: a plan to establish a permanent human outpost on the moon. The first launch is scheduled for early next year.',
+        coverImage: 'https://picsum.photos/1200/800?random=9',
+        publishedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+    },
+     {
+        title: 'Advances in Medical Research',
+        content: 'Researchers have identified a new protein that could be key to developing more effective treatments for autoimmune diseases. Early trials have shown promising results.',
+        coverImage: 'https://picsum.photos/1200/800?random=10',
+        publishedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    },
 ];

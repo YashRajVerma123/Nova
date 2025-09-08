@@ -1,11 +1,12 @@
 
+
 'use client';
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Edit, PlusCircle, Trash, Users, BellRing, Image as ImageIcon } from "lucide-react";
-import { Post, getPosts, Notification, getNotifications } from "@/lib/data";
+import { BarChart, Edit, PlusCircle, Trash, Users, BellRing, Image as ImageIcon, Megaphone } from "lucide-react";
+import { Post, getPosts, Notification, getNotifications, Bulletin, getBulletins } from "@/lib/data";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { addNotificationAction, deleteNotificationAction } from "@/app/actions/notification-actions";
+import { addBulletin, deleteBulletin } from "@/lib/data";
 import { Separator } from "@/components/ui/separator";
 
 
@@ -38,6 +40,12 @@ const notificationSchema = z.object({
   image: z.string().url().optional().or(z.literal('')),
 });
 
+const bulletinSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters.'),
+  content: z.string().min(20, 'Content must be at least 20 characters.'),
+  coverImage: z.string().url('Please enter a valid image URL.'),
+});
+
 
 const AdminPage = () => {
     const { user, isAdmin, loading } = useAuth();
@@ -45,10 +53,13 @@ const AdminPage = () => {
     const { toast } = useToast();
     const [allPosts, setAllPosts] = useState<Post[]>([]);
     const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
+    const [allBulletins, setAllBulletins] = useState<Bulletin[]>([]);
     const [isPostDeleteDialogOpen, setPostDeleteDialogOpen] = useState(false);
     const [isNotifDeleteDialogOpen, setNotifDeleteDialogOpen] = useState(false);
+    const [isBulletinDeleteDialogOpen, setBulletinDeleteDialogOpen] = useState(false);
     const [postToDelete, setPostToDelete] = useState<Post | null>(null);
     const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
+    const [bulletinToDelete, setBulletinToDelete] = useState<Bulletin | null>(null);
 
     const notificationForm = useForm<z.infer<typeof notificationSchema>>({
       resolver: zodResolver(notificationSchema),
@@ -59,11 +70,22 @@ const AdminPage = () => {
       },
     });
 
+    const bulletinForm = useForm<z.infer<typeof bulletinSchema>>({
+      resolver: zodResolver(bulletinSchema),
+      defaultValues: {
+        title: '',
+        content: '',
+        coverImage: 'https://picsum.photos/1200/800',
+      },
+    });
+
     const fetchAllData = async () => {
         const posts = await getPosts();
         setAllPosts(posts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()));
         const notifications = await getNotifications();
         setAllNotifications(notifications);
+        const bulletinsResponse = await getBulletins(100); // Fetch all bulletins for admin
+        setAllBulletins(bulletinsResponse.bulletins);
     }
 
     useEffect(() => {
@@ -89,6 +111,11 @@ const AdminPage = () => {
     const handleDeleteNotifClick = (notification: Notification) => {
         setNotificationToDelete(notification);
         setNotifDeleteDialogOpen(true);
+    };
+
+    const handleDeleteBulletinClick = (bulletin: Bulletin) => {
+        setBulletinToDelete(bulletin);
+        setBulletinDeleteDialogOpen(true);
     };
 
     const handleDeletePostConfirm = async () => {
@@ -117,6 +144,19 @@ const AdminPage = () => {
         setNotificationToDelete(null);
     };
 
+    const handleDeleteBulletinConfirm = async () => {
+        if (!bulletinToDelete) return;
+        try {
+            await deleteBulletin(bulletinToDelete.id);
+            setAllBulletins(allBulletins.filter(b => b.id !== bulletinToDelete!.id));
+            toast({ title: "Bulletin Deleted", description: `"${bulletinToDelete.title}" has been deleted.` });
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to delete bulletin.", variant: "destructive" });
+        }
+        setBulletinDeleteDialogOpen(false);
+        setBulletinToDelete(null);
+    }
+
     const onNotificationSubmit = async (values: z.infer<typeof notificationSchema>) => {
       try {
         await addNotificationAction(values);
@@ -125,6 +165,17 @@ const AdminPage = () => {
         await fetchAllData(); // Refresh the list
       } catch (error) {
         toast({ title: "Error", description: "Failed to send notification.", variant: "destructive" });
+      }
+    }
+
+    const onBulletinSubmit = async (values: z.infer<typeof bulletinSchema>) => {
+      try {
+        await addBulletin(values);
+        toast({ title: "Bulletin Published!", description: "Your new bulletin is now live." });
+        bulletinForm.reset();
+        await fetchAllData(); // Refresh the list
+      } catch (error) {
+        toast({ title: "Error", description: "Failed to publish bulletin.", variant: "destructive" });
       }
     }
 
@@ -139,7 +190,7 @@ const AdminPage = () => {
                 </p>
             </section>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-full mx-auto mb-12">
                 <Card className="glass-card">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
@@ -160,6 +211,16 @@ const AdminPage = () => {
                         <p className="text-xs text-muted-foreground">Currently logged in</p>
                     </CardContent>
                 </Card>
+                <Card className="glass-card">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Bulletins</CardTitle>
+                        <Megaphone className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{allBulletins.length}</div>
+                        <p className="text-xs text-muted-foreground">Manage all bulletins below</p>
+                    </CardContent>
+                </Card>
                  <Link href="/admin/create-post" className="group">
                     <Card className="glass-card h-full flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors duration-300">
                         <CardHeader>
@@ -173,9 +234,9 @@ const AdminPage = () => {
                 </Link>
             </div>
             
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 max-w-full mx-auto">
                 <div className="xl:col-span-2">
-                    <Card className="glass-card">
+                    <Card className="glass-card mb-8">
                         <CardHeader>
                             <CardTitle>Manage Posts</CardTitle>
                             <CardDescription>Here you can edit or delete existing posts.</CardDescription>
@@ -214,9 +275,98 @@ const AdminPage = () => {
                             </Table>
                         </CardContent>
                     </Card>
+
+                    <Card className="glass-card">
+                        <CardHeader>
+                            <CardTitle>Manage Bulletins</CardTitle>
+                            <CardDescription>Here you can delete existing bulletins.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[60%]">Title</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {allBulletins.map(bulletin => (
+                                        <TableRow key={bulletin.id}>
+                                            <TableCell className="font-medium">{bulletin.title}</TableCell>
+                                            <TableCell>{new Date(bulletin.publishedAt).toLocaleDateString()}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteBulletinClick(bulletin)}>
+                                                    <Trash className="h-4 w-4 text-red-500" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <div className="space-y-8">
+                     <Card className="glass-card">
+                        <CardHeader>
+                           <div className="flex items-center gap-2">
+                            <Megaphone className="h-5 w-5 text-primary" />
+                            <CardTitle>Post a Bulletin</CardTitle>
+                           </div>
+                            <CardDescription>Publish a new daily bulletin.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <Form {...bulletinForm}>
+                            <form onSubmit={bulletinForm.handleSubmit(onBulletinSubmit)} className="space-y-4">
+                              <FormField
+                                control={bulletinForm.control}
+                                name="title"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Title</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Daily Market Wrap-Up" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={bulletinForm.control}
+                                name="content"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Content</FormLabel>
+                                    <FormControl>
+                                      <Textarea placeholder="Markets closed mixed today..." {...field} rows={4} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={bulletinForm.control}
+                                name="coverImage"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Image URL</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="https://picsum.photos/1200/800" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button type="submit" className="w-full" disabled={bulletinForm.formState.isSubmitting}>
+                                {bulletinForm.formState.isSubmitting ? 'Publishing...' : 'Publish Bulletin'}
+                              </Button>
+                            </form>
+                          </Form>
+                        </CardContent>
+                    </Card>
+
                     <Card className="glass-card">
                         <CardHeader>
                            <div className="flex items-center gap-2">
@@ -338,6 +488,21 @@ const AdminPage = () => {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDeleteNotifConfirm} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={isBulletinDeleteDialogOpen} onOpenChange={setBulletinDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the bulletin
+                            <span className="font-bold"> &quot;{bulletinToDelete?.title}&quot;</span>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteBulletinConfirm} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

@@ -1,4 +1,5 @@
 
+
 import { db } from '@/lib/firebase';
 import { 
     collection, 
@@ -15,8 +16,9 @@ import {
     addDoc,
     deleteDoc,
     updateDoc,
+    startAfter,
 } from 'firebase/firestore';
-import { initialPostsData, initialNotificationsData } from '@/lib/data-store';
+import { initialPostsData, initialNotificationsData, initialBulletinsData } from '@/lib/data-store';
 
 
 export type Author = {
@@ -60,6 +62,15 @@ export type Notification = {
   read: boolean;
   image?: string;
 };
+
+export type Bulletin = {
+  id: string;
+  title: string;
+  content: string;
+  coverImage?: string;
+  publishedAt: string; // ISO String
+};
+
 
 // Firestore data converters
 const postConverter = {
@@ -105,6 +116,25 @@ const notificationConverter = {
             description: notification.description,
             image: notification.image,
             createdAt: notification.createdAt,
+        };
+    }
+};
+
+const bulletinConverter = {
+    fromFirestore: (snapshot: any, options: any): Bulletin => {
+        const data = snapshot.data(options);
+        return {
+            id: snapshot.id,
+            title: data.title,
+            content: data.content,
+            coverImage: data.coverImage,
+            publishedAt: (data.publishedAt as Timestamp).toDate().toISOString(),
+        };
+    },
+    toFirestore: (bulletin: Omit<Bulletin, 'id'>) => {
+        return {
+            ...bulletin,
+            publishedAt: Timestamp.fromDate(new Date(bulletin.publishedAt)),
         };
     }
 };
@@ -169,6 +199,19 @@ const seedDatabase = async () => {
         });
         await batch.commit();
         console.log("Notifications seeded successfully.");
+    }
+
+    const bulletinsCollection = collection(db, 'bulletins');
+    const bulletinsSnapshot = await getDocs(query(bulletinsCollection, limit(1)));
+    if(bulletinsSnapshot.empty) {
+        console.log("No bulletins found, seeding database...");
+        const batch = writeBatch(db);
+        initialBulletinsData.forEach(bulletinData => {
+            const bulletinRef = doc(collection(db, 'bulletins')).withConverter(bulletinConverter);
+            batch.set(bulletinRef, bulletinData);
+        });
+        await batch.commit();
+        console.log("Bulletins seeded successfully.");
     }
 }
 
@@ -247,4 +290,52 @@ export const getNotification = async (id: string): Promise<Notification | null> 
         return snapshot.data();
     }
     return null;
+}
+
+
+// New Bulletin Functions
+
+export const getBulletins = async (
+    pageSize: number = 3,
+    startAfterDocId?: string
+): Promise<{ bulletins: Bulletin[]; lastDocId?: string }> => {
+    await seedDatabase();
+    let lastDoc;
+    if (startAfterDocId) {
+        lastDoc = await getDoc(doc(db, "bulletins", startAfterDocId));
+    }
+
+    const bulletinsCollection = collection(db, 'bulletins').withConverter(bulletinConverter);
+    const constraints = [
+        orderBy('publishedAt', 'desc'),
+        limit(pageSize)
+    ];
+
+    if (lastDoc) {
+        constraints.push(startAfter(lastDoc));
+    }
+    
+    const q = query(bulletinsCollection, ...constraints);
+    const snapshot = await getDocs(q);
+    
+    const bulletins = snapshot.docs.map(doc => doc.data());
+    const lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
+    
+    return {
+        bulletins,
+        lastDocId: lastVisibleDoc?.id
+    };
+};
+
+export async function addBulletin(bulletin: { title: string; content: string; coverImage?: string }) {
+  const bulletinsCollection = collection(db, 'bulletins');
+  await addDoc(bulletinsCollection, {
+    ...bulletin,
+    publishedAt: Timestamp.now(),
+  });
+}
+
+export async function deleteBulletin(bulletinId: string) {
+    const bulletinRef = doc(db, 'bulletins', bulletinId);
+    await deleteDoc(bulletinRef);
 }

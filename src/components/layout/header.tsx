@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -15,8 +16,8 @@ import SearchBar from '@/components/search-bar';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/posts', label: 'Posts' },
+  { href: '/bulletin', label: 'Bulletin' },
   { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact Us' },
 ];
 
 const Header = () => {
