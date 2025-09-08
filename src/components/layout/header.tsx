@@ -90,11 +90,6 @@ const Header = () => {
                       <div className="[&>a]:text-foreground">
                         <Logo />
                       </div>
-                       <SheetTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <X className="h-5 w-5" />
-                          </Button>
-                       </SheetTrigger>
                     </div>
                     <nav className="flex flex-col items-start gap-2 p-6">
                       {navLinks.map((link) => (
