@@ -10,7 +10,7 @@ const AboutTheAuthor = async () => {
   const author = await getAuthorByEmail("yashrajverma916@gmail.com");
 
   // Provide default fallback values in case the author data is not yet available
-  const authorAvatar = author?.avatar || "https://i.pravatar.cc/150?u=yash-raj";
+  const authorAvatar = "https://i.ibb.co/TChNTL8/pfp.png";
   const authorName = author?.name || "Yash Raj Verma";
   const authorBio = author?.bio || "Hi, I'm Yash Raj Verma. Welcome to Nova, my personal blog where I explore the rapidly evolving worlds of technology, AI, space, and breaking news. I break down complex topics into clear, engaging insights. Thanks for reading.";
   const instagramUrl = author?.instagramUrl || "https://instagram.com/v.yash.raj";
@@ -45,3 +45,4 @@ const AboutTheAuthor = async () => {
 };
 
 export default AboutTheAuthor;
+
