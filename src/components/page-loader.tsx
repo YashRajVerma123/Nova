@@ -48,7 +48,7 @@ export default function PageLoader() {
   return (
     <div
       className={cn(
-        'fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm transition-opacity duration-300',
+        'fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm transition-opacity duration-150',
         loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
