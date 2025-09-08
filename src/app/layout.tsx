@@ -53,7 +53,7 @@ export default function RootLayout({
           <SplashLoader />
           <PageLoader />
           <BackgroundAnimation />
-          <div className="relative z-10 flex flex-col min-h-screen">
+          <div className="relative z-10 flex flex-col min-h-screen animate-fade-in-up">
             <Header />
             <main className="flex-grow pt-20">{children}</main>
             <Footer />
