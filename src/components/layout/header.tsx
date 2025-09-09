@@ -21,17 +21,8 @@ const navLinks = [
 ];
 
 const Header = () => {
-  const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -41,7 +32,7 @@ const Header = () => {
     <header
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out',
-        scrolled ? 'py-3 bg-background/80 backdrop-blur-lg border-b border-border/10' : 'py-5 bg-transparent'
+        'py-3 bg-background/80 backdrop-blur-lg border-b border-border/10'
       )}
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
