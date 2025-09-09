@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, updateProfile, User as FirebaseUser } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, updateProfile, User as FirebaseUser, setPersistence, inMemoryPersistence } from 'firebase/auth';
 import { app, db } from '@/lib/firebase';
 import type { Author } from '@/lib/data';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -72,26 +72,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async () => {
     const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const fbUser = result.user;
+    try {
+        await setPersistence(auth, inMemoryPersistence);
+        const result = await signInWithPopup(auth, provider);
+        const fbUser = result.user;
 
-    // Check if user exists in firestore, if not create them
-    const userRef = doc(db, 'users', fbUser.uid);
-    const userDoc = await getDoc(userRef);
-    let firestoreData;
-    if (!userDoc.exists()) {
-        firestoreData = {
-            name: fbUser.displayName,
-            email: fbUser.email,
-            avatar: fbUser.photoURL,
-        };
-        await setDoc(userRef, firestoreData);
-    } else {
-        firestoreData = userDoc.data();
+        // Check if user exists in firestore, if not create them
+        const userRef = doc(db, 'users', fbUser.uid);
+        const userDoc = await getDoc(userRef);
+        let firestoreData;
+        if (!userDoc.exists()) {
+            firestoreData = {
+                name: fbUser.displayName,
+                email: fbUser.email,
+                avatar: fbUser.photoURL,
+            };
+            await setDoc(userRef, firestoreData);
+        } else {
+            firestoreData = userDoc.data();
+        }
+
+        setFirebaseUser(fbUser);
+        setUser(formatUser(fbUser, firestoreData));
+    } catch (error) {
+        // Silently handle popup closed by user, re-throw other errors
+        if ((error as any).code !== 'auth/popup-closed-by-user') {
+            console.error('Sign in failed:', error);
+            throw error;
+        }
     }
-
-    setFirebaseUser(fbUser);
-    setUser(formatUser(fbUser, firestoreData));
   }, []);
 
   const signOut = useCallback(async () => {

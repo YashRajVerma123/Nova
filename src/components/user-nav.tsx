@@ -69,19 +69,18 @@ const UserNav = () => {
     setIsSigningIn(true);
     try {
       await signIn();
-      // Only close the dialog on successful sign-in
+      // On success, the AuthProvider will update the user state,
+      // and this component will re-render. We can close the dialog.
       setSignInOpen(false);
     } catch (error) {
-      console.error('Sign in failed', error);
-      // Don't show a toast for user-closed popups
-      if ((error as any).code !== 'auth/popup-closed-by-user') {
-          toast({
-            title: 'Sign In Failed',
-            description: 'Could not sign you in with Google. Please try again.',
-            variant: 'destructive',
-          });
-      }
+      // Handle actual errors, but not the user closing the popup
+      toast({
+        title: 'Sign In Failed',
+        description: 'Could not sign you in with Google. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
+        // This ensures the button state is reset even if the user closes the popup
         setIsSigningIn(false);
     }
   };
