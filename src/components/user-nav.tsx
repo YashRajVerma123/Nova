@@ -70,19 +70,20 @@ const UserNav = () => {
     try {
       await signIn();
       // On success, the AuthProvider will update the user state,
-      // and this component will re-render. We can close the dialog.
+      // and this component will re-render, closing the dialog.
       setSignInOpen(false);
     } catch (error) {
-      // Handle actual errors, but not the user closing the popup
+      // The auth context now handles the "popup closed" error silently.
+      // We only need to show a toast for actual errors.
       toast({
         title: 'Sign In Failed',
-        description: 'Could not sign you in with Google. Please try again.',
+        description: 'Could not sign you in. Please try again.',
         variant: 'destructive',
       });
-    } finally {
-        // This ensures the button state is reset even if the user closes the popup
-        setIsSigningIn(false);
     }
+    // We intentionally do NOT reset isSigningIn here in a `finally` block.
+    // The state will be correctly handled by either a successful login (re-render)
+    // or the catch block above.
   };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
