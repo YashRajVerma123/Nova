@@ -9,14 +9,21 @@ export default function PageLoader() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
     // When the path changes, we can assume the loading is complete.
     // The key here is that this useEffect hook runs *after* the new page component has mounted.
     setLoading(false);
-  }, [pathname, searchParams]);
+  }, [pathname, searchParams, isMounted]);
 
   useEffect(() => {
+    if (!isMounted) return;
     // This effect is for handling link clicks to show the loader immediately.
     const handleLinkClick = (e: MouseEvent) => {
       // Check if the click is on a Next.js Link component (an `<a>` tag)
@@ -43,7 +50,11 @@ export default function PageLoader() {
     return () => {
       document.removeEventListener('click', handleLinkClick);
     };
-  }, []);
+  }, [isMounted]);
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div
