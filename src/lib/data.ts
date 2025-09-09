@@ -195,7 +195,12 @@ export const getPosts = async (): Promise<Post[]> => {
     const postsCollection = collection(db, 'posts').withConverter(postConverter);
     const q = query(postsCollection, orderBy('publishedAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => doc.data());
+    const allPosts = snapshot.docs.map(doc => doc.data());
+    
+    // Filter out duplicates based on slug, keeping the most recently published one.
+    const uniquePosts = Array.from(new Map(allPosts.map(post => [post.slug, post])).values());
+    
+    return uniquePosts;
 };
 
 export const getPost = async (slug: string): Promise<Post | undefined> => {
@@ -314,3 +319,4 @@ export const getAuthorByEmail = async (email: string): Promise<Author | null> =>
     }
     return snapshot.docs[0].data();
 };
+
