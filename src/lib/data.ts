@@ -18,7 +18,6 @@ import {
     updateDoc,
     startAfter,
 } from 'firebase/firestore';
-import { initialPostsData, initialNotificationsData, initialBulletinsData } from '@/lib/data-store';
 
 
 export type Author = {
@@ -184,59 +183,6 @@ const authorConverter = {
 };
 
 
-const seedDatabase = async () => {
-    const postsCollection = collection(db, 'posts');
-    const postsSnapshot = await getDocs(query(postsCollection, limit(1)));
-    
-    if (postsSnapshot.empty) {
-        console.log("No posts found, seeding database...");
-        const batch = writeBatch(db);
-        initialPostsData.forEach(postData => {
-            const { comments, ...post } = postData;
-            const postRef = doc(collection(db, 'posts')).withConverter(postConverter);
-            batch.set(postRef, post);
-            
-            if (comments) {
-              comments.forEach(commentData => {
-                  const commentRef = doc(collection(postRef, 'comments')).withConverter(commentConverter);
-                  batch.set(commentRef, commentData);
-              });
-            }
-        });
-        await batch.commit();
-        console.log("Posts seeded successfully.");
-    }
-
-    const notificationsCollection = collection(db, 'notifications');
-    const notificationsSnapshot = await getDocs(query(notificationsCollection, limit(1)));
-    if(notificationsSnapshot.empty) {
-        console.log("No notifications found, seeding database...");
-        const batch = writeBatch(db);
-        initialNotificationsData.forEach(notifData => {
-            const notifRef = doc(collection(db, 'notifications'));
-            batch.set(notifRef, {
-              ...notifData,
-              createdAt: Timestamp.fromDate(new Date(notifData.createdAt))
-            });
-        });
-        await batch.commit();
-        console.log("Notifications seeded successfully.");
-    }
-
-    const bulletinsCollection = collection(db, 'bulletins');
-    const bulletinsSnapshot = await getDocs(query(bulletinsCollection, limit(1)));
-    if(bulletinsSnapshot.empty) {
-        console.log("No bulletins found, seeding database...");
-        const batch = writeBatch(db);
-        initialBulletinsData.forEach(bulletinData => {
-            const bulletinRef = doc(collection(db, 'bulletins')).withConverter(bulletinConverter);
-            batch.set(bulletinRef, bulletinData);
-        });
-        await batch.commit();
-        console.log("Bulletins seeded successfully.");
-    }
-}
-
 const sortComments = (comments: Comment[]): Comment[] => {
     return [...comments].sort((a,b) => {
         if (a.pinned && !b.pinned) return -1;
@@ -246,7 +192,6 @@ const sortComments = (comments: Comment[]): Comment[] => {
 };
 
 export const getPosts = async (): Promise<Post[]> => {
-    await seedDatabase();
     const postsCollection = collection(db, 'posts').withConverter(postConverter);
     const q = query(postsCollection, orderBy('publishedAt', 'desc'));
     const snapshot = await getDocs(q);
@@ -254,7 +199,6 @@ export const getPosts = async (): Promise<Post[]> => {
 };
 
 export const getPost = async (slug: string): Promise<Post | undefined> => {
-    await seedDatabase(); // Ensure data exists
     const postsCollection = collection(db, 'posts');
     const q = query(postsCollection, where('slug', '==', slug), limit(1)).withConverter(postConverter);
     const snapshot = await getDocs(q);
@@ -280,7 +224,6 @@ export const getComments = async (postId: string): Promise<Comment[]> => {
 };
 
 export const getNotifications = async (): Promise<Notification[]> => {
-    await seedDatabase();
     const notificationsCollection = collection(db, 'notifications').withConverter(notificationConverter);
     const q = query(notificationsCollection, orderBy('createdAt', 'desc'), limit(50));
     const snapshot = await getDocs(q);
@@ -321,7 +264,6 @@ export const getBulletins = async (
     pageSize: number = 3,
     startAfterDocId?: string
 ): Promise<{ bulletins: Bulletin[]; lastDocId?: string }> => {
-    await seedDatabase();
     let lastDoc;
     if (startAfterDocId) {
         lastDoc = await getDoc(doc(db, "bulletins", startAfterDocId));
