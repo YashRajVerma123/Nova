@@ -1,5 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Award, FileText, Globe, Users } from "lucide-react";
 import { Newspaper, Rss, ShieldCheck } from "lucide-react";
+import Counter from "@/components/counter";
 
 const features = [
   {
@@ -20,10 +21,10 @@ const features = [
 ];
 
 const stats = [
-    { value: "100+", label: "Articles Published" },
-    { value: "24/7", label: "News Coverage" },
-    { value: "50k+", label: "Monthly Readers" },
-    { value: "10+", label: "Expert Authors" },
+    { icon: <FileText className="h-10 w-10 text-primary" />, value: 100, label: "Articles Published", suffix: "+" },
+    { icon: <Globe className="h-10 w-10 text-primary" />, value: 24, label: "News Coverage", suffix: "/7" },
+    { icon: <Users className="h-10 w-10 text-primary" />, value: 50, label: "Monthly Readers", suffix:"k+" },
+    { icon: <Award className="h-10 w-10 text-primary" />, value: 10, label: "Expert Authors", suffix:"+" },
 ];
 
 const AboutPage = () => {
@@ -56,14 +57,22 @@ const AboutPage = () => {
         </div>
       </section>
       
-      <section className="bg-secondary rounded-xl p-8 md:p-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {stats.map((stat) => (
-                <div key={stat.label}>
-                    <p className="text-4xl md:text-5xl font-bold font-headline text-primary">{stat.value}</p>
-                    <p className="text-sm md:text-base text-muted-foreground mt-2">{stat.label}</p>
-                </div>
-            ))}
+      <section className="animate-fade-in-up" style={{animationDelay: '0.5s'}}>
+         <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-headline font-bold">Our Journey in Numbers</h2>
+            <p className="text-muted-foreground mt-2">The impact we're making, one story at a time.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {stats.map((stat, index) => (
+            <div key={index} className="glass-card p-6 rounded-2xl flex flex-col items-center justify-center text-center transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:-translate-y-2 relative overflow-hidden">
+               <div className="absolute -top-4 -right-4 h-16 w-16 bg-primary/5 rounded-full blur-lg"></div>
+              <div className="mb-4">{stat.icon}</div>
+              <div className="text-4xl font-bold font-headline text-primary">
+                <Counter to={stat.value} suffix={stat.suffix} />
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+            </div>
+          ))}
         </div>
       </section>
 
