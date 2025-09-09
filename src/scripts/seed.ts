@@ -1,12 +1,17 @@
 
-import { db } from '../lib/firebase';
-import { collection, getDocs, writeBatch, doc, query, limit, deleteDoc } from 'firebase/firestore';
-import { initialPostsData, initialNotificationsData, initialBulletinsData } from '../lib/data-store';
 import 'dotenv/config'
+import { db } from '../lib/firebase';
+import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { initialPostsData, initialNotificationsData, initialBulletinsData } from '../lib/data-store';
+
 
 const clearCollection = async (collectionPath: string) => {
     const collectionRef = collection(db, collectionPath);
     const snapshot = await getDocs(collectionRef);
+    if (snapshot.empty) {
+        console.log(`Collection is already empty: ${collectionPath}`);
+        return;
+    }
     const batch = writeBatch(db);
     snapshot.docs.forEach(doc => {
         batch.delete(doc.ref);
@@ -15,61 +20,67 @@ const clearCollection = async (collectionPath: string) => {
     console.log(`Cleared collection: ${collectionPath}`);
 }
 
-
 const seedDatabase = async () => {
     console.log("Starting database seed...");
 
-    // Clear existing data to prevent duplicates
-    await clearCollection('posts');
-    await clearCollection('notifications');
-    await clearCollection('bulletins');
-    
-    // Note: This doesn't clear subcollections like comments, but for this app's seeding it's okay.
-    // A more robust solution would recursively delete subcollections.
+    // --- Seeding logic ---
+    const postsCollectionRef = collection(db, 'posts');
+    const postsSnapshot = await getDocs(postsCollectionRef);
+    if (postsSnapshot.empty) {
+        console.log("Seeding posts...");
+        const postBatch = writeBatch(db);
+        initialPostsData.forEach(postData => {
+            const { comments, ...post } = postData;
+            const postRef = doc(db, 'posts', post.slug);
+            postBatch.set(postRef, { ...post, publishedAt: new Date(post.publishedAt) });
 
-    // Seed Posts
-    console.log("Seeding posts...");
-    const postBatch = writeBatch(db);
-    initialPostsData.forEach(postData => {
-        const { comments, ...post } = postData;
-        // Use slug as document ID to prevent duplicates
-        const postRef = doc(db, 'posts', post.slug);
-        postBatch.set(postRef, { ...post, publishedAt: new Date(post.publishedAt) });
+            if (comments) {
+                comments.forEach(commentData => {
+                    const commentRef = doc(collection(postRef, 'comments'));
+                    postBatch.set(commentRef, { ...commentData, createdAt: new Date(commentData.createdAt) });
+                });
+            }
+        });
+        await postBatch.commit();
+        console.log("Posts seeded successfully.");
+    } else {
+        console.log("Posts collection is not empty, skipping seeding.");
+    }
 
-        if (comments) {
-            comments.forEach(commentData => {
-                const commentRef = doc(collection(postRef, 'comments'));
-                postBatch.set(commentRef, { ...commentData, createdAt: new Date(commentData.createdAt) });
-            });
-        }
-    });
-    await postBatch.commit();
-    console.log("Posts seeded successfully.");
+    const notificationsCollectionRef = collection(db, 'notifications');
+    const notifsSnapshot = await getDocs(notificationsCollectionRef);
+    if (notifsSnapshot.empty) {
+        console.log("Seeding notifications...");
+        const notifBatch = writeBatch(db);
+        initialNotificationsData.forEach(notifData => {
+            const notifRef = doc(collection(db, 'notifications'));
+            notifBatch.set(notifRef, { ...notifData, createdAt: new Date(notifData.createdAt) });
+        });
+        await notifBatch.commit();
+        console.log("Notifications seeded successfully.");
+    } else {
+        console.log("Notifications collection is not empty, skipping seeding.");
+    }
 
-    // Seed Notifications
-    console.log("Seeding notifications...");
-    const notifBatch = writeBatch(db);
-    initialNotificationsData.forEach(notifData => {
-        const notifRef = doc(collection(db, 'notifications'));
-        notifBatch.set(notifRef, { ...notifData, createdAt: new Date(notifData.createdAt) });
-    });
-    await notifBatch.commit();
-    console.log("Notifications seeded successfully.");
-
-    // Seed Bulletins
-    console.log("Seeding bulletins...");
-    const bulletinBatch = writeBatch(db);
-    initialBulletinsData.forEach(bulletinData => {
-        const bulletinRef = doc(collection(db, 'bulletins'));
-        bulletinBatch.set(bulletinRef, { ...bulletinData, publishedAt: new Date(bulletinData.publishedAt) });
-    });
-    await bulletinBatch.commit();
-    console.log("Bulletins seeded successfully.");
-
+    const bulletinsCollectionRef = collection(db, 'bulletins');
+    const bulletinsSnapshot = await getDocs(bulletinsCollectionRef);
+    if (bulletinsSnapshot.empty) {
+        console.log("Seeding bulletins...");
+        const bulletinBatch = writeBatch(db);
+        initialBulletinsData.forEach(bulletinData => {
+            const bulletinRef = doc(collection(db, 'bulletins'));
+            bulletinBatch.set(bulletinRef, { ...bulletinData, publishedAt: new Date(bulletinData.publishedAt) });
+        });
+        await bulletinBatch.commit();
+        console.log("Bulletins seeded successfully.");
+    } else {
+        console.log("Bulletins collection is not empty, skipping seeding.");
+    }
 
     console.log("Database seeding finished.");
 };
 
 seedDatabase().catch(error => {
     console.error("Error seeding database:", error);
+    process.exit(1);
 });
