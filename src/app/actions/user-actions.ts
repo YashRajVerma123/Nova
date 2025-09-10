@@ -13,6 +13,7 @@ const profileSchema = z.object({
   instagramUrl: z.string().url('Please enter a valid Instagram URL.'),
   signature: z.string().min(2, 'Signature must be at least 2 characters.'),
   avatar: z.string().optional(),
+  showEmail: z.boolean().optional(),
 });
 
 export async function updateAuthorProfile(authorId: string, values: z.infer<typeof profileSchema>): Promise<{ success: boolean }> {
@@ -29,6 +30,7 @@ export async function updateAuthorProfile(authorId: string, values: z.infer<type
   if (values.instagramUrl) updateData.instagramUrl = values.instagramUrl;
   if (values.signature) updateData.signature = values.signature;
   if (values.avatar) updateData.avatar = values.avatar;
+  if (values.showEmail !== undefined) updateData.showEmail = values.showEmail;
 
   await updateDoc(authorRef, updateData);
 
@@ -38,5 +40,3 @@ export async function updateAuthorProfile(authorId: string, values: z.infer<type
   
   return { success: true };
 }
-
-    

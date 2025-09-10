@@ -28,6 +28,7 @@ export type Author = {
   bio?: string;
   instagramUrl?: string;
   signature?: string;
+  showEmail?: boolean;
 };
 
 export type Comment = {
@@ -175,6 +176,7 @@ const authorConverter = {
             bio: data.bio,
             instagramUrl: data.instagramUrl,
             signature: data.signature,
+            showEmail: data.showEmail || false,
         };
     },
     toFirestore: (author: Omit<Author, 'id'>) => {
@@ -319,4 +321,5 @@ export const getAuthorByEmail = async (email: string): Promise<Author | null> =>
     }
     return snapshot.docs[0].data();
 };
+
 

@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTheme } from 'next-themes';
 import { Switch } from './ui/switch';
 import { usePathname } from 'next/navigation';
+import { Textarea } from './ui/textarea';
 
 // Helper to convert file to Base64
 const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
@@ -43,9 +44,11 @@ const UserNav = () => {
   const [isSignInOpen, setSignInOpen] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
-  const [newUsername, setNewUsername] = useState(user?.name || '');
+  const [newUsername, setNewUsername] = useState('');
+  const [newBio, setNewBio] = useState('');
+  const [newShowEmail, setNewShowEmail] = useState(false);
   const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState(user?.avatar || '');
+  const [previewUrl, setPreviewUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -62,6 +65,8 @@ const UserNav = () => {
     if (user) {
         setNewUsername(user.name);
         setPreviewUrl(user.avatar);
+        setNewBio(user.bio || '');
+        setNewShowEmail(user.showEmail || false);
     }
   }, [user]);
 
@@ -75,15 +80,18 @@ const UserNav = () => {
     } catch (error) {
       // The auth context now handles the "popup closed" error silently.
       // We only need to show a toast for actual errors.
-      toast({
-        title: 'Sign In Failed',
-        description: 'Could not sign you in. Please try again.',
-        variant: 'destructive',
-      });
+      if ((error as Error).message.includes('auth/popup-closed-by-user')) {
+        // Do nothing
+      } else {
+        toast({
+            title: 'Sign In Failed',
+            description: 'Could not sign you in. Please try again.',
+            variant: 'destructive',
+        });
+      }
+    } finally {
+        setIsSigningIn(false);
     }
-    // We intentionally do NOT reset isSigningIn here in a `finally` block.
-    // The state will be correctly handled by either a successful login (re-render)
-    // or the catch block above.
   };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -98,7 +106,12 @@ const UserNav = () => {
         newAvatarUrl = await toBase64(newAvatarFile);
       }
       
-      await updateUserProfile({ name: newUsername.trim(), avatar: newAvatarUrl });
+      await updateUserProfile({ 
+          name: newUsername.trim(), 
+          avatar: newAvatarUrl,
+          bio: newBio,
+          showEmail: newShowEmail,
+      });
       toast({
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
@@ -129,9 +142,15 @@ const UserNav = () => {
     if (user) {
         setNewUsername(user.name);
         setPreviewUrl(user.avatar);
+        setNewBio(user.bio || '');
+        setNewShowEmail(user.showEmail || false);
         setNewAvatarFile(null);
         setProfileOpen(true);
     }
+  }
+  
+  if (!isMounted) {
+      return <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />;
   }
   
   // For mobile sheet
@@ -139,7 +158,7 @@ const UserNav = () => {
       return null;
   }
 
-  if (loading || !isMounted) {
+  if (loading) {
     return <div className="h-9 w-20 rounded-md bg-muted animate-pulse" />;
   }
 
@@ -311,19 +330,35 @@ const UserNav = () => {
                     Upload Photo
                   </Button>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  className="col-span-3"
                 />
+              </div>
+               <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={newBio}
+                  onChange={(e) => setNewBio(e.target.value)}
+                  placeholder="Tell us a little bit about yourself..."
+                  rows={3}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="show-email" 
+                  checked={newShowEmail}
+                  onCheckedChange={setNewShowEmail}
+                />
+                <Label htmlFor="show-email">Show email on your profile card</Label>
               </div>
             </div>
             <DialogFooter>
+               <Button variant="ghost" onClick={() => setProfileOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Save changes'}
               </Button>

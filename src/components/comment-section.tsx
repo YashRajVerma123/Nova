@@ -33,6 +33,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import ProfileCard from './profile-card';
 
 interface CommentSectionProps {
   postId: string;
@@ -229,20 +231,33 @@ const Comment = ({
         <div className={cn("flex items-start gap-4 p-4 rounded-lg transition-colors duration-300 relative", {
            "bg-primary/5 border-l-4 border-primary": comment.highlighted,
         })}>
-            <Avatar>
-              <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
-              <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
-            </Avatar>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Avatar className="cursor-pointer">
+                        <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
+                        <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
+                    </Avatar>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md p-0">
+                    <ProfileCard user={comment.author} />
+                </DialogContent>
+            </Dialog>
+
             <div className="flex-1">
               {!isEditing ? (
                 <>
                 <div className="flex items-center gap-4 flex-wrap">
-                    <div className="flex items-baseline gap-2">
-                        <p className="font-semibold">{comment.author.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                     <Dialog>
+                        <DialogTrigger asChild>
+                             <p className="font-semibold cursor-pointer hover:underline">{comment.author.name}</p>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md p-0">
+                            <ProfileCard user={comment.author} />
+                        </DialogContent>
+                    </Dialog>
+                    <p className="text-xs text-muted-foreground">
                         {new Date(comment.createdAt).toLocaleDateString()}
-                        </p>
-                    </div>
+                    </p>
                     {comment.pinned && <Badge variant="secondary"><Pin className="h-3 w-3 mr-1" /> Pinned</Badge>}
                     {comment.highlighted && <Badge variant="default" className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"><Star className="h-3 w-3 mr-1" /> Highlighted</Badge>}
                 </div>
