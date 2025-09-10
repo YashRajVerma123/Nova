@@ -4,6 +4,7 @@
 import { Author } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Mail } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface ProfileCardProps {
     user: Author;
@@ -14,10 +15,31 @@ const getInitials = (name: string) => {
     return names.length > 1 ? `${names[0][0]}${names[1][0]}` : name.substring(0, 2);
 };
 
+const getRandomHslColor = () => `hsl(${Math.floor(Math.random() * 360)}, 100%, 75%)`;
+
 const ProfileCard = ({ user }: ProfileCardProps) => {
+    const [gradientColors, setGradientColors] = useState({ from: '#E2CBFF', to: '#393BB2' });
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+        setGradientColors({
+            from: getRandomHslColor(),
+            to: getRandomHslColor(),
+        });
+    }, []);
+
+    const gradientStyle = {
+        background: `conic-gradient(from 90deg at 50% 50%, ${gradientColors.from} 0%, ${gradientColors.to} 50%, ${gradientColors.from} 100%)`,
+    };
+
+    if (!isMounted) {
+        return null;
+    }
+
     return (
-        <div className="relative p-1 overflow-hidden rounded-lg">
-            <div className="absolute inset-[-1000%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+        <div className="relative p-0.5 overflow-hidden rounded-lg">
+            <div className="absolute inset-[-1000%] animate-[spin_5s_linear_infinite]" style={gradientStyle} />
             <div className="relative flex flex-col items-center p-6 bg-background rounded-lg">
                 <Avatar className="h-24 w-24 mb-4 border-4 border-primary/20">
                     <AvatarImage src={user.avatar} alt={user.name} />
