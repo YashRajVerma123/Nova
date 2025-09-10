@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { Author, Comment } from '@/lib/data';
 import { db } from '@/lib/firebase';
-import { collection, doc, addDoc, updateDoc, deleteDoc, runTransaction, Timestamp, getDoc, writeBatch, where, query, getDocs } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, deleteDoc, runTransaction, Timestamp, getDoc, writeBatch, where, query, getDocs, setDoc } from 'firebase/firestore';
 
 export async function addComment(
     postId: string, 
@@ -19,7 +19,11 @@ export async function addComment(
         return { error: 'You must be logged in to comment.' };
     }
     
+    // Create a new ref to get an ID
+    const newCommentRef = doc(collection(db, 'posts', postId, 'comments'));
+    
     const newCommentData = {
+        id: newCommentRef.id,
         content,
         author,
         createdAt: Timestamp.now(),
@@ -29,20 +33,17 @@ export async function addComment(
         parentId,
     };
     
-    const postRef = doc(db, 'posts', postId);
-    const commentsCollection = collection(postRef, 'comments');
-    const newCommentRef = await addDoc(commentsCollection, newCommentData);
+    // Use setDoc to save the comment with the generated ID
+    await setDoc(newCommentRef, newCommentData);
     
-    const postDoc = await getDoc(postRef);
+    const postDoc = await getDoc(doc(db, 'posts', postId));
     const postSlug = postDoc.data()?.slug;
 
-    // Fetch the newly created comment to return it with the ID and converted timestamp
-    const newCommentSnapshot = await getDoc(newCommentRef);
-    const newComment = {
-        id: newCommentSnapshot.id,
-        ...newCommentSnapshot.data(),
-        createdAt: (newCommentSnapshot.data()?.createdAt as Timestamp).toDate().toISOString(),
-    } as Comment;
+    // The data is already complete, just format the timestamp
+    const newComment: Comment = {
+        ...newCommentData,
+        createdAt: newCommentData.createdAt.toDate().toISOString(),
+    };
 
     if (postSlug) {
       revalidatePath(`/posts/${postSlug}`);

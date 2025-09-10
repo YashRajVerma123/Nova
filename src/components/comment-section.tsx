@@ -439,6 +439,8 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
   }
 
   const handleLikeToggle = (commentId: string, isLiked: boolean) => {
+    const newLikeCount = (comments.find(c => c.id === commentId)?.likes || 0) + (isLiked ? -1 : 1);
+    
     setLikedComments(prev => {
         const newLikes = { ...prev, [commentId]: !isLiked };
         const allStoredLikes = JSON.parse(localStorage.getItem(LIKED_COMMENTS_STORAGE_KEY) || '{}');
@@ -449,7 +451,7 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
 
     setComments(prevComments => 
         prevComments.map(c => 
-            c.id === commentId ? { ...c, likes: c.likes + (isLiked ? -1 : 1) } : c
+            c.id === commentId ? { ...c, likes: newLikeCount < 0 ? 0 : newLikeCount } : c
         )
     );
   }
