@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from './ui/badge';
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import ProfileCard from './profile-card';
 
 interface CommentSectionProps {
@@ -239,6 +239,12 @@ const Comment = ({
                     </Avatar>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md p-0">
+                    <DialogHeader className="sr-only">
+                      <DialogTitle>{comment.author.name}'s Profile</DialogTitle>
+                      <DialogDescription>
+                        This is the profile card for {comment.author.name}. It contains their avatar, name, bio, and email if they chose to share it.
+                      </DialogDescription>
+                    </DialogHeader>
                     <ProfileCard user={comment.author} />
                 </DialogContent>
             </Dialog>
@@ -252,6 +258,12 @@ const Comment = ({
                              <p className="font-semibold cursor-pointer hover:underline">{comment.author.name}</p>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-md p-0">
+                            <DialogHeader className="sr-only">
+                                <DialogTitle>{comment.author.name}'s Profile</DialogTitle>
+                                <DialogDescription>
+                                This is the profile card for {comment.author.name}. It contains their avatar, name, bio, and email if they chose to share it.
+                                </DialogDescription>
+                            </DialogHeader>
                             <ProfileCard user={comment.author} />
                         </DialogContent>
                     </Dialog>
