@@ -4,11 +4,12 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Link from 'next/link';
-import { Instagram, Users } from "lucide-react";
+import { Instagram, Users, BadgeCheck } from "lucide-react";
 import { getAuthorByEmail, isFollowing, getAuthorById } from "@/lib/data";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 import FollowButton from "./follow-button";
+import { Badge } from "./ui/badge";
 
 const AboutTheAuthor = () => {
   const [author, setAuthor] = useState<Awaited<ReturnType<typeof getAuthorById>>>(null);
@@ -55,6 +56,7 @@ const AboutTheAuthor = () => {
   const instagramUrl = author?.instagramUrl || "https://instagram.com/v.yash.raj";
   const signature = author?.signature || "V.Yash.Raj";
   const followerCount = author?.followers || 0;
+  const isMainAuthor = author?.email === 'yashrajverma916@gmail.com';
   
   return (
     <section>
@@ -68,6 +70,14 @@ const AboutTheAuthor = () => {
             </Avatar>
             <div className="flex-1 text-center md:text-left">
                 <h3 className="text-2xl font-headline font-bold">{authorName}</h3>
+                {isMainAuthor && (
+                    <div className="flex justify-center md:justify-start mt-2">
+                        <Badge variant="default" className="flex items-center gap-1.5 border-blue-500/50 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20">
+                            <BadgeCheck className="h-4 w-4" />
+                            Verified Author
+                        </Badge>
+                    </div>
+                )}
                 <div className="flex items-center justify-center md:justify-start gap-4 my-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
