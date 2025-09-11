@@ -13,13 +13,8 @@ import BlogPostCard from '@/components/blog-post-card';
 import PostActions from '@/components/post-actions';
 import CommentSection from '@/components/comment-section';
 import AboutTheAuthor from '@/components/about-the-author';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Bookmark } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 // Local storage keys
-const BOOKMARKED_POSTS_KEY = 'bookmarked_posts';
 const READING_PROGRESS_KEY = 'reading_progress';
 
 interface PostClientPageProps {
@@ -29,19 +24,10 @@ interface PostClientPageProps {
 }
 
 export default function PostClientPage({ post, relatedPosts, initialComments }: PostClientPageProps) {
-  const { toast } = useToast();
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Check initial bookmark state and restore reading progress
+  // Restore reading progress
   useEffect(() => {
-    // Check if post is bookmarked
-    const bookmarkedPosts = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
-    if (bookmarkedPosts[post.slug]) {
-      setIsBookmarked(true);
-    }
-
-    // Restore reading progress
     const readingProgress = JSON.parse(localStorage.getItem(READING_PROGRESS_KEY) || '{}');
     const scrollPosition = readingProgress[post.slug];
     if (typeof scrollPosition === 'number') {
@@ -56,7 +42,7 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
         if (contentRef.current) {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
-                const bookmarkedPosts = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
+                const bookmarkedPosts = JSON.parse(localStorage.getItem('bookmarked_posts') || '{}');
                 // Only save progress for bookmarked posts
                 if (bookmarkedPosts[post.slug]) {
                     const readingProgress = JSON.parse(localStorage.getItem(READING_PROGRESS_KEY) || '{}');
@@ -74,31 +60,6 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
     };
   }, [post.slug]);
 
-  const toggleBookmark = () => {
-    const bookmarkedPosts = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
-    const readingProgress = JSON.parse(localStorage.getItem(READING_PROGRESS_KEY) || '{}');
-    const newIsBookmarked = !isBookmarked;
-
-    if (newIsBookmarked) {
-        bookmarkedPosts[post.slug] = {
-            slug: post.slug,
-            title: post.title,
-            description: post.description,
-            coverImage: post.coverImage,
-            bookmarkedAt: new Date().toISOString()
-        };
-        toast({ title: 'Article Bookmarked!', description: 'You can find it in your bookmarks.' });
-    } else {
-        delete bookmarkedPosts[post.slug];
-        delete readingProgress[post.slug]; // Also remove reading progress
-        localStorage.setItem(READING_PROGRESS_KEY, JSON.stringify(readingProgress));
-        toast({ title: 'Bookmark Removed', variant: 'destructive' });
-    }
-
-    localStorage.setItem(BOOKMARKED_POSTS_KEY, JSON.stringify(bookmarkedPosts));
-    setIsBookmarked(newIsBookmarked);
-  };
-  
   const getInitials = (name: string) => {
     const names = name.split(' ');
     return names.length > 1 ? `${names[0][0]}${names[1][0]}` : name.substring(0, 2);
@@ -134,10 +95,6 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
                     </Link>
                 ))}
                 </div>
-                 <Button variant="outline" size="sm" onClick={toggleBookmark}>
-                    <Bookmark className={cn("h-4 w-4 mr-2", isBookmarked && "fill-primary text-primary")} />
-                    {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-                </Button>
             </div>
             <h1 className="text-3xl md:text-5xl font-headline font-extrabold tracking-tight mb-4">{post.title}</h1>
             <p className="text-lg text-muted-foreground mb-6">{post.description}</p>
@@ -207,4 +164,3 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
     </>
   );
 };
-
