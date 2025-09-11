@@ -69,6 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    
     const initializeAuth = async () => {
       try {
         const clientConfig = await getClientFirebaseConfig();
@@ -76,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { auth: authInstance } = initializeClientApp(clientConfig);
           setAuth(authInstance);
 
-          const unsubscribe = onAuthStateChanged(authInstance, async (fbUser) => {
+          unsubscribe = onAuthStateChanged(authInstance, async (fbUser) => {
             if (fbUser) {
               setFirebaseUser(fbUser);
               const firestoreData = await fetchUserFromFirestore(fbUser);
@@ -85,25 +87,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setFirebaseUser(null);
               setUser(null);
             }
-            // Set loading to false only after the first auth state has been determined.
-            setLoading(false);
           });
-          
-          return unsubscribe;
-        } else {
-          // If no config, stop loading but don't set up auth
-          setLoading(false);
         }
       } catch (error) {
         console.error("Auth initialization failed:", error);
+      } finally {
+        // This is crucial: ensure loading is set to false even if auth fails.
         setLoading(false);
       }
     };
     
-    const unsubscribePromise = initializeAuth();
+    initializeAuth();
 
     return () => {
-      unsubscribePromise.then(unsubscribe => unsubscribe && unsubscribe());
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
   }, []);
 
