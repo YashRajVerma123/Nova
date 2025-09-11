@@ -17,6 +17,8 @@ import {
     deleteDoc,
     updateDoc,
     startAfter,
+    runTransaction,
+    increment,
 } from 'firebase/firestore';
 
 
@@ -29,6 +31,8 @@ export type Author = {
   instagramUrl?: string;
   signature?: string;
   showEmail?: boolean;
+  followers?: number;
+  following?: number;
 };
 
 export type Comment = {
@@ -177,6 +181,8 @@ const authorConverter = {
             instagramUrl: data.instagramUrl,
             signature: data.signature,
             showEmail: data.showEmail || false,
+            followers: data.followers || 0,
+            following: data.following || 0,
         };
     },
     toFirestore: (author: Omit<Author, 'id'>) => {
@@ -323,3 +329,19 @@ export const getAuthorByEmail = async (email: string): Promise<Author | null> =>
 };
 
 
+export const getAuthorById = async (id: string): Promise<Author | null> => {
+  const userRef = doc(db, 'users', id).withConverter(authorConverter);
+  const snapshot = await getDoc(userRef);
+
+  if (!snapshot.exists()) {
+    return null;
+  }
+  return snapshot.data();
+};
+
+export async function isFollowing(followerId: string, authorId: string): Promise<boolean> {
+  if (followerId === authorId) return false;
+  const followDocRef = doc(db, 'users', followerId, 'following', authorId);
+  const docSnap = await getDoc(followDocRef);
+  return docSnap.exists();
+}

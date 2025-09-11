@@ -1,6 +1,7 @@
 
+
 'use client';
-import { CreditCard, LogOut, User as UserIcon, Upload, Moon, Sun, Loader2, PanelRightOpen, Settings } from 'lucide-react';
+import { CreditCard, LogOut, User as UserIcon, Upload, Moon, Sun, Loader2, PanelRightOpen, Settings, UserPlus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -270,6 +271,14 @@ const UserNav = () => {
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">{user.name}</p>
               <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+              <div className="flex gap-4 pt-1">
+                <div className="text-xs text-muted-foreground">
+                    <span className="font-bold text-foreground">{user.followers || 0}</span> Followers
+                </div>
+                 <div className="text-xs text-muted-foreground">
+                    <span className="font-bold text-foreground">{user.following || 0}</span> Following
+                </div>
+              </div>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />

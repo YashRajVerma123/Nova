@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -39,6 +40,8 @@ const formatUser = (user: FirebaseUser, firestoreData?: any): Author => {
         instagramUrl: firestoreData?.instagramUrl,
         signature: firestoreData?.signature,
         showEmail: firestoreData?.showEmail || false,
+        followers: firestoreData?.followers || 0,
+        following: firestoreData?.following || 0,
     };
 };
 
@@ -59,6 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: fbUser.email,
         avatar: fbUser.photoURL,
         showEmail: false,
+        followers: 0,
+        following: 0,
     };
     await setDoc(userRef, newUser, { merge: true });
     return newUser;

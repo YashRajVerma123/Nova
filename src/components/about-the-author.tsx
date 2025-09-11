@@ -1,20 +1,60 @@
 
 
+'use client'
+
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Link from 'next/link';
-import { Instagram } from "lucide-react";
-import { getAuthorByEmail } from "@/lib/data";
+import { Instagram, Users } from "lucide-react";
+import { getAuthorByEmail, isFollowing, getAuthorById } from "@/lib/data";
+import { useAuth } from "@/hooks/use-auth";
+import { useState, useEffect } from "react";
+import FollowButton from "./follow-button";
 
-const AboutTheAuthor = async () => {
-  // Fetch the author details from the database
-  const author = await getAuthorByEmail("yashrajverma916@gmail.com");
+const AboutTheAuthor = () => {
+  const [author, setAuthor] = useState<Awaited<ReturnType<typeof getAuthorById>>>(null);
+  const { user } = useAuth();
+  const [isFollowingState, setIsFollowingState] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Hardcoded email for the main author
+  const authorEmail = "yashrajverma916@gmail.com";
+
+  useEffect(() => {
+    const fetchAuthorData = async () => {
+      setIsLoading(true);
+      const mainAuthor = await getAuthorByEmail(authorEmail);
+      if (mainAuthor) {
+        setAuthor(mainAuthor);
+        if (user) {
+          const following = await isFollowing(user.id, mainAuthor.id);
+          setIsFollowingState(following);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    fetchAuthorData();
+  }, [user]);
+
+  const handleFollowToggle = (newFollowState: boolean) => {
+    setIsFollowingState(newFollowState);
+    // Optimistically update follower count
+    setAuthor(prev => {
+        if (!prev) return null;
+        return {
+            ...prev,
+            followers: (prev.followers || 0) + (newFollowState ? 1 : -1)
+        }
+    })
+  }
 
   // Provide default fallback values in case the author data is not yet available
-  const authorAvatar = "https://i.ibb.co/TChNTL8/pfp.png";
+  const authorAvatar = author?.avatar || "https://i.ibb.co/TChNTL8/pfp.png";
   const authorName = author?.name || "Yash Raj Verma";
   const authorBio = author?.bio || "Hi, I'm Yash Raj Verma. Welcome to Nova, my personal blog where I explore the rapidly evolving worlds of technology, AI, space, and breaking news. I break down complex topics into clear, engaging insights. Thanks for reading.";
   const instagramUrl = author?.instagramUrl || "https://instagram.com/v.yash.raj";
   const signature = author?.signature || "V.Yash.Raj";
+  const followerCount = author?.followers || 0;
   
   return (
     <section>
@@ -28,15 +68,30 @@ const AboutTheAuthor = async () => {
             </Avatar>
             <div className="flex-1 text-center md:text-left">
                 <h3 className="text-2xl font-headline font-bold">{authorName}</h3>
+                <div className="flex items-center justify-center md:justify-start gap-4 my-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        <span>{followerCount} Followers</span>
+                    </div>
+                </div>
                 <p className="text-muted-foreground mt-2 mb-4">
                   {authorBio}
                 </p>
-                 <Link href={instagramUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
-                    <Instagram className="h-4 w-4" />
-                    Follow on Instagram
-                 </Link>
+                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                    {author && user && user.id !== author.id && !isLoading && (
+                        <FollowButton
+                            authorId={author.id}
+                            isFollowing={isFollowingState}
+                            onToggle={handleFollowToggle}
+                        />
+                    )}
+                     <Link href={instagramUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                        <Instagram className="h-4 w-4" />
+                        Follow on Instagram
+                     </Link>
+                </div>
             </div>
-             <div className="self-end">
+             <div className="self-end mt-4 md:mt-0">
                 <p className="font-signature text-4xl text-primary/80">{signature}</p>
              </div>
         </div>
@@ -45,4 +100,3 @@ const AboutTheAuthor = async () => {
 };
 
 export default AboutTheAuthor;
-
