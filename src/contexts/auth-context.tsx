@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const clientConfig = await getClientFirebaseConfig();
       // Ensure config has projectId before initializing
       if (clientConfig && clientConfig.projectId) {
-        const clientApp = !getApps().length ? initializeApp(clientConfig) : getApp();
+        const clientApp = !getApps().length ? initializeApp(clientConfig, "client-app") : getApp("client-app");
         const authInstance = getAuth(clientApp);
         setClientAuth(authInstance);
 
