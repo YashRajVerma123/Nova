@@ -20,10 +20,15 @@ import { useToast } from "@/hooks/use-toast";
 export default function PostActions({ post }: { post: Post }) {
   const { toast } = useToast();
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 25) + 5);
+  const [likeCount, setLikeCount] = useState(0);
   const [currentUrl, setCurrentUrl] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+    // Moved random number generation to useEffect to avoid hydration mismatch
+    setLikeCount(Math.floor(Math.random() * 25) + 5);
+
     if (typeof window !== 'undefined') {
       setCurrentUrl(window.location.href);
     }
@@ -32,6 +37,11 @@ export default function PostActions({ post }: { post: Post }) {
       setLiked(true);
     }
   }, [post.slug]);
+
+  if (!isMounted) {
+    // Render a placeholder or nothing on the server
+    return <div className="flex items-center justify-between h-10"></div>;
+  }
 
   const handleLike = () => {
     const newLikedState = !liked;
