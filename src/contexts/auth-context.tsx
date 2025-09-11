@@ -3,7 +3,7 @@
 
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, User as FirebaseUser, Auth, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { db as serverDb } from '@/lib/firebase-server';
+import { db } from '@/lib/firebase-server';
 import type { Author } from '@/lib/data';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getClientFirebaseConfig } from '@/app/actions/config-actions';
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUserFromFirestore = async (fbUser: FirebaseUser) => {
-    const userRef = doc(serverDb, 'users', fbUser.uid);
+    const userRef = doc(db, 'users', fbUser.uid);
     const userDoc = await getDoc(userRef);
     if (userDoc.exists()) {
       return userDoc.data();
@@ -87,12 +87,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setFirebaseUser(null);
               setUser(null);
             }
+            // This is the correct place to stop loading, after auth state is determined.
+            setLoading(false);
           });
+        } else {
+            // If no config, we are not in an auth-enabled state. Stop loading.
+            setLoading(false);
         }
       } catch (error) {
         console.error("Auth initialization failed:", error);
-      } finally {
-        // This is crucial: ensure loading is set to false even if auth fails.
+        // Ensure loading stops even if initialization fails.
         setLoading(false);
       }
     };
@@ -108,8 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async () => {
     if (!auth) {
-      console.error("Client auth not initialized");
-      throw new Error("Authentication service is not available.");
+      console.error("Client auth not initialized or initialization failed.");
+      throw new Error("Authentication service is not available. Please try again in a moment.");
     }
     const provider = new GoogleAuthProvider();
     try {
@@ -149,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (updates.showEmail !== undefined) updateData.showEmail = updates.showEmail;
 
     if (Object.keys(updateData).length > 0) {
-        const userRef = doc(serverDb, 'users', auth.currentUser.uid);
+        const userRef = doc(db, 'users', auth.currentUser.uid);
         await setDoc(userRef, updateData, { merge: true });
     }
 
