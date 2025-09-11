@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/toaster";
 import BackgroundAnimation from "@/components/background-animation";
 import PageLoader from "@/components/page-loader";
 import SplashLoader from "@/components/splash-loader";
+import { Suspense } from "react";
 
 const inter = Inter({ 
   subsets: ["latin"], 
@@ -51,7 +52,9 @@ export default function RootLayout({
       >
         <ClientProviders>
           <SplashLoader />
-          <PageLoader />
+          <Suspense fallback={null}>
+            <PageLoader />
+          </Suspense>
           <BackgroundAnimation />
           <div className="relative z-10 flex flex-col min-h-screen animate-fade-in-up">
             <Header />
