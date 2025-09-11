@@ -1,11 +1,14 @@
+// This file is being deprecated in favor of firebase-server.ts and firebase-client.ts
+// It is kept for now to avoid breaking existing imports, but should be considered for removal.
+// For server-side code, import from '@/lib/firebase-server';
+// For client-side code, use the AuthProvider context.
 
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+// For simplicity, we will just re-export the server-side instance.
+// This assumes any remaining direct import of 'db' is from a server component.
+import { db } from './firebase-server';
+import { FirebaseOptions } from 'firebase/app';
 
-// Your web app's Firebase configuration
-// This is now just a placeholder structure. The actual values will be
-// fetched at runtime via a server action to prevent exposing them at build time.
+// This config is now only used to pass to the client via server action.
 export const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
@@ -15,11 +18,5 @@ export const firebaseConfig: FirebaseOptions = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
 };
-
-// Initialize Firebase for SERVER-SIDE usage only
-// The client-side app will be initialized in the AuthProvider
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-
 
 export { db };

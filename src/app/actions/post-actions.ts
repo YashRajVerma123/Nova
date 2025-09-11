@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { Post, Author } from '@/lib/data';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-server'; // Use server db
 import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, getDocs, limit, getDoc, setDoc } from 'firebase/firestore';
 import { z } from 'zod';
 

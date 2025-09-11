@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { Author, Comment } from '@/lib/data';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-server'; // Use server db
 import { collection, doc, addDoc, updateDoc, deleteDoc, runTransaction, Timestamp, getDoc, writeBatch, where, query, getDocs, setDoc } from 'firebase/firestore';
 
 export async function addComment(

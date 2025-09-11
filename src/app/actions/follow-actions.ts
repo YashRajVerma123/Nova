@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-server'; // Use server db
 import { doc, runTransaction, increment } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 

@@ -3,7 +3,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-server'; // Use server db
 import { doc, updateDoc } from 'firebase/firestore';
 import { z } from 'zod';
 
