@@ -4,7 +4,7 @@
 
 import { Author, isFollowing } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Mail, Users, Star } from "lucide-react";
+import { Mail, Users, BadgeCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import FollowButton from "./follow-button";
@@ -78,9 +78,9 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
             <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-bold font-headline">{author.name}</h2>
                 {isMainAuthor && (
-                     <Badge variant="default" className="flex items-center gap-1 border-primary/50 bg-primary/10 text-primary hover:bg-primary/20">
-                        <Star className="h-3 w-3" />
-                        Author
+                     <Badge variant="default" className="flex items-center gap-1.5 border-blue-500/50 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20">
+                        <BadgeCheck className="h-4 w-4" />
+                        Verified Author
                     </Badge>
                 )}
             </div>
