@@ -4,10 +4,13 @@
 
 import { Author, isFollowing } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Mail, Users } from "lucide-react";
+import { Mail, Users, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import FollowButton from "./follow-button";
+import { Badge } from "./ui/badge";
+import { cn } from "@/lib/utils";
+
 
 interface ProfileCardProps {
     user: Author;
@@ -64,13 +67,23 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
         background: `conic-gradient(from 90deg at 50% 50%, ${gradientColors.from} 0%, ${gradientColors.to} 50%, ${gradientColors.from} 100%)`,
     };
 
+    const isMainAuthor = author.email === 'yashrajverma916@gmail.com';
+
     const renderCardContent = () => (
         <>
             <Avatar className="h-24 w-24 mb-4 border-4 border-primary/20">
                 <AvatarImage src={author.avatar} alt={author.name} />
                 <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
             </Avatar>
-            <h2 className="text-2xl font-bold font-headline">{author.name}</h2>
+            <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold font-headline">{author.name}</h2>
+                {isMainAuthor && (
+                     <Badge variant="default" className="flex items-center gap-1 border-primary/50 bg-primary/10 text-primary hover:bg-primary/20">
+                        <Star className="h-3 w-3" />
+                        Author
+                    </Badge>
+                )}
+            </div>
 
              <div className="flex items-center gap-4 my-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
