@@ -33,6 +33,7 @@ const dancingScript = Dancing_Script({
 export const metadata: Metadata = {
   title: "Nova - Cutting through the noise",
   description: "Your essential destination for making sense of today. We provide current affairs news for the modern reader.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
