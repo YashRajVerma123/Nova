@@ -3,10 +3,12 @@
 'use client';
 
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, updateProfile, User as FirebaseUser, setPersistence, browserLocalPersistence, getRedirectResult } from 'firebase/auth';
-import { app, db } from '@/lib/firebase';
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, updateProfile, User as FirebaseUser, setPersistence, browserLocalPersistence, getRedirectResult, Auth } from 'firebase/auth';
+import { app as serverApp, db } from '@/lib/firebase';
 import type { Author } from '@/lib/data';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { getClientFirebaseConfig } from '@/app/actions/config-actions';
+import { FirebaseOptions, initializeApp, getApps, getApp } from 'firebase/app';
 
 interface AuthContextType {
   user: Author | null;
@@ -27,8 +29,6 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const auth = getAuth(app);
-
 // A mapping from Firebase User + Firestore data to our app's Author type
 const formatUser = (user: FirebaseUser, firestoreData?: any): Author => {
     return {
@@ -45,11 +45,41 @@ const formatUser = (user: FirebaseUser, firestoreData?: any): Author => {
     };
 };
 
+let clientAuth: Auth;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Author | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const initializeClientAuth = async () => {
+      const clientConfig = await getClientFirebaseConfig();
+      const clientApp = !getApps().length ? initializeApp(clientConfig) : getApp();
+      clientAuth = getAuth(clientApp);
+
+      const unsubscribe = onAuthStateChanged(clientAuth, async (fbUser) => {
+        if (fbUser) {
+          setFirebaseUser(fbUser);
+          const firestoreData = await fetchUserFromFirestore(fbUser);
+          setUser(formatUser(fbUser, firestoreData));
+        } else {
+          setFirebaseUser(null);
+          setUser(null);
+        }
+        setLoading(false);
+      });
+      
+      return unsubscribe;
+    };
+    
+    const unsubscribePromise = initializeClientAuth();
+
+    return () => {
+      unsubscribePromise.then(unsubscribe => unsubscribe && unsubscribe());
+    };
+  }, []);
+  
   const fetchUserFromFirestore = async (fbUser: FirebaseUser) => {
     const userRef = doc(db, 'users', fbUser.uid);
     const userDoc = await getDoc(userRef);
@@ -69,27 +99,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return newUser;
   }
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser) {
-        setFirebaseUser(fbUser);
-        const firestoreData = await fetchUserFromFirestore(fbUser);
-        setUser(formatUser(fbUser, firestoreData));
-      } else {
-        setFirebaseUser(null);
-        setUser(null);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   const signIn = useCallback(async () => {
+    if (!clientAuth) {
+      console.error("Client auth not initialized");
+      return;
+    }
     const provider = new GoogleAuthProvider();
     try {
-        await setPersistence(auth, browserLocalPersistence);
-        await signInWithPopup(auth, provider);
+        await setPersistence(clientAuth, browserLocalPersistence);
+        await signInWithPopup(clientAuth, provider);
         // The onAuthStateChanged listener will handle the user state update.
     } catch (error) {
         // Silently handle popup closed by user, re-throw other errors
@@ -101,7 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await firebaseSignOut(auth);
+    if (!clientAuth) return;
+    await firebaseSignOut(clientAuth);
     setFirebaseUser(null);
     setUser(null);
   }, []);
@@ -114,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signature?: string;
       showEmail?: boolean;
   }) => {
-    if (!auth.currentUser) throw new Error("Not authenticated");
+    if (!clientAuth?.currentUser) throw new Error("Not authenticated");
     
     // We construct a new object with only the fields that are being updated
     // to avoid accidentally wiping fields.
@@ -127,13 +146,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (updates.showEmail !== undefined) updateData.showEmail = updates.showEmail;
 
     if (Object.keys(updateData).length > 0) {
-        const userRef = doc(db, 'users', auth.currentUser.uid);
+        const userRef = doc(db, 'users', clientAuth.currentUser.uid);
         await setDoc(userRef, updateData, { merge: true });
     }
 
     // Force a refresh of the user object to get the latest profile
-    const firestoreData = await fetchUserFromFirestore(auth.currentUser);
-    setUser(formatUser(auth.currentUser, firestoreData));
+    const firestoreData = await fetchUserFromFirestore(clientAuth.currentUser);
+    setUser(formatUser(clientAuth.currentUser, firestoreData));
   }, []);
 
   const isAdmin = user?.email === 'yashrajverma916@gmail.com';
