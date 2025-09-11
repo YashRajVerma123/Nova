@@ -67,6 +67,17 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            
+            {/* Icons moved to the left on mobile */}
+            <div className="flex md:hidden items-center gap-1">
+              <SearchBar />
+              <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
+                  <Link href="/bookmarks">
+                      <Bookmark className="h-5 w-5"/>
+                      <span className="sr-only">Bookmarks</span>
+                  </Link>
+              </Button>
+            </div>
 
             <div className="hidden md:flex items-center gap-1">
                <nav className="flex items-center gap-0">
@@ -84,13 +95,15 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2">
-            <SearchBar />
-            <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
-                <Link href="/bookmarks">
-                    <Bookmark className="h-5 w-5"/>
-                    <span className="sr-only">Bookmarks</span>
-                </Link>
-            </Button>
+            <div className="hidden md:flex">
+              <SearchBar />
+              <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
+                  <Link href="/bookmarks">
+                      <Bookmark className="h-5 w-5"/>
+                      <span className="sr-only">Bookmarks</span>
+                  </Link>
+              </Button>
+            </div>
             <NotificationBell />
             <UserNav />
         </div>
