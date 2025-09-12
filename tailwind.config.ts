@@ -117,6 +117,10 @@ export default {
           '70%': { opacity: '1', transform: 'translateX(0)' },
           '100%': { opacity: '0', transform: 'translateX(10px)' },
         },
+        shine: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -129,6 +133,7 @@ export default {
         'move-circle-3': 'move-circle-3 15s ease-in-out infinite',
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'swipe-indicator': 'swipe-indicator 2.5s ease-in-out forwards 1s',
+        'shine': 'shine 3s linear infinite',
       },
     },
   },

@@ -82,6 +82,19 @@
   }
 }
 
+@layer utilities {
+    .badge-shine {
+        @apply relative overflow-hidden;
+    }
+    .badge-shine::after {
+        content: "";
+        @apply absolute top-0 -left-full w-full h-full;
+        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shine 3s infinite linear;
+    }
+}
+
+
 .glass-card {
   @apply bg-card/60 backdrop-blur-xl border border-black/5 rounded-xl shadow-lg;
 }

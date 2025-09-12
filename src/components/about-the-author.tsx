@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 import FollowButton from "./follow-button";
 import { Badge } from "./ui/badge";
+import { cn } from "@/lib/utils";
 
 const AboutTheAuthor = () => {
   const [author, setAuthor] = useState<Awaited<ReturnType<typeof getAuthorById>>>(null);
@@ -69,15 +70,15 @@ const AboutTheAuthor = () => {
                 <AvatarFallback>YV</AvatarFallback>
             </Avatar>
             <div className="flex-1 text-center md:text-left">
-                <h3 className="text-2xl font-headline font-bold">{authorName}</h3>
-                {isMainAuthor && (
-                    <div className="flex justify-center md:justify-start mt-2">
-                        <Badge variant="default" className="flex items-center gap-1.5 border-blue-500/50 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20">
+                <div className="flex flex-col items-center md:items-start gap-2">
+                    <h3 className="text-2xl font-headline font-bold">{authorName}</h3>
+                    {isMainAuthor && (
+                        <Badge variant="default" className={cn("flex items-center gap-1.5 border-blue-500/50 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20", "badge-shine")}>
                             <BadgeCheck className="h-4 w-4" />
                             Verified Author
                         </Badge>
-                    </div>
-                )}
+                    )}
+                </div>
                 <div className="flex items-center justify-center md:justify-start gap-4 my-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
@@ -102,7 +103,7 @@ const AboutTheAuthor = () => {
                 </div>
             </div>
              <div className="self-end mt-4 md:mt-0">
-                <p className="font-signature text-4xl text-primary/80">{signature}</p>
+                <p className="font-signature text-4xl bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{signature}</p>
              </div>
         </div>
     </section>

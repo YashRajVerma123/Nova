@@ -78,7 +78,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
             <div className="flex flex-col items-center text-center gap-2">
                 <h2 className="text-2xl font-bold font-headline">{author.name}</h2>
                 {isMainAuthor && (
-                     <Badge variant="default" className="flex items-center gap-1.5 border-blue-500/50 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20">
+                     <Badge variant="default" className={cn("flex items-center gap-1.5 border-blue-500/50 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20", "badge-shine")}>
                         <BadgeCheck className="h-4 w-4" />
                         Verified Author
                     </Badge>
