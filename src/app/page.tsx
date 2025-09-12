@@ -20,7 +20,7 @@ export default async function HomePage() {
   const recentPosts = allPosts
     .filter(p => !p.featured)
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    .slice(0, 3);
+    .slice(0, 6);
 
   return (
     <div className="space-y-24 md:space-y-32">
@@ -67,8 +67,8 @@ export default async function HomePage() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden lg:flex" />
-          <CarouselNext className="hidden lg:flex" />
+          <CarouselPrevious className="flex" />
+          <CarouselNext className="flex" />
         </Carousel>
       </section>
 
@@ -77,9 +77,11 @@ export default async function HomePage() {
       {/* Recent Posts Section */}
       <section className="container mx-auto px-4">
         <h2 className="text-3xl font-headline font-bold mb-8 text-center">Recent News</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
             {recentPosts.map((post) => (
-                <BlogPostCard key={post.slug} post={post} />
+              <div key={post.slug} className="transform transition-transform duration-300 sm:scale-100 scale-95">
+                <BlogPostCard post={post} />
+              </div>
             ))}
         </div>
         <div className="text-center mt-12">
