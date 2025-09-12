@@ -13,6 +13,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 import { Separator } from '@/components/ui/separator';
+import RecentPostCard from '@/components/recent-post-card';
 
 export default async function HomePage() {
   const allPosts: Post[] = await getPosts();
@@ -20,7 +21,7 @@ export default async function HomePage() {
   const recentPosts = allPosts
     .filter(p => !p.featured)
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    .slice(0, 6);
+    .slice(0, 10);
 
   return (
     <div className="space-y-24 md:space-y-32">
@@ -49,39 +50,40 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Posts Section */}
-      <section className="container mx-auto px-4">
-        <h2 className="text-3xl font-headline font-bold mb-8 text-center">Featured Stories</h2>
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          className="w-full"
-        >
-          <CarouselContent>
-            {featuredPosts.map((post, index) => (
-              <CarouselItem key={post.slug} className="md:basis-1/2 lg:basis-1/3">
-                 <div className="p-1">
-                    <BlogPostCard post={post} priority={index === 0} />
-                 </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="flex" />
-          <CarouselNext className="flex" />
-        </Carousel>
-      </section>
+      {featuredPosts.length > 0 && (
+        <section className="container mx-auto px-4">
+          <h2 className="text-3xl font-headline font-bold mb-8 text-center">Featured Stories</h2>
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent>
+              {featuredPosts.map((post, index) => (
+                <CarouselItem key={post.slug} className="md:basis-1/2 lg:basis-1/3">
+                  <div className="p-1">
+                      <BlogPostCard post={post} priority={index < 3} />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </section>
+      )}
+
 
       <Separator className="container mx-auto bg-border/10"/>
 
       {/* Recent Posts Section */}
       <section className="container mx-auto px-4">
         <h2 className="text-3xl font-headline font-bold mb-8 text-center">Recent News</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+        <div className="grid grid-cols-1 gap-8">
             {recentPosts.map((post) => (
-              <div key={post.slug} className="transform transition-transform duration-300 sm:scale-100 scale-95">
-                <BlogPostCard post={post} />
-              </div>
+                <RecentPostCard key={post.slug} post={post} />
             ))}
         </div>
         <div className="text-center mt-12">
