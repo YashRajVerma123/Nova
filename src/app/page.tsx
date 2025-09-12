@@ -53,7 +53,8 @@ export default async function HomePage() {
       {/* Featured Posts Section */}
       {featuredPosts.length > 0 && (
         <section className="container mx-auto px-4">
-          <h2 className="text-3xl font-headline font-bold mb-8 text-center">Featured Stories</h2>
+          <h2 className="text-3xl font-headline font-bold mb-2 text-center">Featured Stories</h2>
+          <p className="text-center text-muted-foreground mb-8 md:hidden">Swipe to see more</p>
           <Carousel
             opts={{
               align: "start",
@@ -70,10 +71,6 @@ export default async function HomePage() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-full bg-background/50 backdrop-blur-sm md:hidden animate-swipe-indicator">
-              <Hand className="h-5 w-5 text-primary" />
-              <span className="text-xs font-medium">Swipe</span>
-            </div>
             <CarouselPrevious className="hidden md:inline-flex" />
             <CarouselNext className="hidden md:inline-flex" />
           </Carousel>
