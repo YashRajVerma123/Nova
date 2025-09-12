@@ -72,13 +72,15 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     
     const cardContent = (
          <div className="relative flex flex-col items-center p-6 bg-background rounded-lg w-full">
-            <Avatar className={cn(
-                "h-24 w-24 mb-4 border-4",
-                isMainAuthor ? "border-yellow-400" : "border-primary/20"
-                )}>
-                <AvatarImage src={author.avatar} alt={author.name} />
-                <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
-            </Avatar>
+             <div className={cn(
+                "h-24 w-24 mb-4 rounded-full flex items-center justify-center",
+                isMainAuthor && "p-0.5 bg-gradient-to-r from-yellow-300 via-amber-500 to-yellow-300 animate-pulse"
+             )}>
+                <Avatar className={cn("h-full w-full", isMainAuthor && "border-2 border-background")}>
+                    <AvatarImage src={author.avatar} alt={author.name} />
+                    <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
+                </Avatar>
+            </div>
             <div className="flex flex-col items-center text-center gap-2">
                 <h2 className="text-2xl font-bold font-headline">{author.name}</h2>
                 {isMainAuthor && (
