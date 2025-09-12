@@ -69,7 +69,6 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     };
 
     const isMainAuthor = author.email === 'yashrajverma916@gmail.com';
-    const signature = author?.signature || "V.Yash.Raj";
     
     const cardContent = (
          <div className="relative flex flex-col items-center p-6 bg-background rounded-lg w-full">
@@ -107,7 +106,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
             </div>
 
             {isMainAuthor && (
-                <p className="font-signature text-3xl mt-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{signature}</p>
+                <p className="font-signature text-3xl mt-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{author.signature || 'V.Yash.Raj'}</p>
             )}
             
             {!isLoadingFollow && loggedInUser && loggedInUser.id !== author.id && (
@@ -125,7 +124,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     if (isMainAuthor) {
         return (
             <div className="relative p-0.5 overflow-hidden rounded-lg">
-                <div className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#27272a_50%,#a1a1aa_75%,#fff_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#27272a_50%,#a1a1aa_75%,#fff_100%)]" />
+                <div className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#333_0%,#a1a1aa_25%,#fff_50%,#a1a1aa_75%,#333_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#333_0%,#a1a1aa_25%,#fff_50%,#a1a1aa_75%,#333_100%)]" />
                 {cardContent}
             </div>
         );
@@ -139,4 +138,5 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
 };
 
 export default ProfileCard;
+
 
