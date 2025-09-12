@@ -117,9 +117,13 @@ export default {
           '70%': { opacity: '1', transform: 'translateX(0)' },
           '100%': { opacity: '0', transform: 'translateX(10px)' },
         },
-        shine: {
+        'shine': {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(100%)' },
+        },
+        'spin-slow': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
         },
       },
       animation: {
@@ -133,10 +137,10 @@ export default {
         'move-circle-3': 'move-circle-3 15s ease-in-out infinite',
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'swipe-indicator': 'swipe-indicator 2.5s ease-in-out forwards 1s',
-        'shine': 'shine 3s linear infinite',
+        'shine': 'shine 1.5s ease-in-out 3s infinite',
+        'spin-slow': 'spin-slow 5s linear infinite',
       },
     },
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
-

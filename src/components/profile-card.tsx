@@ -21,11 +21,7 @@ const getInitials = (name: string) => {
     return names.length > 1 ? `${names[0][0]}${names[1][0]}` : name.substring(0, 2);
 };
 
-const getRandomHslColor = () => `hsl(${Math.floor(Math.random() * 360)}, 100%, 75%)`;
-
 const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
-    const [gradientColors, setGradientColors] = useState({ from: '#E2CBFF', to: '#393BB2' });
-    const [isMounted, setIsMounted] = useState(false);
     const { user: loggedInUser } = useAuth();
     const [isFollowingState, setIsFollowingState] = useState(false);
     const [isLoadingFollow, setIsLoadingFollow] = useState(true);
@@ -36,12 +32,6 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     }, [initialUser]);
 
     useEffect(() => {
-        setIsMounted(true);
-        setGradientColors({
-            from: getRandomHslColor(),
-            to: getRandomHslColor(),
-        });
-        
         const checkFollowing = async () => {
             if (loggedInUser && loggedInUser.id !== author.id) {
                 setIsLoadingFollow(true);
@@ -63,16 +53,11 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
         }));
     };
 
-    const gradientStyle = {
-        background: `conic-gradient(from 90deg at 50% 50%, ${gradientColors.from} 0%, ${gradientColors.to} 50%, ${gradientColors.from} 100%)`,
-    };
-
     const isMainAuthor = author.email === 'yashrajverma916@gmail.com';
     const signature = author?.signature || "V.Yash.Raj";
-
-
-    const renderCardContent = () => (
-        <>
+    
+    const cardContent = (
+         <div className="relative flex flex-col items-center p-6 bg-background rounded-lg w-full">
             <Avatar className="h-24 w-24 mb-4 border-4 border-primary/20">
                 <AvatarImage src={author.avatar} alt={author.name} />
                 <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
@@ -105,7 +90,10 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
                     {author.bio || "This user hasn't written a bio yet."}
                  </p>
             </div>
-             <p className="font-signature text-3xl mt-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{signature}</p>
+
+            {isMainAuthor && (
+                <p className="font-signature text-3xl mt-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{signature}</p>
+            )}
             
             {!isLoadingFollow && loggedInUser && loggedInUser.id !== author.id && (
                 <div className="mt-6 w-full max-w-[150px]">
@@ -116,27 +104,19 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
                     />
                 </div>
             )}
-        </>
+        </div>
     );
-
-    if (!isMounted) {
+    
+    if (isMainAuthor) {
         return (
             <div className="relative p-0.5 overflow-hidden rounded-lg">
-                <div className="relative flex flex-col items-center p-6 bg-background rounded-lg">
-                    {renderCardContent()}
-                </div>
+                <div className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#1a1a1a_0%,#333333_50%,#1a1a1a_100%)]" />
+                {cardContent}
             </div>
         );
     }
-
-    return (
-        <div className="relative p-0.5 overflow-hidden rounded-lg">
-            <div className="absolute inset-[-1000%] animate-[spin_5s_linear_infinite]" style={gradientStyle} />
-            <div className="relative flex flex-col items-center p-6 bg-background rounded-lg">
-                {renderCardContent()}
-            </div>
-        </div>
-    );
+    
+    return cardContent;
 };
 
 export default ProfileCard;
