@@ -43,42 +43,40 @@ const Header = () => {
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
         <div className="flex items-center gap-1 md:gap-2">
-            <div className="md:hidden">
+            {/* Mobile Left Section */}
+            <div className="flex items-center gap-1 md:hidden">
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {navLinks.map((link) => (
-                    <DropdownMenuItem key={link.href} asChild>
-                      <Link
-                          href={link.href}
-                          className={cn(
-                            'text-sm font-medium transition-colors hover:text-primary',
-                            pathname === link.href ? 'text-primary' : 'text-foreground/80'
-                          )}
-                        >
-                          {link.label}
-                        </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Menu className="h-6 w-6" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {navLinks.map((link) => (
+                      <DropdownMenuItem key={link.href} asChild>
+                        <Link
+                            href={link.href}
+                            className={cn(
+                              'text-sm font-medium transition-colors hover:text-primary',
+                              pathname === link.href ? 'text-primary' : 'text-foreground/80'
+                            )}
+                          >
+                            {link.label}
+                          </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <SearchBar />
+                <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
+                    <Link href="/bookmarks">
+                        <Bookmark className="h-5 w-5"/>
+                        <span className="sr-only">Bookmarks</span>
+                    </Link>
+                </Button>
             </div>
             
-            {/* Icons moved to the left on mobile */}
-            <div className="flex md:hidden items-center gap-1">
-              <SearchBar />
-              <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
-                  <Link href="/bookmarks">
-                      <Bookmark className="h-5 w-5"/>
-                      <span className="sr-only">Bookmarks</span>
-                  </Link>
-              </Button>
-            </div>
-
+            {/* Desktop Left Section */}
             <div className="hidden md:flex items-center gap-1">
                <nav className="flex items-center gap-0">
                   {navLinks.map((link) => (
