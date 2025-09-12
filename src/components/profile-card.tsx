@@ -68,6 +68,8 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     };
 
     const isMainAuthor = author.email === 'yashrajverma916@gmail.com';
+    const signature = author?.signature || "V.Yash.Raj";
+
 
     const renderCardContent = () => (
         <>
@@ -103,6 +105,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
                     {author.bio || "This user hasn't written a bio yet."}
                  </p>
             </div>
+             <p className="font-signature text-3xl mt-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{signature}</p>
             
             {!isLoadingFollow && loggedInUser && loggedInUser.id !== author.id && (
                 <div className="mt-6 w-full max-w-[150px]">
