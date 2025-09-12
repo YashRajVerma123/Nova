@@ -72,12 +72,13 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     
     const cardContent = (
          <div className="relative flex flex-col items-center p-6 bg-background rounded-lg w-full">
-             <div className={cn("h-24 w-24 mb-4 rounded-full flex items-center justify-center")}>
-                <Avatar className={cn("h-full w-full", isMainAuthor && "border-2 border-blue-500")}>
-                    <AvatarImage src={author.avatar} alt={author.name} />
-                    <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
-                </Avatar>
-            </div>
+            <Avatar className={cn(
+              "h-24 w-24 mb-4",
+              isMainAuthor && "border-2 border-blue-500"
+            )}>
+                <AvatarImage src={author.avatar} alt={author.name} />
+                <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
+            </Avatar>
             <div className="flex flex-col items-center text-center gap-2">
                 <h2 className="text-2xl font-bold font-headline">{author.name}</h2>
                 {isMainAuthor && (
@@ -125,7 +126,8 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     
     if (isMainAuthor) {
         return (
-            <div className="relative p-0.5 overflow-hidden rounded-lg bg-[conic-gradient(from_90deg_at_50%_50%,#171717_0%,#a3a3a3_50%,#171717_100%)] animate-spin-slow">
+            <div className="relative p-0.5 overflow-hidden rounded-lg">
+                <div className="absolute inset-[-1000%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
                 {cardContent}
             </div>
         );
@@ -139,5 +141,3 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
 };
 
 export default ProfileCard;
-
-

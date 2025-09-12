@@ -86,6 +86,8 @@ export async function getFollowList(userId: string, type: 'followers' | 'followi
     if (userIds.length === 0) return [];
     
     const usersCollectionRef = collection(db, 'users').withConverter(authorConverter);
+    // Firestore 'in' queries are limited to 30 items. For a more scalable solution,
+    // you would fetch users individually or in batches. For this app's scale, this is okay.
     const q = query(usersCollectionRef, where('__name__', 'in', userIds));
     
     const usersSnapshot = await getDocs(q);
