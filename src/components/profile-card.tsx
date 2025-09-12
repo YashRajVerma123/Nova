@@ -5,7 +5,7 @@
 import { Author, isFollowing } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Mail, Users, BadgeCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import FollowButton from "./follow-button";
 import { Badge } from "./ui/badge";
@@ -21,11 +21,25 @@ const getInitials = (name: string) => {
     return names.length > 1 ? `${names[0][0]}${names[1][0]}` : name.substring(0, 2);
 };
 
+const gradientClasses = [
+    "from-purple-500 to-pink-500",
+    "from-blue-500 to-green-500",
+    "from-red-500 to-yellow-500",
+    "from-indigo-500 to-cyan-500",
+    "from-fuchsia-500 to-rose-500",
+];
+
 const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     const { user: loggedInUser } = useAuth();
     const [isFollowingState, setIsFollowingState] = useState(false);
     const [isLoadingFollow, setIsLoadingFollow] = useState(true);
     const [author, setAuthor] = useState(initialUser);
+
+    const randomGradient = useMemo(() => {
+        const randomIndex = Math.floor(Math.random() * gradientClasses.length);
+        return gradientClasses[randomIndex];
+    }, [author.id]);
+
 
     useEffect(() => {
         setAuthor(initialUser);
@@ -110,13 +124,17 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     if (isMainAuthor) {
         return (
             <div className="relative p-0.5 overflow-hidden rounded-lg">
-                <div className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#1a1a1a_0%,#333333_50%,#1a1a1a_100%)]" />
+                <div className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#E2E8F0_0%,#94A3B8_50%,#E2E8F0_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#1a1a1a_0%,#333333_50%,#1a1a1a_100%)]" />
                 {cardContent}
             </div>
         );
     }
     
-    return cardContent;
+    return (
+        <div className={cn("relative p-0.5 overflow-hidden rounded-lg bg-gradient-to-r", randomGradient)}>
+            {cardContent}
+        </div>
+    );
 };
 
 export default ProfileCard;
