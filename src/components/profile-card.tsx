@@ -72,11 +72,8 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     
     const cardContent = (
          <div className="relative flex flex-col items-center p-6 bg-background rounded-lg w-full">
-             <div className={cn(
-                "h-24 w-24 mb-4 rounded-full flex items-center justify-center",
-                isMainAuthor && "p-0.5 bg-gradient-to-r from-yellow-300 via-amber-500 to-yellow-300 animate-pulse"
-             )}>
-                <Avatar className={cn("h-full w-full", isMainAuthor && "border-2 border-background")}>
+             <div className={cn("h-24 w-24 mb-4 rounded-full flex items-center justify-center")}>
+                <Avatar className={cn("h-full w-full", isMainAuthor && "border-2 border-blue-500")}>
                     <AvatarImage src={author.avatar} alt={author.name} />
                     <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
                 </Avatar>
@@ -128,7 +125,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     
     if (isMainAuthor) {
         return (
-            <div className="relative p-0.5 overflow-hidden rounded-lg bg-[conic-gradient(from_90deg_at_50%_50%,#a1a1aa_0%,#fff_25%,#a1a1aa_50%,#333_75%,#a1a1aa_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#333_0%,#a1a1aa_25%,#fff_50%,#a1a1aa_75%,#333_100%)]">
+            <div className="relative p-0.5 overflow-hidden rounded-lg bg-[conic-gradient(from_90deg_at_50%_50%,#333_0%,#a1a1aa_25%,#fff_50%,#a1a1aa_75%,#333_100%)]">
                 {cardContent}
             </div>
         );
@@ -142,3 +139,4 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
 };
 
 export default ProfileCard;
+

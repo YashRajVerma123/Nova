@@ -10,6 +10,13 @@ export default {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    container: {
+      center: true,
+      padding: '2rem',
+      screens: {
+        '2xl': '1400px',
+      },
+    },
     extend: {
       fontFamily: {
         body: ['var(--font-inter)', 'sans-serif'],
@@ -118,9 +125,9 @@ export default {
           '70%': { opacity: '1', transform: 'translateX(0)' },
           '100%': { opacity: '0', transform: 'translateX(10px)' },
         },
-        'spin-slow': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
+        shine: {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
         },
       },
       animation: {
@@ -134,9 +141,10 @@ export default {
         'move-circle-3': 'move-circle-3 15s ease-in-out infinite',
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'swipe-indicator': 'swipe-indicator 2.5s ease-in-out forwards 1s',
-        'spin-slow': 'spin-slow 5s linear infinite',
+        'text-shine': 'shine 2s linear infinite',
       },
     },
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
+
