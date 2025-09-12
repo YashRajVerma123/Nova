@@ -103,7 +103,7 @@ const AboutTheAuthor = () => {
                 </div>
             </div>
              <div className="self-end mt-4 md:mt-0">
-                <p className="font-signature text-4xl bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{signature}</p>
+                <p className="font-signature text-4xl bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{signature}</p>
              </div>
         </div>
     </section>
@@ -111,3 +111,4 @@ const AboutTheAuthor = () => {
 };
 
 export default AboutTheAuthor;
+
