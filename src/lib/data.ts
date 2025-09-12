@@ -169,7 +169,7 @@ const commentConverter = {
     }
 };
 
-const authorConverter = {
+export const authorConverter = {
     fromFirestore: (snapshot: any, options: any): Author => {
         const data = snapshot.data(options);
         return {

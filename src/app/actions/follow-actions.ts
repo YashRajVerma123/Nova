@@ -3,9 +3,9 @@
 'use server';
 
 import { db } from '@/lib/firebase-server'; // Use server db
-import { doc, runTransaction, increment, collection, getDocs } from 'firebase/firestore';
+import { doc, runTransaction, increment, collection, getDocs, where, query } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
-import { Author } from '@/lib/data';
+import { Author, authorConverter } from '@/lib/data';
 
 export async function toggleFollow(followerId: string, authorId: string, isCurrentlyFollowing: boolean): Promise<{ success: boolean, error?: string }> {
     if (!followerId) {
@@ -76,38 +76,19 @@ export async function removeFollower(userId: string, followerId: string): Promis
 }
 
 
-const authorConverter = {
-    fromFirestore: (snapshot: any, options: any): Author => {
-        const data = snapshot.data(options);
-        return {
-            id: snapshot.id,
-            name: data.name,
-            avatar: data.avatar,
-            email: data.email,
-            bio: data.bio,
-            instagramUrl: data.instagramUrl,
-            signature: data.signature,
-            showEmail: data.showEmail || false,
-            followers: data.followers || 0,
-            following: data.following || 0,
-        };
-    },
-    toFirestore: (author: Omit<Author, 'id'>) => {
-        return author;
-    }
-};
-
 export async function getFollowList(userId: string, type: 'followers' | 'following'): Promise<Author[]> {
     if (!userId) return [];
     
-    const listCollection = collection(db, 'users', userId, type);
-    const listSnapshot = await getDocs(listCollection);
+    const listCollectionRef = collection(db, 'users', userId, type);
+    const listSnapshot = await getDocs(listCollectionRef);
     const userIds = listSnapshot.docs.map(d => d.id);
     
     if (userIds.length === 0) return [];
     
-    const userPromises = userIds.map(id => getDoc(doc(db, 'users', id).withConverter(authorConverter)));
-    const userDocs = await Promise.all(userPromises);
+    const usersCollectionRef = collection(db, 'users').withConverter(authorConverter);
+    const q = query(usersCollectionRef, where('__name__', 'in', userIds));
     
-    return userDocs.filter(d => d.exists()).map(d => d.data() as Author);
+    const usersSnapshot = await getDocs(q);
+    
+    return usersSnapshot.docs.map(d => d.data());
 }
