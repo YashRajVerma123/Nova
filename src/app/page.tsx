@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Hand } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { getPosts, Post } from '@/lib/data';
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/carousel"
 import { Separator } from '@/components/ui/separator';
 import RecentPostCard from '@/components/recent-post-card';
+import { cn } from '@/lib/utils';
 
 export default async function HomePage() {
   const allPosts: Post[] = await getPosts();
@@ -58,7 +59,7 @@ export default async function HomePage() {
               align: "start",
               loop: true,
             }}
-            className="w-full"
+            className="w-full relative group"
           >
             <CarouselContent>
               {featuredPosts.map((post, index) => (
@@ -69,8 +70,12 @@ export default async function HomePage() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-full bg-background/50 backdrop-blur-sm md:hidden animate-swipe-indicator">
+              <Hand className="h-5 w-5 text-primary" />
+              <span className="text-xs font-medium">Swipe</span>
+            </div>
+            <CarouselPrevious className="hidden md:inline-flex" />
+            <CarouselNext className="hidden md:inline-flex" />
           </Carousel>
         </section>
       )}

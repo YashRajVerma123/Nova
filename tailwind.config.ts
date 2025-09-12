@@ -111,6 +111,12 @@ export default {
           '0%, 100%': { opacity: '1', transform: 'scale(1)' },
           '50%': { opacity: '0.5', transform: 'scale(1.2)' },
         },
+        'swipe-indicator': {
+          '0%': { opacity: '0', transform: 'translateX(-10px)' },
+          '30%': { opacity: '1', transform: 'translateX(0)' },
+          '70%': { opacity: '1', transform: 'translateX(0)' },
+          '100%': { opacity: '0', transform: 'translateX(10px)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -122,6 +128,7 @@ export default {
         'move-circle-2': 'move-circle-2 12s ease-in-out infinite',
         'move-circle-3': 'move-circle-3 15s ease-in-out infinite',
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'swipe-indicator': 'swipe-indicator 2.5s ease-in-out forwards 1s',
       },
     },
   },

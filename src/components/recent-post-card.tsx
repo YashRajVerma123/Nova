@@ -21,27 +21,27 @@ const RecentPostCard = ({ post }: RecentPostCardProps) => {
   
   return (
     <Link href={`/posts/${post.slug}`} className="group block">
-      <div className="glass-card h-full flex flex-col md:flex-row overflow-hidden transition-all duration-300 hover:border-primary/50 hover:-translate-y-1">
-        <div className="relative w-full md:w-1/3 aspect-video md:aspect-auto overflow-hidden">
+      <div className="glass-card h-full flex flex-row overflow-hidden transition-all duration-300 hover:border-primary/50 hover:-translate-y-1">
+        <div className="relative w-2/5 md:w-1/3 aspect-square overflow-hidden">
           <Image
             src={post.coverImage}
             alt={post.title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, 33vw"
+            sizes="(max-width: 768px) 40vw, 33vw"
             data-ai-hint="blog cover"
           />
         </div>
-        <div className="p-6 flex flex-col flex-grow md:w-2/3">
-          <h3 className="font-headline text-xl lg:text-2xl font-bold leading-snug mb-2 group-hover:text-primary transition-colors">
+        <div className="p-4 sm:p-6 flex flex-col flex-grow w-3/5 md:w-2/3">
+          <h3 className="font-headline text-lg sm:text-xl lg:text-2xl font-bold leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
             {post.title}
           </h3>
-          <p className="text-muted-foreground text-sm mb-4 flex-grow line-clamp-2">{post.description}</p>
+          <p className="text-muted-foreground text-xs sm:text-sm mb-4 flex-grow line-clamp-2 md:line-clamp-3">{post.description}</p>
           
-          <div className="text-xs text-muted-foreground flex items-center gap-4 mb-4">
+          <div className="text-xs text-muted-foreground flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4">
               <div className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  <span>{new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  <span>{new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
               </div>
               <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
@@ -51,11 +51,11 @@ const RecentPostCard = ({ post }: RecentPostCardProps) => {
 
           <div className="flex justify-between items-center mt-auto pt-4 border-t border-border/10">
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                 <AvatarImage src={post.author.avatar} alt={post.author.name} />
                 <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium">{post.author.name}</span>
+              <span className="text-sm font-medium line-clamp-1">{post.author.name}</span>
             </div>
           </div>
         </div>
