@@ -86,7 +86,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
                 )}
             </div>
 
-             <div className="flex items-center gap-4 my-2 text-sm text-muted-foreground">
+            <div className="flex flex-col items-center gap-1 my-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
                     <span>{author.followers || 0} Followers</span>
@@ -124,7 +124,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     if (isMainAuthor) {
         return (
             <div className="relative p-0.5 overflow-hidden rounded-lg">
-                <div className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#E2E8F0_0%,#94A3B8_50%,#E2E8F0_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#1a1a1a_0%,#333333_50%,#1a1a1a_100%)]" />
+                <div className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#E2E8F0_0%,#1E293B_50%,#E2E8F0_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#71717a_0%,#fafafa_50%,#71717a_100%)]" />
                 {cardContent}
             </div>
         );
