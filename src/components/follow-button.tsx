@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -16,7 +17,7 @@ interface FollowButtonProps {
 
 const FollowButton = ({ authorId, isFollowing, onToggle }: FollowButtonProps) => {
     const [isLoading, setIsLoading] = useState(false);
-    const { user, signIn } = useAuth();
+    const { user, signIn, updateFollowingCount } = useAuth();
     const { toast } = useToast();
 
     const handleClick = async () => {
@@ -34,6 +35,8 @@ const FollowButton = ({ authorId, isFollowing, onToggle }: FollowButtonProps) =>
             const result = await toggleFollow(user.id, authorId, isFollowing);
             if(result.success) {
                 onToggle(!isFollowing);
+                // Update global state
+                updateFollowingCount(isFollowing ? -1 : 1);
             } else {
                 throw new Error(result.error || 'An unknown error occurred');
             }

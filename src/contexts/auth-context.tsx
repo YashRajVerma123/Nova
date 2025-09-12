@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -24,6 +25,8 @@ interface AuthContextType {
       signature?: string;
       showEmail?: boolean;
   }) => Promise<void>;
+  updateFollowingCount: (change: number) => void;
+  updateFollowerCount: (change: number) => void;
   loading: boolean;
 }
 
@@ -160,10 +163,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const firestoreData = await fetchUserFromFirestore(auth.currentUser);
     setUser(formatUser(auth.currentUser, firestoreData));
   }, [auth]);
+  
+  const updateFollowingCount = (change: number) => {
+      setUser(currentUser => {
+          if (!currentUser) return null;
+          return {
+              ...currentUser,
+              following: (currentUser.following || 0) + change
+          }
+      })
+  }
+  const updateFollowerCount = (change: number) => {
+      setUser(currentUser => {
+          if (!currentUser) return null;
+          return {
+              ...currentUser,
+              followers: (currentUser.followers || 0) + change
+          }
+      })
+  }
 
   const isAdmin = user?.email === 'yashrajverma916@gmail.com';
 
-  const value = { user, firebaseUser, auth, isAdmin, signIn, signOut, updateUserProfile, loading };
+  const value = { user, firebaseUser, auth, isAdmin, signIn, signOut, updateUserProfile, loading, updateFollowingCount, updateFollowerCount };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

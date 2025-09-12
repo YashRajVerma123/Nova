@@ -30,6 +30,7 @@ import { useTheme } from 'next-themes';
 import { Switch } from './ui/switch';
 import { usePathname } from 'next/navigation';
 import { Textarea } from './ui/textarea';
+import FollowListDialog from './follow-list-dialog';
 
 // Helper to convert file to Base64
 const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
@@ -56,7 +57,9 @@ const UserNav = () => {
   const { theme, setTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
-  
+  const [isFollowListOpen, setFollowListOpen] = useState(false);
+  const [followListType, setFollowListType] = useState<'followers' | 'following'>('followers');
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -148,6 +151,11 @@ const UserNav = () => {
         setNewAvatarFile(null);
         setProfileOpen(true);
     }
+  }
+
+  const handleOpenFollowList = (type: 'followers' | 'following') => {
+      setFollowListType(type);
+      setFollowListOpen(true);
   }
   
   if (!isMounted) {
@@ -272,10 +280,10 @@ const UserNav = () => {
               <p className="text-sm font-medium leading-none">{user.name}</p>
               <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
               <div className="flex gap-4 pt-1">
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={() => handleOpenFollowList('followers')}>
                     <span className="font-bold text-foreground">{user.followers || 0}</span> Followers
                 </div>
-                 <div className="text-xs text-muted-foreground">
+                 <div className="text-xs text-muted-foreground cursor-pointer hover:underline" onClick={() => handleOpenFollowList('following')}>
                     <span className="font-bold text-foreground">{user.following || 0}</span> Following
                 </div>
               </div>
@@ -375,6 +383,14 @@ const UserNav = () => {
           </form>
         </DialogContent>
       </Dialog>
+      {user && (
+         <FollowListDialog 
+            isOpen={isFollowListOpen} 
+            onOpenChange={setFollowListOpen}
+            listType={followListType}
+            userId={user.id}
+         />
+      )}
     </>
   );
 };

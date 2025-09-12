@@ -340,6 +340,7 @@ export const getAuthorById = async (id: string): Promise<Author | null> => {
 };
 
 export async function isFollowing(followerId: string, authorId: string): Promise<boolean> {
+  if (!followerId || !authorId) return false;
   if (followerId === authorId) return false;
   const followDocRef = doc(db, 'users', followerId, 'following', authorId);
   const docSnap = await getDoc(followDocRef);
