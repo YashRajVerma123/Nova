@@ -107,8 +107,8 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
                  </p>
             </div>
 
-            {isMainAuthor && (
-                <p className="font-signature text-3xl mt-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{author.signature || 'V.Yash.Raj'}</p>
+            {isMainAuthor && author.signature && (
+                <p className="font-signature text-3xl mt-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{author.signature}</p>
             )}
             
             {!isLoadingFollow && loggedInUser && loggedInUser.id !== author.id && (
@@ -125,7 +125,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     
     if (isMainAuthor) {
         return (
-            <div className="relative p-0.5 overflow-hidden rounded-lg bg-[conic-gradient(from_90deg_at_50%_50%,#333_0%,#a1a1aa_25%,#fff_50%,#a1a1aa_75%,#333_100%)]">
+            <div className="relative p-0.5 overflow-hidden rounded-lg bg-[conic-gradient(from_90deg_at_50%_50%,#171717_0%,#a3a3a3_50%,#171717_100%)] animate-spin-slow">
                 {cardContent}
             </div>
         );
@@ -139,4 +139,5 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
 };
 
 export default ProfileCard;
+
 
