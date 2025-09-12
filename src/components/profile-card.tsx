@@ -36,8 +36,9 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     const [author, setAuthor] = useState(initialUser);
 
     const randomGradient = useMemo(() => {
-        const randomIndex = Math.floor(Math.random() * gradientClasses.length);
-        return gradientClasses[randomIndex];
+        const nonBlackGradients = gradientClasses.filter(g => !g.includes('black'));
+        const randomIndex = Math.floor(Math.random() * nonBlackGradients.length);
+        return nonBlackGradients[randomIndex];
     }, [author.id]);
 
 
@@ -124,7 +125,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     if (isMainAuthor) {
         return (
             <div className="relative p-0.5 overflow-hidden rounded-lg">
-                <div className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#000_0,#000_50%,#a0aec0_75%,#fff_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#000_0,#000_50%,#a0aec0_75%,#fff_100%)]" />
+                <div className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#27272a_50%,#a1a1aa_75%,#fff_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#27272a_50%,#a1a1aa_75%,#fff_100%)]" />
                 {cardContent}
             </div>
         );
