@@ -105,11 +105,15 @@ export default function PostActions({ post }: { post: Post }) {
           <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
           {likeCount}
         </Button>
+      </div>
+
+      <div className="flex justify-center">
          <Button variant="outline" size="sm" onClick={toggleBookmark}>
             <Bookmark className={cn("h-4 w-4 mr-2", isBookmarked && "fill-primary text-primary")} />
             {isBookmarked ? 'Bookmarked' : 'Bookmark'}
         </Button>
       </div>
+
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
