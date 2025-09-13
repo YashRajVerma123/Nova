@@ -1,5 +1,4 @@
 
-
 'use client';
 import { CreditCard, LogOut, User as UserIcon, Upload, Moon, Sun, Loader2, PanelRightOpen, Settings, UserPlus } from 'lucide-react';
 import {
@@ -31,6 +30,7 @@ import { Switch } from './ui/switch';
 import { usePathname } from 'next/navigation';
 import { Textarea } from './ui/textarea';
 import FollowListDialog from './follow-list-dialog';
+import Link from 'next/link';
 
 // Helper to convert file to Base64
 const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
@@ -205,9 +205,9 @@ const UserNav = () => {
               </Button>
                {isAdmin && (
                   <Button asChild variant="outline">
-                      <a href="/admin">
+                      <Link href="/admin">
                           <PanelRightOpen className="mr-2" /> Admin Dashboard
-                      </a>
+                      </Link>
                   </Button>
                 )}
                <div className="flex items-center justify-between rounded-lg border p-3">
@@ -296,9 +296,11 @@ const UserNav = () => {
               <span>Profile</span>
             </DropdownMenuItem>
             {isAdmin && (
-               <DropdownMenuItem onSelect={() => window.location.href='/admin'}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Admin Panel</span>
+               <DropdownMenuItem asChild>
+                <Link href="/admin">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Admin Panel</span>
+                </Link>
               </DropdownMenuItem>
             )}
              <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
