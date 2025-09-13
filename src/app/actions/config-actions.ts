@@ -8,7 +8,7 @@ export async function getClientFirebaseConfig() {
     // This action ensures that sensitive server-side keys are not exposed.
     return {
         apiKey: firebaseConfig.apiKey,
-        authDomain: firebaseConfig.authDomain,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
         projectId: firebaseConfig.projectId,
         storageBucket: firebaseConfig.storageBucket,
         messagingSenderId: firebaseConfig.messagingSenderId,
@@ -16,3 +16,4 @@ export async function getClientFirebaseConfig() {
         measurementId: firebaseConfig.measurementId,
     };
 }
+
