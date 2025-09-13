@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -13,24 +14,34 @@ import { useToast } from '@/hooks/use-toast';
 import { addPost } from '@/app/actions/post-actions';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Upload } from 'lucide-react';
 import Link from 'next/link';
+
+const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+});
 
 const formSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters.'),
   description: z.string().min(20, 'Description must be at least 20 characters.'),
   content: z.string().min(100, 'Content must be at least 100 characters.'),
-  coverImage: z.string().url('Please enter a valid image URL.'),
+  coverImage: z.string().min(1, 'Please upload a cover image.'),
   tags: z.string().min(1, 'Please enter at least one tag.'),
   featured: z.boolean().default(false),
+  readTime: z.coerce.number().min(1, 'Read time must be at least 1 minute.'),
 });
 
 export default function CreatePostPage() {
   const { toast } = useToast();
   const router = useRouter();
   const { user, isAdmin, loading } = useAuth();
+  const [imagePreview, setImagePreview] = useState<string | null>('https://picsum.photos/1200/800');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,6 +52,7 @@ export default function CreatePostPage() {
       coverImage: 'https://picsum.photos/1200/800',
       tags: '',
       featured: false,
+      readTime: 5,
     },
   });
 
@@ -57,6 +69,15 @@ export default function CreatePostPage() {
           </div>
       );
   }
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const base64 = await toBase64(file);
+      setImagePreview(base64);
+      form.setValue('coverImage', base64);
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
      if (!user) {
@@ -134,33 +155,65 @@ export default function CreatePostPage() {
                         </FormItem>
                     )}
                     />
-                    <FormField
-                    control={form.control}
-                    name="coverImage"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Cover Image URL</FormLabel>
+                     <FormItem>
+                        <FormLabel>Cover Image</FormLabel>
                         <FormControl>
-                            <Input placeholder="https://picsum.photos/1200/800" {...field} />
+                            <div className="flex flex-col items-center gap-4">
+                                {imagePreview && (
+                                <div className="relative aspect-video w-full rounded-md overflow-hidden border">
+                                    <Image src={imagePreview} alt="Cover image preview" layout="fill" objectFit="cover" />
+                                </div>
+                                )}
+                                <Input 
+                                    id="coverImage-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                />
+                                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Upload Image
+                                </Button>
+                            </div>
                         </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="tags"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Tags</FormLabel>
-                        <FormControl>
-                            <Input placeholder="AI, Technology, Future" {...field} />
-                        </FormControl>
-                         <p className="text-xs text-muted-foreground">Enter a comma-separated list of tags.</p>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+                         <FormField
+                            control={form.control}
+                            name="coverImage"
+                            render={({ field }) => <FormMessage {...field} />}
+                        />
+                    </FormItem>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="tags"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Tags</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="AI, Technology, Future" {...field} />
+                                </FormControl>
+                                <p className="text-xs text-muted-foreground">Enter a comma-separated list of tags.</p>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="readTime"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Read Time (minutes)</FormLabel>
+                                <FormControl>
+                                    <Input type="number" placeholder="5" {...field} />
+                                </FormControl>
+                                 <p className="text-xs text-muted-foreground">Estimated time to read the article.</p>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                     <FormField
                         control={form.control}
                         name="featured"

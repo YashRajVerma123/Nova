@@ -12,9 +12,10 @@ const formSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters.'),
   description: z.string().min(20, 'Description must be at least 20 characters.'),
   content: z.string().min(100, 'Content must be at least 100 characters.'),
-  coverImage: z.string().url('Please enter a valid image URL.'),
+  coverImage: z.string().min(1, 'Please upload a cover image.'),
   tags: z.string().min(1, 'Please enter at least one tag.'),
   featured: z.boolean().default(false),
+  readTime: z.coerce.number().min(1, 'Read time must be at least 1 minute.'),
 });
 
 // A mock function to get author details. In a real app this might involve a database lookup.
@@ -57,7 +58,6 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
 
     const slug = values.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
     const tagsArray = values.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
-    const readTime = Math.ceil(values.content.split(/\s+/).length / 200);
 
     const newPost: Omit<Post, 'id' | 'comments'> = {
         slug,
@@ -69,7 +69,7 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
         featured: values.featured,
         author,
         publishedAt: new Date().toISOString(),
-        readTime,
+        readTime: values.readTime,
     };
     
     const postsCollection = collection(db, 'posts');
@@ -91,7 +91,6 @@ export async function updatePost(postId: string, values: z.infer<typeof formSche
 
   const newSlug = values.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
   const tagsArray = values.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
-  const readTime = Math.ceil(values.content.split(/\s+/).length / 200);
 
   const updatedData = {
     slug: newSlug,
@@ -101,7 +100,7 @@ export async function updatePost(postId: string, values: z.infer<typeof formSche
     coverImage: values.coverImage,
     tags: tagsArray,
     featured: values.featured,
-    readTime,
+    readTime: values.readTime,
   };
 
   await updateDoc(postRef, updatedData);

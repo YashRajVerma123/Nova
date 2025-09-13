@@ -84,21 +84,26 @@
 
 @layer utilities {
     .badge-shine {
-        @apply relative overflow-hidden;
+        @apply relative overflow-hidden bg-clip-text;
     }
     .badge-shine::after {
-        content: "";
-        @apply absolute top-0 -left-full w-full h-full;
-        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-        animation: shine 3s infinite linear;
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(110deg, transparent 20%, white 50%, transparent 80%);
+        background-size: 200% 100%;
+        animation: shine 1.5s linear 3s infinite;
     }
 
     @keyframes shine {
       0% {
-        transform: translateX(-100%);
+        background-position: 200% 0;
       }
       100% {
-        transform: translateX(100%);
+        background-position: -200% 0;
       }
     }
 }
