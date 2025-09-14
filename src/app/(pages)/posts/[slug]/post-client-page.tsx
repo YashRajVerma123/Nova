@@ -13,6 +13,7 @@ import BlogPostCard from '@/components/blog-post-card';
 import PostActions from '@/components/post-actions';
 import CommentSection from '@/components/comment-section';
 import AboutTheAuthor from '@/components/about-the-author';
+import { cn } from '@/lib/utils';
 
 // Local storage keys
 const READING_PROGRESS_KEY = 'reading_progress';
@@ -130,7 +131,7 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
           </div>
 
           <div 
-            className="prose prose-invert prose-lg max-w-none prose-headings:font-headline prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg"
+            className={cn("prose prose-invert prose-lg max-w-none prose-headings:font-headline prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg", "font-mono")}
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 

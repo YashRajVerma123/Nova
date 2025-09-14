@@ -22,6 +22,7 @@ export default {
         body: ['var(--font-inter)', 'sans-serif'],
         headline: ['var(--font-space-grotesk)', 'sans-serif'],
         signature: ['var(--font-dancing-script)', 'cursive'],
+        mono: ['var(--font-mono)', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -148,6 +149,7 @@ export default {
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
+
 
 
 
