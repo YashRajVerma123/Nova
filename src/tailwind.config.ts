@@ -22,7 +22,6 @@ export default {
         body: ['var(--font-inter)', 'sans-serif'],
         headline: ['var(--font-space-grotesk)', 'sans-serif'],
         signature: ['var(--font-dancing-script)', 'cursive'],
-        mono: ['var(--font-mono)', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -128,7 +127,6 @@ export default {
         },
         shine: {
           '0%': { backgroundPosition: '200% center' },
-          '50%': { backgroundPosition: '-200% center' },
           '100%': { backgroundPosition: '-200% center' },
         },
       },
@@ -143,12 +141,13 @@ export default {
         'move-circle-3': 'move-circle-3 15s ease-in-out infinite',
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'swipe-indicator': 'swipe-indicator 2.5s ease-in-out forwards 1s',
-        'text-shine': 'shine 6s linear infinite',
+        'text-shine': 'shine 2s linear infinite',
       },
     },
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
+
 
 
 

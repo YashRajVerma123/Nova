@@ -1,6 +1,6 @@
 
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, Dancing_Script, Space_Mono } from "next/font/google";
+import { Inter, Space_Grotesk, Dancing_Script } from "next/font/google";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { ClientProviders } from "@/components/client-providers";
@@ -29,12 +29,6 @@ const dancingScript = Dancing_Script({
   weight: '700'
 });
 
-const spaceMono = Space_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  weight: '400',
-});
-
 
 export const metadata: Metadata = {
   title: "Nova - Cutting through the noise",
@@ -59,7 +53,6 @@ export default function RootLayout({
           inter.variable,
           spaceGrotesk.variable,
           dancingScript.variable,
-          spaceMono.variable,
         )}
       >
         <ClientProviders>

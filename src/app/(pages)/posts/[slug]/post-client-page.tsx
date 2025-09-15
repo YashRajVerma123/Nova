@@ -131,7 +131,7 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
           </div>
 
           <div 
-            className={cn("prose prose-invert prose-lg max-w-none prose-headings:font-headline prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg", "font-mono")}
+            className="prose prose-invert prose-lg max-w-none prose-headings:font-headline prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 
