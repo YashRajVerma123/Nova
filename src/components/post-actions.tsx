@@ -10,13 +10,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+const LIKED_POSTS_KEY = 'likedPosts';
+const POST_LIKE_COUNTS_KEY = 'postLikeCounts';
 const BOOKMARKED_POSTS_KEY = 'bookmarked_posts';
 const READING_PROGRESS_KEY = 'reading_progress';
 
@@ -31,22 +32,34 @@ export default function PostActions({ post }: { post: Post }) {
 
   useEffect(() => {
     setIsMounted(true);
-    // Moved random number generation to useEffect to avoid hydration mismatch
-    setLikeCount(Math.floor(Math.random() * 25) + 5);
 
     if (typeof window !== 'undefined') {
       setCurrentUrl(window.location.href);
-    }
-    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
-    if (likedPosts[post.slug]) {
-      setLiked(true);
-    }
 
-    const bookmarkedPosts = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
-    if (bookmarkedPosts[post.slug]) {
-      setIsBookmarked(true);
-    }
+      // Liked status
+      const likedPosts = JSON.parse(localStorage.getItem(LIKED_POSTS_KEY) || '{}');
+      if (likedPosts[post.slug]) {
+        setLiked(true);
+      }
 
+      // Like count
+      const likeCounts = JSON.parse(localStorage.getItem(POST_LIKE_COUNTS_KEY) || '{}');
+      if (likeCounts[post.slug]) {
+        setLikeCount(likeCounts[post.slug]);
+      } else {
+        // If no like count is stored, initialize it with a random number and store it.
+        const initialLikes = Math.floor(Math.random() * 25) + 5;
+        setLikeCount(initialLikes);
+        likeCounts[post.slug] = initialLikes;
+        localStorage.setItem(POST_LIKE_COUNTS_KEY, JSON.stringify(likeCounts));
+      }
+
+      // Bookmark status
+      const bookmarkedPosts = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
+      if (bookmarkedPosts[post.slug]) {
+        setIsBookmarked(true);
+      }
+    }
   }, [post.slug]);
 
   if (!isMounted) {
@@ -57,15 +70,23 @@ export default function PostActions({ post }: { post: Post }) {
   const handleLike = () => {
     const newLikedState = !liked;
     setLiked(newLikedState);
-    setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
+    
+    const newLikeCount = newLikedState ? likeCount + 1 : likeCount - 1;
+    setLikeCount(newLikeCount);
 
-    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+    // Update liked status in localStorage
+    const likedPosts = JSON.parse(localStorage.getItem(LIKED_POSTS_KEY) || '{}');
     if (newLikedState) {
       likedPosts[post.slug] = true;
     } else {
       delete likedPosts[post.slug];
     }
-    localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+    localStorage.setItem(LIKED_POSTS_KEY, JSON.stringify(likedPosts));
+
+    // Update like count in localStorage
+    const likeCounts = JSON.parse(localStorage.getItem(POST_LIKE_COUNTS_KEY) || '{}');
+    likeCounts[post.slug] = newLikeCount;
+    localStorage.setItem(POST_LIKE_COUNTS_KEY, JSON.stringify(likeCounts));
   };
 
   const handleCopyToClipboard = () => {
