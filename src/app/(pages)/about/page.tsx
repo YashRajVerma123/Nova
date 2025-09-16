@@ -32,7 +32,7 @@ const AboutPage = () => {
     <div className="container mx-auto px-4 py-16">
       <section className="text-center mb-24 animate-fade-in-up">
         <h1 className="text-4xl md:text-6xl font-headline font-bold tracking-tight mb-4">
-          About Nova<span className="text-primary">.</span>
+          About Lunex<span className="text-primary">.</span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
           Cutting through the noise, delivering clarity. We are your essential destination for making sense of today's complex world.

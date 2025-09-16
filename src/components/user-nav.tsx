@@ -1,4 +1,3 @@
-
 'use client';
 import { CreditCard, LogOut, User as UserIcon, Upload, Moon, Sun, Loader2, PanelRightOpen, Settings, UserPlus } from 'lucide-react';
 import {
@@ -244,7 +243,7 @@ const UserNav = () => {
             <DialogHeader>
               <DialogTitle>Sign In</DialogTitle>
               <DialogDescription>
-                To continue to Nova, sign in with your Google account.
+                To continue to Lunex, sign in with your Google account.
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center space-x-2">

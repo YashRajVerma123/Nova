@@ -17,7 +17,7 @@ export async function sendContactEmail(values: z.infer<typeof formSchema>) {
   console.log('Email:', values.email);
   console.log('Message:', values.message);
   console.log('---');
-  console.log('Simulating sending email to help.novablog@gmail.com');
+  console.log('Simulating sending email to help.lunexblog@gmail.com');
 
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -26,7 +26,7 @@ export async function sendContactEmail(values: z.infer<typeof formSchema>) {
   // For example, with Resend:
   // const { data, error } = await resend.emails.send({
   //   from: 'onboarding@resend.dev',
-  //   to: 'help.novablog@gmail.com',
+  //   to: 'help.lunexblog@gmail.com',
   //   subject: `New contact from ${values.name}`,
   //   react: EmailTemplate({ name: values.name, email: values.email, message: values.message })
   // });

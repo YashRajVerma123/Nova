@@ -36,8 +36,8 @@ const Footer = () => {
            <div className="md:col-span-4">
               <h3 className="font-headline text-lg font-semibold mb-4">Contact</h3>
               <p className="text-sm text-muted-foreground">For any inquiries, please email us at:</p>
-              <a href="mailto:help.novablog@gmail.com" className="text-sm text-primary hover:underline">
-                help.novablog@gmail.com
+              <a href="mailto:help.lunexblog@gmail.com" className="text-sm text-primary hover:underline">
+                help.lunexblog@gmail.com
               </a>
            </div>
         </div>
@@ -45,7 +45,7 @@ const Footer = () => {
         <Separator className="my-8 bg-border/20" />
 
         <div className="flex flex-col md:flex-row justify-between items-center text-center md:text-left space-y-4 md:space-y-0 text-xs text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Nova. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Lunex. All rights reserved.</p>
           <p>Made With ❤️ By Yash Raj</p>
           <p>Cutting through the noise, delivering clarity.</p>
         </div>

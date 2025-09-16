@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Dancing_Script } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -31,7 +30,7 @@ const dancingScript = Dancing_Script({
 
 
 export const metadata: Metadata = {
-  title: "Nova - Cutting through the noise",
+  title: "Lunex - Cutting through the noise",
   description: "Your essential destination for making sense of today. We provide current affairs news for the modern reader.",
   manifest: "/manifest.json",
 };

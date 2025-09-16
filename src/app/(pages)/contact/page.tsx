@@ -34,7 +34,7 @@ const ContactPage = () => {
                   color: 'transparent',
                 }}
              >
-                help.novablog@gmail.com
+                help.lunexblog@gmail.com
              </div>
            </div>
         </div>

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nova-blog 
+    name: lunex-blog 
     env: node
     plan: free # You can change this to a paid plan if needed
     buildCommand: "npm install && npm run build"
@@ -22,4 +22,5 @@ services:
         sync: false
       - key: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
         sync: false
+
 
