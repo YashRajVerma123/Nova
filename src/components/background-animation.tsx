@@ -2,27 +2,45 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-const Animation = () => (
-  <div className="fixed inset-0 -z-10 overflow-hidden">
-    <div className="absolute top-0 -left-4 w-72 h-72 bg-primary rounded-full filter blur-3xl opacity-20 animate-move-circle-1"></div>
-    <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full filter blur-3xl opacity-20 animate-move-circle-2"></div>
-    <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-pink-500 rounded-full filter blur-3xl opacity-20 animate-move-circle-3"></div>
-  </div>
-);
+import { useTheme } from 'next-themes';
 
 const BackgroundAnimation = () => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isMounted, setIsMounted] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     setIsMounted(true);
+    const handleMouseMove = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   if (!isMounted) {
     return null;
   }
 
-  return <Animation />;
-}
+  const spotlightColor = theme === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : 'rgba(0, 0, 0, 0.03)';
+
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden bg-background">
+      <div 
+        className="pointer-events-none fixed inset-0 z-30 transition duration-300"
+        style={{
+          background: `radial-gradient(600px at ${mousePosition.x}px ${mousePosition.y}px, ${spotlightColor}, transparent 80%)`,
+        }}
+      ></div>
+      <div id="stars-sm"></div>
+      <div id="stars-md"></div>
+      <div id="stars-lg"></div>
+    </div>
+  );
+};
 
 export default BackgroundAnimation;
