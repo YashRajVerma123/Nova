@@ -2,7 +2,7 @@
 'use client'
 
 import { Post } from "@/lib/data";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Heart, Share2, Copy, Bookmark, Newspaper, Loader2, MessageSquare } from "lucide-react";
 import {
@@ -22,11 +22,11 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { Separator } from "./ui/separator";
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { summarizeBlogPost } from "@/ai/flows/summarize-blog-posts";
+import { Separator } from "./ui/separator";
 
 const LIKED_POSTS_KEY = 'likedPosts';
 const POST_LIKE_COUNTS_KEY = 'postLikeCounts';
@@ -34,7 +34,7 @@ const BOOKMARKED_POSTS_KEY = 'bookmarked_posts';
 const READING_PROGRESS_KEY = 'reading_progress';
 
 
-export default function PostActions({ post, isVisible }: { post: Post, isVisible: boolean }) {
+export default function PostActions({ post }: { post: Post }) {
   const { toast } = useToast();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -154,61 +154,56 @@ export default function PostActions({ post, isVisible }: { post: Post, isVisible
 
   return (
     <>
-      <div className={cn(
-          "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out",
-          isVisible ? "translate-y-0" : "translate-y-full"
-      )}>
-          <div className="container mx-auto px-4 py-3 flex justify-center">
-              <div className="glass-card flex items-center justify-center p-2 gap-2">
-                  <Button variant="ghost" size="sm" onClick={handleLike}>
-                    <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
-                    {likeCount}
-                  </Button>
-                   <Separator orientation="vertical" className="h-6 bg-border/50" />
-                   <Button variant="ghost" size="icon" onClick={handleSummarize}>
-                    <Newspaper className="h-4 w-4" />
-                     <span className="sr-only">Summarize</span>
-                  </Button>
-                  <Separator orientation="vertical" className="h-6 bg-border/50" />
-                  <Button variant="ghost" size="icon" onClick={toggleBookmark}>
-                    <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-primary text-primary")} />
-                    <span className="sr-only">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-                  </Button>
-                  <Separator orientation="vertical" className="h-6 bg-border/50" />
-                  <Button variant="ghost" size="icon" onClick={handleScrollToComments}>
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="sr-only">Comments</span>
-                  </Button>
-                   <Separator orientation="vertical" className="h-6 bg-border/50" />
-                  <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Share2 className="h-4 w-4" />
-                          <span className="sr-only">Share</span>
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Share this post</DialogTitle>
-                          <DialogDescription>
-                            Anyone with this link will be able to view this post.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex items-center space-x-2">
-                          <div className="grid flex-1 gap-2">
-                            <Input
-                              id="link"
-                              defaultValue={currentUrl}
-                              readOnly
-                            />
-                          </div>
-                          <Button type="button" size="icon" onClick={handleCopyToClipboard}>
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-              </div>
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
+          <div className="glass-card flex items-center justify-center p-2 gap-2">
+              <Button variant="ghost" size="sm" onClick={handleLike}>
+                <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
+                {likeCount}
+              </Button>
+               <Separator orientation="vertical" className="h-6 bg-border/50" />
+               <Button variant="ghost" size="icon" onClick={handleSummarize}>
+                <Newspaper className="h-4 w-4" />
+                 <span className="sr-only">Summarize</span>
+              </Button>
+              <Separator orientation="vertical" className="h-6 bg-border/50" />
+              <Button variant="ghost" size="icon" onClick={toggleBookmark}>
+                <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-primary text-primary")} />
+                <span className="sr-only">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+              </Button>
+              <Separator orientation="vertical" className="h-6 bg-border/50" />
+              <Button variant="ghost" size="icon" onClick={handleScrollToComments}>
+                  <MessageSquare className="h-4 w-4" />
+                  <span className="sr-only">Comments</span>
+              </Button>
+               <Separator orientation="vertical" className="h-6 bg-border/50" />
+              <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Share2 className="h-4 w-4" />
+                      <span className="sr-only">Share</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Share this post</DialogTitle>
+                      <DialogDescription>
+                        Anyone with this link will be able to view this post.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center space-x-2">
+                      <div className="grid flex-1 gap-2">
+                        <Input
+                          id="link"
+                          defaultValue={currentUrl}
+                          readOnly
+                        />
+                      </div>
+                      <Button type="button" size="icon" onClick={handleCopyToClipboard}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
           </div>
       </div>
 
