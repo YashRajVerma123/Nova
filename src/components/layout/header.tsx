@@ -78,7 +78,7 @@ const Header = () => {
             
             {/* Desktop Left Section */}
             <div className="hidden md:flex items-center gap-1">
-               <nav className="flex items-center gap-0">
+               <nav className="flex items-center gap-0 font-headline">
                   {navLinks.map((link) => (
                     <Button key={link.href} asChild variant="ghost" className={cn(pathname === link.href && 'text-primary')}>
                       <Link href={link.href}>{link.label}</Link>
