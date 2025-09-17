@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, Dancing_Script } from "next/font/google";
+import { Inter, Space_Grotesk, Dancing_Script, Source_Serif_4 } from "next/font/google";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { ClientProviders } from "@/components/client-providers";
@@ -11,10 +11,9 @@ import PageLoader from "@/components/page-loader";
 import SplashLoader from "@/components/splash-loader";
 import { Suspense } from "react";
 
-const inter = Inter({ 
+const sourceSerif = Source_Serif_4({ 
   subsets: ["latin"], 
-  variable: "--font-inter",
-  featureSettings: "'ss01'",
+  variable: "--font-source-serif",
 });
 
 const spaceGrotesk = Space_Grotesk({
@@ -49,7 +48,7 @@ export default function RootLayout({
       <body
         className={cn(
           "min-h-screen bg-background font-body text-foreground antialiased",
-          inter.variable,
+          sourceSerif.variable,
           spaceGrotesk.variable,
           dancingScript.variable,
         )}
