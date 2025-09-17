@@ -3,6 +3,7 @@
 
 import { Post } from "@/lib/data";
 import { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { Button } from "./ui/button";
 import { Heart, Share2, Copy, Bookmark, Newspaper, Loader2, MessageSquare } from "lucide-react";
 import {
@@ -43,9 +44,11 @@ export default function PostActions({ post }: { post: Post }) {
   const [isSummaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [summary, setSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
+    setPortalContainer(document.getElementById('post-actions-container'));
 
     if (typeof window !== 'undefined') {
       setCurrentUrl(window.location.href);
@@ -148,12 +151,12 @@ export default function PostActions({ post }: { post: Post }) {
     }
   }
 
-  if (!isMounted) {
+  if (!isMounted || !portalContainer) {
     return null;
   }
-
-  return (
-    <>
+  
+  const actionBar = (
+     <>
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <div className="glass-card flex items-center justify-center p-1 gap-1 rounded-full shadow-2xl">
               <Button variant="ghost" size="sm" onClick={handleLike} className="rounded-full">
@@ -227,5 +230,7 @@ export default function PostActions({ post }: { post: Post }) {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
+
+  return ReactDOM.createPortal(actionBar, portalContainer);
 }

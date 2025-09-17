@@ -65,12 +65,13 @@ export default function RootLayout({
             <PageLoader />
           </Suspense>
           <BackgroundAnimation />
-          <div className="relative z-10 flex flex-col min-h-screen animate-fade-in-up">
+          <div className="relative z-10 flex flex-col min-h-screen">
             <Header />
-            <main className="flex-grow pt-20">{children}</main>
+            <main className="flex-grow pt-20 animate-fade-in-up">{children}</main>
             <Footer />
           </div>
           <Toaster />
+          <div id="post-actions-container"></div>
         </ClientProviders>
       </body>
     </html>

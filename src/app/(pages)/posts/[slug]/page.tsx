@@ -24,7 +24,6 @@ export default async function PostPage({ params }: { params: { slug: string } })
   return (
     <>
       <PostClientPage post={post} relatedPosts={relatedPosts} initialComments={initialComments} />
-      <PostActions post={post} />
     </>
   );
 };

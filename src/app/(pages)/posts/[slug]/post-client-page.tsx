@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import BlogPostCard from '@/components/blog-post-card';
 import CommentSection from '@/components/comment-section';
 import AboutTheAuthor from '@/components/about-the-author';
-import { cn } from '@/lib/utils';
+import PostActions from '@/components/post-actions';
 
 // Local storage keys
 const READING_PROGRESS_KEY = 'reading_progress';
@@ -160,6 +160,7 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
           </>
         )}
       </div>
+      <PostActions post={post} />
     </>
   );
 };
