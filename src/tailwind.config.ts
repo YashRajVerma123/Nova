@@ -129,14 +129,6 @@ export default {
           '0%': { backgroundPosition: '200% center' },
           '100%': { backgroundPosition: '-200% center' },
         },
-        twinkle: {
-          '0%, 100%': { opacity: '0.5', transform: 'scale(1)' },
-          '50%': { opacity: '1', transform: 'scale(1.2)' },
-        },
-        'move-background': {
-          from: { transform: 'translate3d(0, 0, 0)' },
-          to: { transform: 'translate3d(1000px, 0, 0)' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -150,8 +142,6 @@ export default {
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'swipe-indicator': 'swipe-indicator 2.5s ease-in-out forwards 1s',
         'text-shine': 'shine 2s linear infinite',
-        twinkle: 'twinkle 5s ease-in-out infinite',
-        'move-background': 'move-background 150s linear infinite',
       },
     },
   },
