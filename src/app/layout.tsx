@@ -30,7 +30,7 @@ const dancingScript = Dancing_Script({
 
 
 export const metadata: Metadata = {
-  title: "Lunex - Cutting through the noise",
+  title: "Lunex",
   description: "Your essential destination for making sense of today. We provide current affairs news for the modern reader.",
   manifest: "/manifest.json",
 };
