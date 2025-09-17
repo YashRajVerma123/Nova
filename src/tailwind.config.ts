@@ -71,6 +71,14 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       keyframes: {
+        spin: {
+          from: {
+            transform: 'rotate(0deg)',
+          },
+          to: {
+            transform: 'rotate(360deg)',
+          },
+        },
         'accordion-down': {
           from: {
             height: '0',
@@ -154,6 +162,7 @@ export default {
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'swipe-indicator': 'swipe-indicator 2.5s ease-in-out forwards 1s',
         'text-shine': 'shine 2s linear infinite',
+        spin: 'spin 1s linear infinite',
       },
     },
   },
