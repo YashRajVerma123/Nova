@@ -130,6 +130,10 @@ export default {
           '0%, 100%': { opacity: '1', transform: 'scale(1)' },
           '50%': { opacity: '0.5', transform: 'scale(1.2)' },
         },
+        pulse: {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.5', transform: 'scale(0.95)' },
+        },
         'swipe-indicator': {
           '0%': { opacity: '0', transform: 'translateX(-10px)' },
           '30%': { opacity: '1', transform: 'translateX(0)' },
@@ -155,7 +159,8 @@ export default {
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'swipe-indicator': 'swipe-indicator 2.5s ease-in-out forwards 1s',
         'text-shine': 'shine 2s linear infinite',
-        spin: 'spin 1s linear infinite',
+        'spin': 'spin 1s linear infinite',
+        'pulse': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },
