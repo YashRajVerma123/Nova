@@ -115,6 +115,16 @@ export default {
           '50%': { transform: 'translate(60px, -120px)' },
           '100%': { transform: 'translate(0, 0)' },
         },
+        'move-circle-4': {
+          '0%': { transform: 'translate(0, 0)' },
+          '50%': { transform: 'translate(-80px, 150px)' },
+          '100%': { transform: 'translate(0, 0)' },
+        },
+        'move-circle-5': {
+          '0%': { transform: 'translate(0, 0)' },
+          '50%': { transform: 'translate(150px, -80px)' },
+          '100%': { transform: 'translate(0, 0)' },
+        },
          'pulse-dot': {
           '0%, 100%': { opacity: '1', transform: 'scale(1)' },
           '50%': { opacity: '0.5', transform: 'scale(1.2)' },
@@ -139,6 +149,8 @@ export default {
         'move-circle-1': 'move-circle-1 6s ease-in-out infinite',
         'move-circle-2': 'move-circle-2 8s ease-in-out infinite',
         'move-circle-3': 'move-circle-3 10s ease-in-out infinite',
+        'move-circle-4': 'move-circle-4 9s ease-in-out infinite',
+        'move-circle-5': 'move-circle-5 7s ease-in-out infinite',
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'swipe-indicator': 'swipe-indicator 2.5s ease-in-out forwards 1s',
         'text-shine': 'shine 2s linear infinite',
