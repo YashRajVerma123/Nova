@@ -134,8 +134,6 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
             className="prose prose-invert prose-xl max-w-none prose-headings:font-headline prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg font-content"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
-
-          <Separator className="my-10" />
           
           <PostActions post={post} />
 
@@ -165,3 +163,5 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
     </>
   );
 };
+
+    

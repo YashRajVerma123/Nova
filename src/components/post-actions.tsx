@@ -2,9 +2,9 @@
 'use client'
 
 import { Post } from "@/lib/data";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "./ui/button";
-import { Heart, Share2, Copy, Bookmark, Newspaper, Loader2 } from "lucide-react";
+import { Heart, Share2, Copy, Bookmark, Newspaper, Loader2, MessageSquare } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-
+import { Separator } from "./ui/separator";
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,9 @@ export default function PostActions({ post }: { post: Post }) {
   const [isSummaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [summary, setSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -62,7 +65,6 @@ export default function PostActions({ post }: { post: Post }) {
       if (likeCounts[post.slug]) {
         setLikeCount(likeCounts[post.slug]);
       } else {
-        // If no like count is stored, initialize it with a random number and store it.
         const initialLikes = Math.floor(Math.random() * 25) + 5;
         setLikeCount(initialLikes);
         likeCounts[post.slug] = initialLikes;
@@ -75,12 +77,29 @@ export default function PostActions({ post }: { post: Post }) {
         setIsBookmarked(true);
       }
     }
+    
+    const handleScroll = () => {
+        const articleElement = document.querySelector('article');
+        if (articleElement) {
+            const { top, bottom } = articleElement.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            // Show when the top of the article is above the viewport,
+            // and hide when the bottom is near the top of the viewport.
+            if (top < 100 && bottom > viewportHeight * 0.2) {
+                setIsVisible(true);
+            } else {
+                setIsVisible(false);
+            }
+        }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+
   }, [post.slug]);
 
-  if (!isMounted) {
-    // Render a placeholder or nothing on the server
-    return <div className="flex items-center justify-between h-10"></div>;
-  }
 
   const handleLike = () => {
     const newLikedState = !liked;
@@ -89,7 +108,6 @@ export default function PostActions({ post }: { post: Post }) {
     const newLikeCount = newLikedState ? likeCount + 1 : likeCount - 1;
     setLikeCount(newLikeCount);
 
-    // Update liked status in localStorage
     const likedPosts = JSON.parse(localStorage.getItem(LIKED_POSTS_KEY) || '{}');
     if (newLikedState) {
       likedPosts[post.slug] = true;
@@ -98,7 +116,6 @@ export default function PostActions({ post }: { post: Post }) {
     }
     localStorage.setItem(LIKED_POSTS_KEY, JSON.stringify(likedPosts));
 
-    // Update like count in localStorage
     const likeCounts = JSON.parse(localStorage.getItem(POST_LIKE_COUNTS_KEY) || '{}');
     likeCounts[post.slug] = newLikeCount;
     localStorage.setItem(POST_LIKE_COUNTS_KEY, JSON.stringify(likeCounts));
@@ -148,55 +165,79 @@ export default function PostActions({ post }: { post: Post }) {
     }
   }
 
+  const handleScrollToComments = () => {
+    const commentSection = document.querySelector('section:has(h2#comments)');
+    if (commentSection) {
+        commentSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  if (!isMounted) {
+    return <div className="my-10"><Separator /></div>;
+  }
+
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleLike}>
-            <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
-            {likeCount}
-          </Button>
-           <Button variant="outline" size="sm" onClick={handleSummarize}>
-            <Newspaper className="h-4 w-4 mr-2" />
-            Summarize
-          </Button>
-        </div>
-
-        <div className="flex justify-center">
-          <Button variant="outline" size="sm" onClick={toggleBookmark}>
-              <Bookmark className={cn("h-4 w-4 mr-2", isBookmarked && "fill-primary text-primary")} />
-              {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-          </Button>
-        </div>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Share this post</DialogTitle>
-              <DialogDescription>
-                Anyone with this link will be able to view this post.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center space-x-2">
-              <div className="grid flex-1 gap-2">
-                <Input
-                  id="link"
-                  defaultValue={currentUrl}
-                  readOnly
-                />
+      <div ref={contentRef} className="my-10">
+        <Separator />
+      </div>
+      
+      <div className={cn(
+          "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out",
+          isVisible ? "translate-y-0" : "translate-y-full"
+      )}>
+          <div className="container mx-auto px-4 py-3">
+              <div className="glass-card flex items-center justify-center p-2 gap-2">
+                  <Button variant="ghost" size="sm" onClick={handleLike}>
+                    <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
+                    {likeCount}
+                  </Button>
+                   <Separator orientation="vertical" className="h-6 bg-border/50" />
+                   <Button variant="ghost" size="sm" onClick={handleSummarize}>
+                    <Newspaper className="h-4 w-4 mr-2" />
+                    Summarize
+                  </Button>
+                  <Separator orientation="vertical" className="h-6 bg-border/50" />
+                  <Button variant="ghost" size="sm" onClick={toggleBookmark}>
+                    <Bookmark className={cn("h-4 w-4 mr-2", isBookmarked && "fill-primary text-primary")} />
+                    {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                  </Button>
+                  <Separator orientation="vertical" className="h-6 bg-border/50" />
+                  <Button variant="ghost" size="sm" onClick={handleScrollToComments}>
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Comments
+                  </Button>
+                   <Separator orientation="vertical" className="h-6 bg-border/50" />
+                  <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Share
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Share this post</DialogTitle>
+                          <DialogDescription>
+                            Anyone with this link will be able to view this post.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex items-center space-x-2">
+                          <div className="grid flex-1 gap-2">
+                            <Input
+                              id="link"
+                              defaultValue={currentUrl}
+                              readOnly
+                            />
+                          </div>
+                          <Button type="button" size="icon" onClick={handleCopyToClipboard}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
               </div>
-              <Button type="button" size="icon" onClick={handleCopyToClipboard}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          </div>
       </div>
 
       <AlertDialog open={isSummaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
@@ -224,3 +265,5 @@ export default function PostActions({ post }: { post: Post }) {
     </>
   )
 }
+
+    

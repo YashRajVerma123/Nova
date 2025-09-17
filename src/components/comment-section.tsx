@@ -478,7 +478,7 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
   
   return (
     <section>
-      <h2 className="text-3xl font-headline font-bold mb-8">Comments ({commentCount})</h2>
+      <h2 id="comments" className="text-3xl font-headline font-bold mb-8">Comments ({commentCount})</h2>
       <div className="glass-card p-6">
         {user ? (
           <CommentForm postId={postId} onCommentAdded={addCommentToState} />
@@ -509,3 +509,5 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
     </section>
   );
 }
+
+    
