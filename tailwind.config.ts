@@ -14,6 +14,7 @@ export default {
         body: ['var(--font-source-serif)', 'serif'],
         headline: ['var(--font-space-grotesk)', 'sans-serif'],
         signature: ['var(--font-dancing-script)', 'cursive'],
+        content: ['var(--font-raleway)', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',

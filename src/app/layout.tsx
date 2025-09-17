@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, Dancing_Script, Source_Serif_4 } from "next/font/google";
+import { Inter, Space_Grotesk, Dancing_Script, Source_Serif_4, Raleway } from "next/font/google";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { ClientProviders } from "@/components/client-providers";
@@ -27,6 +27,11 @@ const dancingScript = Dancing_Script({
   weight: '700'
 });
 
+const raleway = Raleway({
+  subsets: ['latin'],
+  variable: '--font-raleway',
+});
+
 
 export const metadata: Metadata = {
   title: "Lunex",
@@ -51,6 +56,7 @@ export default function RootLayout({
           sourceSerif.variable,
           spaceGrotesk.variable,
           dancingScript.variable,
+          raleway.variable
         )}
       >
         <ClientProviders>
