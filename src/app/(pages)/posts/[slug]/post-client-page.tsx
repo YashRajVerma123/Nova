@@ -14,6 +14,7 @@ import PostActions from '@/components/post-actions';
 import CommentSection from '@/components/comment-section';
 import AboutTheAuthor from '@/components/about-the-author';
 import { cn } from '@/lib/utils';
+import { useInView } from 'react-intersection-observer';
 
 // Local storage keys
 const READING_PROGRESS_KEY = 'reading_progress';
@@ -26,6 +27,14 @@ interface PostClientPageProps {
 
 export default function PostClientPage({ post, relatedPosts, initialComments }: PostClientPageProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  
+  // This hook will track if the main article content is visible.
+  const { ref: articleRef, inView: isArticleInView } = useInView({
+    // The bar will appear when the article enters the viewport from the bottom, and disappear when it leaves at the top.
+    // A negative rootMargin means it triggers before it's fully in/out of view.
+    rootMargin: '0px 0px -100% 0px',
+  });
+
 
   // Restore reading progress
   useEffect(() => {
@@ -86,7 +95,7 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="container mx-auto px-4 py-10 max-w-4xl" ref={contentRef}>
-        <article>
+        <article ref={articleRef}>
           <header className="mb-8">
             <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex flex-wrap gap-2 mb-4">
@@ -135,12 +144,11 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
           
-          <PostActions post={post} />
-
           <Separator className="my-12" />
-          <AboutTheAuthor />
-
+          
         </article>
+
+        <AboutTheAuthor />
 
         <Separator className="my-12" />
 
@@ -160,8 +168,7 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
           </>
         )}
       </div>
+      <PostActions post={post} isVisible={isArticleInView} />
     </>
   );
 };
-
-    

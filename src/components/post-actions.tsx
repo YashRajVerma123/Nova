@@ -34,7 +34,7 @@ const BOOKMARKED_POSTS_KEY = 'bookmarked_posts';
 const READING_PROGRESS_KEY = 'reading_progress';
 
 
-export default function PostActions({ post }: { post: Post }) {
+export default function PostActions({ post, isVisible }: { post: Post, isVisible: boolean }) {
   const { toast } = useToast();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -44,9 +44,6 @@ export default function PostActions({ post }: { post: Post }) {
   const [isSummaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [summary, setSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  
-  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -77,27 +74,6 @@ export default function PostActions({ post }: { post: Post }) {
         setIsBookmarked(true);
       }
     }
-    
-    const handleScroll = () => {
-        const articleElement = document.querySelector('article');
-        if (articleElement) {
-            const { top, bottom } = articleElement.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
-            // Show when the top of the article is above the viewport,
-            // and hide when the bottom is near the top of the viewport.
-            if (top < 100 && bottom > viewportHeight * 0.2) {
-                setIsVisible(true);
-            } else {
-                setIsVisible(false);
-            }
-        }
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial check
-
-    return () => window.removeEventListener('scroll', handleScroll);
-
   }, [post.slug]);
 
 
@@ -166,22 +142,18 @@ export default function PostActions({ post }: { post: Post }) {
   }
 
   const handleScrollToComments = () => {
-    const commentSection = document.querySelector('section:has(h2#comments)');
+    const commentSection = document.querySelector('#comments');
     if (commentSection) {
         commentSection.scrollIntoView({ behavior: 'smooth' });
     }
   }
 
   if (!isMounted) {
-    return <div className="my-10"><Separator /></div>;
+    return null;
   }
 
   return (
     <>
-      <div ref={contentRef} className="my-10">
-        <Separator />
-      </div>
-      
       <div className={cn(
           "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out",
           isVisible ? "translate-y-0" : "translate-y-full"
