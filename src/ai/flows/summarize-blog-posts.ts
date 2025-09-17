@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -37,7 +38,7 @@ const prompt = ai.definePrompt({
   output: {schema: SummarizeBlogPostOutputSchema},
   prompt: `You are an expert blog post summarizer. Your goal is to create a concise and informative summary of a blog post that can be used in search results or as a preview.
 
-Blog Post Content: {{{blogPostcontent}}}
+Blog Post Content: {{{blogPostContent}}}
 
 Summary:`,
 });
