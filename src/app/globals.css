@@ -155,3 +155,21 @@
 .dark .glass-card {
    @apply bg-card/60 backdrop-blur-xl border border-white/5 rounded-xl shadow-lg;
 }
+
+.loader {
+  width: 4rem; /* 64px */
+  height: 4rem; /* 64px */
+  border-radius: 50%;
+  border: 4px solid hsl(var(--border));
+  border-top-color: hsl(var(--primary));
+  animation: loader-spin 1s linear infinite;
+}
+
+@keyframes loader-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
