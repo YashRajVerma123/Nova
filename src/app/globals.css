@@ -156,32 +156,45 @@
    @apply bg-card/60 backdrop-blur-xl border border-white/5 rounded-xl shadow-lg;
 }
 
-.loader {
-  width: 3.5rem; /* 56px */
-  height: 3.5rem; /* 56px */
-  border-radius: 50%;
-  position: relative;
-  animation: loader-spin 1.2s linear infinite;
-}
-.loader::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 4px solid transparent;
-  background: conic-gradient(from 0deg, hsl(var(--primary)), transparent) border-box;
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out;
-  mask-composite: exclude;
+.loader-container {
+    filter: blur(40px) contrast(30);
+    width: 150px;
+    height: 150px;
+    position: relative;
+    background: transparent;
+    overflow: hidden;
 }
 
-@keyframes loader-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.loader-dot {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: hsl(var(--primary));
+    animation: move 4s infinite linear;
+}
+
+.loader-dot:nth-child(2) {
+    background-color: hsl(var(--foreground));
+    animation-delay: -1s;
+}
+
+.loader-dot:nth-child(3) {
+    background-color: hsl(var(--accent));
+    animation-delay: -2s;
+}
+
+@keyframes move {
+    0%, 100% {
+        transform: translate(50%, 50%) scale(1);
+    }
+    25% {
+        transform: translate(150%, 50%) scale(0.5);
+    }
+    50% {
+        transform: translate(150%, 150%) scale(1);
+    }
+    75% {
+        transform: translate(50%, 150%) scale(0.5);
+    }
 }
