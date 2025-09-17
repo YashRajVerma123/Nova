@@ -158,27 +158,27 @@ export default function PostActions({ post }: { post: Post }) {
   const actionBar = (
      <>
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-          <div className="glass-card flex items-center justify-center p-1 gap-1 rounded-full shadow-2xl">
-              <Button variant="ghost" size="sm" onClick={handleLike} className="rounded-full">
+          <div className="flex items-center justify-center p-1.5 gap-1 rounded-full aurora-border shadow-2xl">
+              <Button variant="ghost" size="sm" onClick={handleLike} className="rounded-full text-white/80 hover:text-white hover:bg-white/10">
                 <Heart className={cn("h-4 w-4 mr-2 transition-all duration-300", liked ? 'fill-red-500 text-red-500' : '')} />
                 {likeCount}
               </Button>
-               <Separator orientation="vertical" className="h-6 bg-border/50" />
-               <Button variant="ghost" size="icon" onClick={handleSummarize} className="rounded-full">
+               <Separator orientation="vertical" className="h-6 bg-white/20" />
+               <Button variant="ghost" size="icon" onClick={handleSummarize} className="rounded-full text-white/80 hover:text-white hover:bg-white/10">
                 <Newspaper className="h-4 w-4" />
                  <span className="sr-only">Summarize</span>
               </Button>
-              <Button variant="ghost" size="icon" onClick={toggleBookmark} className="rounded-full">
+              <Button variant="ghost" size="icon" onClick={toggleBookmark} className="rounded-full text-white/80 hover:text-white hover:bg-white/10">
                 <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-primary text-primary")} />
                 <span className="sr-only">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
               </Button>
-              <Button variant="ghost" size="icon" onClick={handleScrollToComments} className="rounded-full">
+              <Button variant="ghost" size="icon" onClick={handleScrollToComments} className="rounded-full text-white/80 hover:text-white hover:bg-white/10">
                   <MessageSquare className="h-4 w-4" />
                   <span className="sr-only">Comments</span>
               </Button>
               <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
+                    <Button variant="ghost" size="icon" className="rounded-full text-white/80 hover:text-white hover:bg-white/10">
                       <Share2 className="h-4 w-4" />
                       <span className="sr-only">Share</span>
                     </Button>
