@@ -4,7 +4,7 @@
 import { Post } from "@/lib/data";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
-import { Heart, Share2, Copy, Bookmark } from "lucide-react";
+import { Heart, Share2, Copy, Bookmark, Newspaper, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,9 +13,20 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { summarizeBlogPost } from "@/ai/flows/summarize-blog-posts";
 
 const LIKED_POSTS_KEY = 'likedPosts';
 const POST_LIKE_COUNTS_KEY = 'postLikeCounts';
@@ -30,6 +41,9 @@ export default function PostActions({ post }: { post: Post }) {
   const [currentUrl, setCurrentUrl] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isSummaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -119,51 +133,94 @@ export default function PostActions({ post }: { post: Post }) {
     localStorage.setItem(BOOKMARKED_POSTS_KEY, JSON.stringify(bookmarkedPosts));
     setIsBookmarked(newIsBookmarked);
   };
+  
+  const handleSummarize = async () => {
+    setSummaryDialogOpen(true);
+    setIsSummarizing(true);
+    try {
+        const result = await summarizeBlogPost({ blogPostContent: post.content });
+        setSummary(result.summary);
+    } catch(e) {
+        setSummary("Sorry, I couldn't generate a summary for this article at the moment.");
+        console.error(e);
+    } finally {
+        setIsSummarizing(false);
+    }
+  }
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleLike}>
-          <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
-          {likeCount}
-        </Button>
-      </div>
-
-      <div className="flex justify-center">
-         <Button variant="outline" size="sm" onClick={toggleBookmark}>
-            <Bookmark className={cn("h-4 w-4 mr-2", isBookmarked && "fill-primary text-primary")} />
-            {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-        </Button>
-      </div>
-
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
+    <>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleLike}>
+            <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
+            {likeCount}
           </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Share this post</DialogTitle>
-            <DialogDescription>
-              Anyone with this link will be able to view this post.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center space-x-2">
-            <div className="grid flex-1 gap-2">
-              <Input
-                id="link"
-                defaultValue={currentUrl}
-                readOnly
-              />
-            </div>
-            <Button type="button" size="icon" onClick={handleCopyToClipboard}>
-              <Copy className="h-4 w-4" />
+           <Button variant="outline" size="sm" onClick={handleSummarize}>
+            <Newspaper className="h-4 w-4 mr-2" />
+            Summarize
+          </Button>
+        </div>
+
+        <div className="flex justify-center">
+          <Button variant="outline" size="sm" onClick={toggleBookmark}>
+              <Bookmark className={cn("h-4 w-4 mr-2", isBookmarked && "fill-primary text-primary")} />
+              {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+          </Button>
+        </div>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
             </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Share this post</DialogTitle>
+              <DialogDescription>
+                Anyone with this link will be able to view this post.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center space-x-2">
+              <div className="grid flex-1 gap-2">
+                <Input
+                  id="link"
+                  defaultValue={currentUrl}
+                  readOnly
+                />
+              </div>
+              <Button type="button" size="icon" onClick={handleCopyToClipboard}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <AlertDialog open={isSummaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>AI Summary</AlertDialogTitle>
+            <AlertDialogDescription>
+              Here's a quick summary of the article, generated by AI.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {isSummarizing ? (
+             <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+             <div className="text-sm text-muted-foreground max-h-60 overflow-y-auto">
+                <p>{summary}</p>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Close</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
