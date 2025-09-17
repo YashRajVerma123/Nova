@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import BlogPostCard from '@/components/blog-post-card';
-import PostActions from '@/components/post-actions';
 import CommentSection from '@/components/comment-section';
 import AboutTheAuthor from '@/components/about-the-author';
 import { cn } from '@/lib/utils';
@@ -160,7 +159,6 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
             </section>
           </>
         )}
-        <PostActions post={post} />
       </div>
     </>
   );

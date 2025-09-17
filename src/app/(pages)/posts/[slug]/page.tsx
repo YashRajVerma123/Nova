@@ -2,6 +2,7 @@
 import { notFound } from 'next/navigation';
 import { Post, getPost, getPosts, getComments } from '@/lib/data';
 import PostClientPage from './post-client-page';
+import PostActions from '@/components/post-actions';
 
 export default async function PostPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
@@ -21,6 +22,9 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const relatedPosts = allPosts.filter(p => p.slug !== post.slug && p.tags.some(tag => post.tags.includes(tag))).slice(0, 3);
   
   return (
-    <PostClientPage post={post} relatedPosts={relatedPosts} initialComments={initialComments} />
+    <>
+      <PostClientPage post={post} relatedPosts={relatedPosts} initialComments={initialComments} />
+      <PostActions post={post} />
+    </>
   );
 };

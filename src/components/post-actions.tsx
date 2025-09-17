@@ -33,7 +33,6 @@ const POST_LIKE_COUNTS_KEY = 'postLikeCounts';
 const BOOKMARKED_POSTS_KEY = 'bookmarked_posts';
 const READING_PROGRESS_KEY = 'reading_progress';
 
-
 export default function PostActions({ post }: { post: Post }) {
   const { toast } = useToast();
   const [liked, setLiked] = useState(false);
@@ -77,7 +76,6 @@ export default function PostActions({ post }: { post: Post }) {
       }
     }
   }, [post.slug]);
-
 
   const handleLike = () => {
     const newLikedState = !liked;
