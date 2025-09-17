@@ -160,8 +160,8 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
             </section>
           </>
         )}
+        <PostActions post={post} />
       </div>
-      <PostActions post={post} />
     </>
   );
 };
