@@ -62,7 +62,9 @@ export default function PostActions({ post }: { post: Post }) {
       if (likeCounts[post.slug]) {
         setLikeCount(likeCounts[post.slug]);
       } else {
-        const initialLikes = Math.floor(Math.random() * 25) + 5;
+        // Use a more stable random seed based on slug
+        const seed = post.slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const initialLikes = (seed % 20) + 5;
         setLikeCount(initialLikes);
         likeCounts[post.slug] = initialLikes;
         localStorage.setItem(POST_LIKE_COUNTS_KEY, JSON.stringify(likeCounts));
@@ -154,31 +156,28 @@ export default function PostActions({ post }: { post: Post }) {
 
   return (
     <>
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
-          <div className="glass-card flex items-center justify-center p-2 gap-2">
-              <Button variant="ghost" size="sm" onClick={handleLike}>
-                <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="glass-card flex items-center justify-center p-1 gap-1 rounded-full shadow-2xl">
+              <Button variant="ghost" size="sm" onClick={handleLike} className="rounded-full">
+                <Heart className={cn("h-4 w-4 mr-2 transition-all duration-300", liked ? 'fill-red-500 text-red-500' : '')} />
                 {likeCount}
               </Button>
                <Separator orientation="vertical" className="h-6 bg-border/50" />
-               <Button variant="ghost" size="icon" onClick={handleSummarize}>
+               <Button variant="ghost" size="icon" onClick={handleSummarize} className="rounded-full">
                 <Newspaper className="h-4 w-4" />
                  <span className="sr-only">Summarize</span>
               </Button>
-              <Separator orientation="vertical" className="h-6 bg-border/50" />
-              <Button variant="ghost" size="icon" onClick={toggleBookmark}>
+              <Button variant="ghost" size="icon" onClick={toggleBookmark} className="rounded-full">
                 <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-primary text-primary")} />
                 <span className="sr-only">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
               </Button>
-              <Separator orientation="vertical" className="h-6 bg-border/50" />
-              <Button variant="ghost" size="icon" onClick={handleScrollToComments}>
+              <Button variant="ghost" size="icon" onClick={handleScrollToComments} className="rounded-full">
                   <MessageSquare className="h-4 w-4" />
                   <span className="sr-only">Comments</span>
               </Button>
-               <Separator orientation="vertical" className="h-6 bg-border/50" />
               <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="rounded-full">
                       <Share2 className="h-4 w-4" />
                       <span className="sr-only">Share</span>
                     </Button>

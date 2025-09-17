@@ -119,7 +119,9 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
             </div>
           </header>
           
-          <div className="relative aspect-video rounded-xl overflow-hidden mb-8 shadow-lg">
+          <div 
+            className="relative aspect-video rounded-xl overflow-hidden mb-8 shadow-lg"
+          >
             <Image
               src={post.coverImage}
               alt={post.title}
