@@ -63,11 +63,7 @@ export default function PageLoader() {
         loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-      <div className="flex space-x-2">
-        <div className="h-3 w-3 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0s' }}></div>
-        <div className="h-3 w-3 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-        <div className="h-3 w-3 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-      </div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
     </div>
   );
 }
