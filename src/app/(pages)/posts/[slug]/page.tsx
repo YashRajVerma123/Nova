@@ -4,11 +4,13 @@ import { Post, getPost, getPosts, getComments } from '@/lib/data';
 import PostClientPage from './post-client-page';
 
 export default async function PostPage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
+
   // Fetch data in parallel for better performance
   const [post, allPosts, initialComments] = await Promise.all([
-    getPost(params.slug),
+    getPost(slug),
     getPosts(),
-    getPost(params.slug).then(p => p ? getComments(p.id) : [])
+    getPost(slug).then(p => p ? getComments(p.id) : [])
   ]);
   
   if (!post) {
@@ -22,4 +24,3 @@ export default async function PostPage({ params }: { params: { slug: string } })
     <PostClientPage post={post} relatedPosts={relatedPosts} initialComments={initialComments} />
   );
 };
-
