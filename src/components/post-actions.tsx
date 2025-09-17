@@ -93,8 +93,8 @@ export default function PostActions({ post }: { post: Post }) {
         }
     };
     
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial check
 
     return () => window.removeEventListener('scroll', handleScroll);
 
@@ -186,33 +186,33 @@ export default function PostActions({ post }: { post: Post }) {
           "fixed bottom-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out",
           isVisible ? "translate-y-0" : "translate-y-full"
       )}>
-          <div className="container mx-auto px-4 py-3">
+          <div className="container mx-auto px-4 py-3 flex justify-center">
               <div className="glass-card flex items-center justify-center p-2 gap-2">
                   <Button variant="ghost" size="sm" onClick={handleLike}>
                     <Heart className={`h-4 w-4 mr-2 transition-all duration-300 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
                     {likeCount}
                   </Button>
                    <Separator orientation="vertical" className="h-6 bg-border/50" />
-                   <Button variant="ghost" size="sm" onClick={handleSummarize}>
-                    <Newspaper className="h-4 w-4 mr-2" />
-                    Summarize
+                   <Button variant="ghost" size="icon" onClick={handleSummarize}>
+                    <Newspaper className="h-4 w-4" />
+                     <span className="sr-only">Summarize</span>
                   </Button>
                   <Separator orientation="vertical" className="h-6 bg-border/50" />
-                  <Button variant="ghost" size="sm" onClick={toggleBookmark}>
-                    <Bookmark className={cn("h-4 w-4 mr-2", isBookmarked && "fill-primary text-primary")} />
-                    {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                  <Button variant="ghost" size="icon" onClick={toggleBookmark}>
+                    <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-primary text-primary")} />
+                    <span className="sr-only">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
                   </Button>
                   <Separator orientation="vertical" className="h-6 bg-border/50" />
-                  <Button variant="ghost" size="sm" onClick={handleScrollToComments}>
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Comments
+                  <Button variant="ghost" size="icon" onClick={handleScrollToComments}>
+                      <MessageSquare className="h-4 w-4" />
+                      <span className="sr-only">Comments</span>
                   </Button>
                    <Separator orientation="vertical" className="h-6 bg-border/50" />
                   <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Share
+                        <Button variant="ghost" size="icon">
+                          <Share2 className="h-4 w-4" />
+                          <span className="sr-only">Share</span>
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-md">
@@ -265,5 +265,3 @@ export default function PostActions({ post }: { post: Post }) {
     </>
   )
 }
-
-    
