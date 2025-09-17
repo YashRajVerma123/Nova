@@ -36,8 +36,8 @@ const Footer = () => {
            <div className="md:col-span-4">
               <h3 className="font-headline text-lg font-semibold mb-4">Contact</h3>
               <p className="text-sm text-muted-foreground">For any inquiries, please email us at:</p>
-              <a href="mailto:help.lunexblog@gmail.com" className="text-sm text-primary hover:underline">
-                help.lunexblog@gmail.com
+              <a href="mailto:help.novablog@gmail.com" className="text-sm text-primary hover:underline">
+                help.novablog@gmail.com
               </a>
            </div>
         </div>
