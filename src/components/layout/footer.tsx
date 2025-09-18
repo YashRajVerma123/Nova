@@ -8,6 +8,7 @@ const quickLinks = [
   { href: '/posts', label: 'Posts' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact Us' },
+  { href: '/privacy-policy', label: 'Privacy Policy' },
 ];
 
 const Footer = () => {
