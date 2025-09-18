@@ -301,7 +301,7 @@ const AdminPage = () => {
                     </CardContent>
                 </Card>
                  <Link href="/admin/create-post" className="group">
-                    <Card className="glass-card h-full flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors duration-300">
+                    <Card className="aurora-border h-full flex flex-col items-center justify-center text-center hover:shadow-2xl transition-shadow duration-300 rounded-xl">
                         <CardHeader>
                             <PlusCircle className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
                         </CardHeader>
