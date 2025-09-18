@@ -57,7 +57,10 @@ export default function PageLoader() {
         loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-        <div className="spinner"></div>
+        <div className="chasing-dots-loader">
+          <div className="dot dot1"></div>
+          <div className="dot dot2"></div>
+        </div>
     </div>
   );
 }
