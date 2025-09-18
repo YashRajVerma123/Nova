@@ -40,14 +40,12 @@ const BulletinCard = ({ bulletin, index }: { bulletin: Bulletin; index: number }
 
 const BulletinPage = () => {
     const [bulletins, setBulletins] = useState<Bulletin[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [lastDocId, setLastDocId] = useState<string | undefined>(undefined);
     const [hasMore, setHasMore] = useState(true);
-    const [clientLoaded, setClientLoaded] = useState(false);
 
     useEffect(() => {
-        setClientLoaded(true);
         const loadInitialBulletins = async () => {
             setLoading(true);
             const { bulletins: initialBulletins, lastDocId: newLastDocId } = await getBulletins(3);
@@ -69,7 +67,7 @@ const BulletinPage = () => {
         setLoadingMore(false);
     };
 
-    if (loading && clientLoaded) {
+    if (loading) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
