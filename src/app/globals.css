@@ -157,36 +157,23 @@
    @apply bg-card/60 backdrop-blur-xl border border-white/5 rounded-xl shadow-lg;
 }
 
-.loader-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-    width: 60px;
-    height: 60px;
+.spinner {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    position: relative;
+    animation: spin 1s linear infinite;
+    -webkit-mask: conic-gradient(from 90deg at 50% 50%, #0000 0deg, #000 360deg);
+    mask: conic-gradient(from 90deg at 50% 50%, #0000 0deg, #000 360deg);
+    background: conic-gradient(from 0deg at 50% 50%, hsl(var(--primary)) 0deg, hsl(var(--primary) / 0.5) 180deg, hsl(var(--primary)) 360deg);
 }
 
-.loader-tile {
-    width: 100%;
-    height: 100%;
-    background-color: hsl(var(--primary));
-    animation: tile-flip 1.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-}
 
-.loader-tile:nth-child(1) { animation-delay: 0.1s; }
-.loader-tile:nth-child(2) { animation-delay: 0.2s; }
-.loader-tile:nth-child(3) { animation-delay: 0.3s; }
-.loader-tile:nth-child(4) { animation-delay: 0.2s; }
-.loader-tile:nth-child(5) { animation-delay: 0.3s; }
-.loader-tile:nth-child(6) { animation-delay: 0.4s; }
-.loader-tile:nth-child(7) { animation-delay: 0.3s; }
-.loader-tile:nth-child(8) { animation-delay: 0.4s; }
-.loader-tile:nth-child(9) { animation-delay: 0.5s; }
-
-@keyframes tile-flip {
-    0%, 100% {
-        transform: rotateX(0deg);
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
     }
-    50% {
-        transform: rotateX(180deg);
+    to {
+        transform: rotate(360deg);
     }
 }
