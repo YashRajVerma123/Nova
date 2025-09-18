@@ -16,6 +16,7 @@ const formSchema = z.object({
   tags: z.string().min(1, 'Please enter at least one tag.'),
   featured: z.boolean().default(false),
   readTime: z.coerce.number().min(1, 'Read time must be at least 1 minute.'),
+  summary: z.string().optional(),
 });
 
 // A mock function to get author details. In a real app this might involve a database lookup.
@@ -70,6 +71,7 @@ export async function addPost(values: z.infer<typeof formSchema>, authorId: stri
         author,
         publishedAt: new Date().toISOString(),
         readTime: values.readTime,
+        summary: values.summary,
     };
     
     const postsCollection = collection(db, 'posts');
@@ -92,7 +94,7 @@ export async function updatePost(postId: string, values: z.infer<typeof formSche
   const newSlug = values.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
   const tagsArray = values.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
 
-  const updatedData = {
+  const updatedData: { [key: string]: any } = {
     slug: newSlug,
     title: values.title,
     description: values.description,
@@ -101,6 +103,7 @@ export async function updatePost(postId: string, values: z.infer<typeof formSche
     tags: tagsArray,
     featured: values.featured,
     readTime: values.readTime,
+    summary: values.summary,
   };
 
   await updateDoc(postRef, updatedData);

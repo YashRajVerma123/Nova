@@ -18,7 +18,6 @@ import {
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { summarizeBlogPost } from "@/ai/flows/summarize-blog-posts";
 import {
   Tooltip,
   TooltipContent,
@@ -164,22 +163,21 @@ export default function PostActions({ post }: { post: Post }) {
   
   const handleSummarize = async () => {
     setSummaryDialogOpen(true);
-    // Don't re-fetch if we already have a summary and there's no error
-    if (summary && !summaryError) return;
+    if (summary || summaryError) return; // Don't re-run if we already have a result
 
     setIsSummarizing(true);
     setSummary('');
     setSummaryError(null);
 
-    try {
-        const result = await summarizeBlogPost({ blogPostContent: post.content });
-        setSummary(result.summary);
-    } catch(e) {
-        setSummaryError("Sorry, I couldn't generate a summary for this article at the moment.");
-        console.error(e);
-    } finally {
+    // Simulate AI thinking for 1.5 seconds
+    setTimeout(() => {
+        if (post.summary) {
+            setSummary(post.summary);
+        } else {
+            setSummaryError("A summary is not available for this article.");
+        }
         setIsSummarizing(false);
-    }
+    }, 1500);
   }
 
   const handleScrollToComments = () => {

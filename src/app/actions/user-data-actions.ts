@@ -36,6 +36,7 @@ export async function togglePostLike(userId: string, postId: string, postSlug: s
     if (!userId) return { error: 'User not authenticated' };
     
     const postRef = doc(db, 'posts', postId);
+    const userDataRef = doc(db, 'users', userId, 'userData', 'data');
 
     try {
         await runTransaction(db, async (transaction) => {
@@ -47,7 +48,6 @@ export async function togglePostLike(userId: string, postId: string, postSlug: s
             transaction.update(postRef, { likes: increment(isLiked ? -1 : 1) });
 
             // Update the user's personal like data
-            const userDataRef = doc(db, 'users', userId, 'userData', 'data');
             const userDataDoc = await transaction.get(userDataRef);
             const userData = userDataDoc.exists() ? userDataDoc.data() : { likedPosts: {} };
             
@@ -74,6 +74,7 @@ export async function toggleCommentLike(userId: string, postId: string, commentI
     if (!userId) return { error: 'User not authenticated' };
 
     const commentRef = doc(db, 'posts', postId, 'comments', commentId);
+    const userDataRef = doc(db, 'users', userId, 'userData', 'data');
 
     try {
         await runTransaction(db, async (transaction) => {
@@ -83,7 +84,6 @@ export async function toggleCommentLike(userId: string, postId: string, commentI
             }
             transaction.update(commentRef, { likes: increment(isLiked ? -1 : 1) });
 
-            const userDataRef = doc(db, 'users', userId, 'userData', 'data');
             const userDataDoc = await transaction.get(userDataRef);
             const userData = userDataDoc.exists() ? userDataDoc.data() : { likedComments: {} };
             

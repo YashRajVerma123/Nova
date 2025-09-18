@@ -1,5 +1,4 @@
 
-
 import { db } from '@/lib/firebase-server'; // <-- IMPORTANT: Use server DB
 import { 
     collection, 
@@ -60,6 +59,7 @@ export type Post = {
   readTime: number; 
   featured?: boolean;
   likes?: number;
+  summary?: string;
 };
 
 export type Notification = {
@@ -97,6 +97,7 @@ const postConverter = {
             readTime: data.readTime,
             featured: data.featured,
             likes: data.likes || 0,
+            summary: data.summary,
         };
     },
     toFirestore: (post: Omit<Post, 'id'>) => {

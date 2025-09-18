@@ -34,6 +34,7 @@ const formSchema = z.object({
   tags: z.string().min(1, 'Please enter at least one tag.'),
   featured: z.boolean().default(false),
   readTime: z.coerce.number().min(1, 'Read time must be at least 1 minute.'),
+  summary: z.string().optional(),
 });
 
 export default function CreatePostPage() {
@@ -53,6 +54,7 @@ export default function CreatePostPage() {
       tags: '',
       featured: false,
       readTime: 5,
+      summary: '',
     },
   });
 
@@ -138,6 +140,20 @@ export default function CreatePostPage() {
                         <FormControl>
                             <Textarea placeholder="A brief summary of your article..." {...field} rows={2} />
                         </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="summary"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Summary (for AI simulation)</FormLabel>
+                        <FormControl>
+                            <Textarea placeholder="Write a short summary to be shown when a user clicks 'Summarize'." {...field} rows={3} />
+                        </FormControl>
+                         <p className="text-xs text-muted-foreground">This will be shown after a short delay to simulate AI generation.</p>
                         <FormMessage />
                         </FormItem>
                     )}
