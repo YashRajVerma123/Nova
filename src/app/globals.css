@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -156,34 +157,40 @@
    @apply bg-card/60 backdrop-blur-xl border border-white/5 rounded-xl shadow-lg;
 }
 
-.loader-ring-container {
-    position: relative;
-    width: 60px;
-    height: 60px;
+.loader-flipper {
+    perspective: 120px;
 }
 
-.loader-ring {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 3px solid hsl(var(--primary));
-    border-radius: 50%;
-    animation: ring-pulse 1.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+.loader-plane {
+    width: 40px;
+    height: 40px;
+    background-color: hsl(var(--primary));
+    transform-origin: center bottom;
+    animation: fold 1.2s cubic-bezier(0.6,0,0.3,1) infinite;
+    box-shadow: 0 4px 15px hsl(var(--primary) / 0.2);
+    border-radius: 4px;
 }
 
-.loader-ring:nth-child(2) {
-    animation-delay: -0.75s;
-}
-
-@keyframes ring-pulse {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0;
-  }
+@keyframes fold {
+    0% {
+        transform: rotateX(0deg);
+    }
+    15% {
+        transform: rotateX(0deg);
+    }
+    25% {
+        transform: rotateX(-180deg);
+    }
+    50% {
+        transform: rotateX(-180deg);
+    }
+    60% {
+        transform: rotateX(-360deg);
+    }
+    85% {
+        transform: rotateX(-360deg);
+    }
+    100% {
+        transform: rotateX(-360deg);
+    }
 }

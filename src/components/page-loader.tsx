@@ -57,10 +57,10 @@ export default function PageLoader() {
         loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-        <div className="loader-ring-container">
-            <div className="loader-ring"></div>
-            <div className="loader-ring"></div>
+        <div className="loader-flipper">
+            <div className="loader-plane"></div>
         </div>
     </div>
   );
 }
+
