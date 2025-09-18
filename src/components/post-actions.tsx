@@ -27,7 +27,13 @@ import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { summarizeBlogPost } from "@/ai/flows/summarize-blog-posts";
-import { Separator } from "./ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 
 const LIKED_POSTS_KEY = 'likedPosts';
 const POST_LIKE_COUNTS_KEY = 'postLikeCounts';
@@ -155,57 +161,117 @@ export default function PostActions({ post }: { post: Post }) {
     return null;
   }
   
+  const actions = [
+    {
+      label: "Like",
+      icon: <Heart className={cn("h-5 w-5 transition-all duration-300", liked ? 'fill-red-500 text-red-500' : '')} />,
+      onClick: handleLike,
+      content: likeCount,
+    },
+    {
+      label: "Summarize",
+      icon: <Newspaper className="h-5 w-5" />,
+      onClick: handleSummarize,
+    },
+    {
+      label: isBookmarked ? "Bookmarked" : "Bookmark",
+      icon: <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-primary text-primary")} />,
+      onClick: toggleBookmark,
+    },
+    {
+      label: "Comments",
+      icon: <MessageSquare className="h-5 w-5" />,
+      onClick: handleScrollToComments,
+    },
+    {
+      label: "Share",
+      icon: <Share2 className="h-5 w-5" />,
+      onClick: () => {}, // Click handled by DialogTrigger
+      isShare: true,
+    }
+  ];
+  
   const actionBar = (
      <>
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+      {/* Mobile Bar */}
+      <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <div className="flex items-center justify-center p-1.5 gap-1 rounded-full bg-background/60 backdrop-blur-xl border border-white/10 shadow-2xl">
-              <Button variant="ghost" size="sm" onClick={handleLike} className="rounded-full text-foreground/80 hover:text-foreground hover:bg-white/10">
-                <Heart className={cn("h-4 w-4 mr-2 transition-all duration-300", liked ? 'fill-red-500 text-red-500' : '')} />
-                {likeCount}
-              </Button>
-               <Separator orientation="vertical" className="h-6 bg-white/20" />
-               <Button variant="ghost" size="icon" onClick={handleSummarize} className="rounded-full text-foreground/80 hover:text-foreground hover:bg-white/10">
-                <Newspaper className="h-4 w-4" />
-                 <span className="sr-only">Summarize</span>
-              </Button>
-              <Button variant="ghost" size="icon" onClick={toggleBookmark} className="rounded-full text-foreground/80 hover:text-foreground hover:bg-white/10">
-                <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-primary text-primary")} />
-                <span className="sr-only">{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleScrollToComments} className="rounded-full text-foreground/80 hover:text-foreground hover:bg-white/10">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="sr-only">Comments</span>
-              </Button>
-              <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full text-foreground/80 hover:text-foreground hover:bg-white/10">
-                      <Share2 className="h-4 w-4" />
-                      <span className="sr-only">Share</span>
+              {actions.map((action, index) => (
+                 action.isShare ? (
+                    <Dialog key={action.label}>
+                      <DialogTrigger asChild>
+                         <Button variant="ghost" size="icon" className="rounded-full text-foreground/80 hover:text-foreground hover:bg-white/10">
+                            {action.icon}
+                            <span className="sr-only">{action.label}</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Share this post</DialogTitle>
+                          <DialogDescription>Anyone with this link will be able to view this post.</DialogDescription>
+                        </DialogHeader>
+                        <div className="flex items-center space-x-2">
+                          <Input defaultValue={currentUrl} readOnly />
+                          <Button type="button" size="icon" onClick={handleCopyToClipboard}><Copy className="h-4 w-4" /></Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  ) : (
+                    <Button key={action.label} variant="ghost" size={action.content !== undefined ? 'sm' : 'icon'} onClick={action.onClick} className="rounded-full text-foreground/80 hover:text-foreground hover:bg-white/10">
+                      {action.icon}
+                      {action.content !== undefined && <span className="ml-1.5 text-xs">{action.content}</span>}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Share this post</DialogTitle>
-                      <DialogDescription>
-                        Anyone with this link will be able to view this post.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex items-center space-x-2">
-                      <div className="grid flex-1 gap-2">
-                        <Input
-                          id="link"
-                          defaultValue={currentUrl}
-                          readOnly
-                        />
-                      </div>
-                      <Button type="button" size="icon" onClick={handleCopyToClipboard}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                  )
+              ))}
           </div>
       </div>
+      
+      {/* Desktop Vertical Bar */}
+      <div className="hidden md:block fixed left-4 top-1/2 -translate-y-1/2 z-50">
+         <div className="p-2 glass-card flex flex-col gap-2 rounded-full">
+            <TooltipProvider>
+              {actions.map((action) => (
+                <Tooltip key={action.label} delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    {action.isShare ? (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                           <Button variant="ghost" size="icon" className="rounded-full h-11 w-11">
+                              {action.icon}
+                              <span className="sr-only">{action.label}</span>
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Share this post</DialogTitle>
+                            <DialogDescription>Anyone with this link will be able to view this post.</DialogDescription>
+                          </DialogHeader>
+                          <div className="flex items-center space-x-2">
+                            <Input defaultValue={currentUrl} readOnly />
+                            <Button type="button" size="icon" onClick={handleCopyToClipboard}><Copy className="h-4 w-4" /></Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <Button variant="ghost" size="icon" onClick={action.onClick} className="rounded-full h-11 w-11 relative">
+                        {action.icon}
+                        {action.content !== undefined && (
+                          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                            {action.content}
+                          </span>
+                        )}
+                      </Button>
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{action.label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </TooltipProvider>
+          </div>
+      </div>
+
 
       <AlertDialog open={isSummaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
         <AlertDialogContent>
@@ -234,3 +300,5 @@ export default function PostActions({ post }: { post: Post }) {
 
   return ReactDOM.createPortal(actionBar, portalContainer);
 }
+
+    
