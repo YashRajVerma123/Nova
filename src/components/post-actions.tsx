@@ -5,7 +5,7 @@ import { Post } from "@/lib/data";
 import { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { Button } from "./ui/button";
-import { Heart, Share2, Copy, Bookmark, Newspaper, Loader2, MessageSquare, Bot } from "lucide-react";
+import { Heart, Share2, Copy, Bookmark, Newspaper, Loader2, MessageSquare, Bot, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 
 
 const LIKED_POSTS_KEY = 'likedPosts';
@@ -43,6 +43,7 @@ export default function PostActions({ post }: { post: Post }) {
   const [isSummaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [summary, setSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -131,13 +132,18 @@ export default function PostActions({ post }: { post: Post }) {
   
   const handleSummarize = async () => {
     setSummaryDialogOpen(true);
-    if (summary) return; // Don't re-fetch if we already have it
+    // Don't re-fetch if we already have a summary and there's no error
+    if (summary && !summaryError) return;
+
     setIsSummarizing(true);
+    setSummary('');
+    setSummaryError(null);
+
     try {
         const result = await summarizeBlogPost({ blogPostContent: post.content });
         setSummary(result.summary);
     } catch(e) {
-        setSummary("Sorry, I couldn't generate a summary for this article at the moment.");
+        setSummaryError("Sorry, I couldn't generate a summary for this article at the moment.");
         console.error(e);
     } finally {
         setIsSummarizing(false);
@@ -295,7 +301,16 @@ export default function PostActions({ post }: { post: Post }) {
                   <AvatarFallback><Bot /></AvatarFallback>
                 </Avatar>
                 <div className="flex-1 bg-muted/50 p-4 rounded-lg">
-                  <p className="text-sm text-foreground">{summary}</p>
+                  {summary && <p className="text-sm text-foreground">{summary}</p>}
+                  {summaryError && (
+                    <div className="flex flex-col items-start gap-4">
+                        <p className="text-sm text-destructive">{summaryError}</p>
+                        <Button variant="outline" size="sm" onClick={handleSummarize}>
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Retry
+                        </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -310,5 +325,3 @@ export default function PostActions({ post }: { post: Post }) {
 
   return ReactDOM.createPortal(actionBar, portalContainer);
 }
-
-    
