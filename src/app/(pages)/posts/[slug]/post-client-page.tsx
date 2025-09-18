@@ -16,6 +16,7 @@ import PostActions from '@/components/post-actions';
 import { useAuth } from '@/hooks/use-auth';
 import { updateReadingProgress } from '@/app/actions/user-data-actions';
 import ReadingProgressBar from '@/components/reading-progress-bar';
+import { useDynamicTheme } from '@/contexts/dynamic-theme-context';
 
 interface PostClientPageProps {
   post: Post;
@@ -27,6 +28,19 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
   const { user, bookmarks } = useAuth();
   const contentRef = useRef<HTMLDivElement>(null);
   const isBookmarked = bookmarks[post.id];
+  const { setTheme, resetTheme } = useDynamicTheme();
+  
+  useEffect(() => {
+    // Set theme based on the first tag
+    if (post.tags && post.tags.length > 0) {
+      setTheme(post.tags[0]);
+    }
+
+    // Cleanup function to reset theme when component unmounts
+    return () => {
+      resetTheme();
+    };
+  }, [post.tags, setTheme, resetTheme]);
 
   // Restore reading progress
   useEffect(() => {
