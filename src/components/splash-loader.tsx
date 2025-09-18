@@ -21,16 +21,24 @@ const setShown = () => {
 
 const SplashLoader = () => {
   const [loading, setLoading] = useState(hasBeenShown() ? false : true);
+  const [showLogo, setShowLogo] = useState(false);
 
   useEffect(() => {
     if (!loading) return;
 
-    const timer = setTimeout(() => {
+    const logoTimer = setTimeout(() => {
+        setShowLogo(true);
+    }, 300);
+
+    const mainTimer = setTimeout(() => {
       setLoading(false);
       setShown();
-    }, 2000); // Show loader for 2 seconds
+    }, 2000); // Total splash screen duration
 
-    return () => clearTimeout(timer);
+    return () => {
+        clearTimeout(logoTimer);
+        clearTimeout(mainTimer);
+    };
   }, [loading]);
   
   if (!loading) return null;
@@ -39,10 +47,10 @@ const SplashLoader = () => {
     <div
       className={cn(
         'fixed inset-0 z-[100] flex items-center justify-center bg-background',
-        loading ? 'animate-fade-in-slow' : 'opacity-0 pointer-events-none'
+        !loading && 'opacity-0 pointer-events-none'
       )}
     >
-      <div className={cn('transition-transform duration-1000', loading ? 'scale-100' : 'scale-125')}>
+      <div className={cn('transition-opacity duration-1000', showLogo ? 'opacity-100 animate-fade-in-slow' : 'opacity-0')}>
         <Logo />
       </div>
     </div>
