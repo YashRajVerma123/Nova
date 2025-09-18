@@ -68,29 +68,31 @@ const LikeButton = ({ post }: { post: Post }) => {
   return (
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" onClick={handleLike} className="rounded-full h-11 w-11 relative">
-            <Heart className={cn("h-5 w-5 transition-colors duration-300", isLiked ? 'fill-red-500 text-red-500' : '', isAnimating && 'like-button-burst')} onAnimationEnd={() => setIsAnimating(false)} />
-            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+        <Button variant="ghost" size="icon" onClick={handleLike} className="rounded-full h-auto w-auto p-2 flex flex-col items-center gap-1">
+            <div className="relative">
+              <Heart className={cn("h-6 w-6 transition-colors duration-300", isLiked ? 'fill-red-500 text-red-500' : '', isAnimating && 'like-button-burst')} onAnimationEnd={() => setIsAnimating(false)} />
+               {isAnimating && (
+                  <div className="particle-burst animate">
+                    {[...Array(6)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="particle"
+                        style={
+                          {
+                            '--tx': `${Math.random() * 40 - 20}px`,
+                            '--ty': `${Math.random() * 40 - 20}px`,
+                            'background': particleColors[i % particleColors.length],
+                            'animationDelay': `${Math.random() * 0.1}s`,
+                          } as React.CSSProperties
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+            </div>
+            <span className="text-xs font-bold">
                 {likeCount}
             </span>
-             {isAnimating && (
-                <div className="particle-burst animate">
-                  {[...Array(6)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="particle"
-                      style={
-                        {
-                          '--tx': `${Math.random() * 40 - 20}px`,
-                          '--ty': `${Math.random() * 40 - 20}px`,
-                          'background': particleColors[i % particleColors.length],
-                          'animationDelay': `${Math.random() * 0.1}s`,
-                        } as React.CSSProperties
-                      }
-                    />
-                  ))}
-                </div>
-              )}
         </Button>
       </TooltipTrigger>
       <TooltipContent side="right">
@@ -252,7 +254,7 @@ export default function PostActions({ post }: { post: Post }) {
       
       {/* Desktop Vertical Bar */}
       <div className="hidden md:block fixed left-4 top-1/2 -translate-y-1/2 z-50">
-         <div className="p-2 glass-card flex flex-col gap-2 rounded-full">
+         <div className="p-2 glass-card flex flex-col gap-2 rounded-full items-center">
             <LikeButton post={post} />
             {actions.map((action) => (
               <Tooltip key={action.label} delayDuration={100}>
