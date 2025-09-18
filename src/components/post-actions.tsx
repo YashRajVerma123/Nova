@@ -67,7 +67,7 @@ const LikeButton = ({ post }: { post: Post }) => {
   return (
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" onClick={handleLike} className="rounded-full h-auto w-auto p-2 flex flex-col items-center gap-1">
+        <Button variant="ghost" size="icon" onClick={handleLike} className="rounded-full h-auto w-auto p-2 flex flex-row items-center gap-2">
             <div className="relative">
               <Heart className={cn("h-6 w-6 transition-colors duration-300", isLiked ? 'fill-red-500 text-red-500' : '', isAnimating && 'like-button-burst')} onAnimationEnd={() => setIsAnimating(false)} />
                {isAnimating && (
@@ -89,7 +89,7 @@ const LikeButton = ({ post }: { post: Post }) => {
                   </div>
                 )}
             </div>
-            <span className="text-xs font-bold">
+            <span className="text-sm font-bold pr-2">
                 {likeCount}
             </span>
         </Button>
