@@ -15,6 +15,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import RecentPostCard from '@/components/recent-post-card';
 import { cn } from '@/lib/utils';
+import FeedTabs from '@/components/feed-tabs';
 
 export default async function HomePage() {
   const allPosts: Post[] = await getPosts();
@@ -82,17 +83,7 @@ export default async function HomePage() {
 
       {/* Recent Posts Section */}
       <section className="container mx-auto px-4">
-        <h2 className="text-3xl font-headline font-bold mb-8 text-center">Recent News</h2>
-        <div className="grid grid-cols-1 gap-8">
-            {recentPosts.map((post) => (
-                <RecentPostCard key={post.slug} post={post} />
-            ))}
-        </div>
-        <div className="text-center mt-12">
-            <Button asChild variant="outline">
-                <Link href="/posts">View All Posts</Link>
-            </Button>
-        </div>
+        <FeedTabs recentPosts={recentPosts} />
       </section>
     </div>
   );

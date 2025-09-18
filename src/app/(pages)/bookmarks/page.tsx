@@ -7,46 +7,48 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { BookmarkX, Calendar } from 'lucide-react';
 import { Post } from '@/lib/data';
+import { useAuth } from '@/hooks/use-auth';
+import { toggleBookmark } from '@/app/actions/user-data-actions';
+import { useToast } from '@/hooks/use-toast';
 
-type BookmarkedPost = Pick<Post, 'slug' | 'title' | 'description' | 'coverImage'> & {
+type BookmarkedPost = Pick<Post, 'slug' | 'title' | 'description' | 'coverImage' | 'id'> & {
     bookmarkedAt: string;
 };
 
-const BOOKMARKED_POSTS_KEY = 'bookmarked_posts';
-const READING_PROGRESS_KEY = 'reading_progress';
-
 const BookmarksPage = () => {
-  const [bookmarks, setBookmarks] = useState<BookmarkedPost[]>([]);
-  const [readingProgress, setReadingProgress] = useState<{ [slug: string]: number }>({});
+  const { user, bookmarks: bookmarksFromAuth, loading: authLoading, setBookmarks, signIn } = useAuth();
   const [isClient, setIsClient] = useState(false);
-  
+  const { toast } = useToast();
+
   useEffect(() => {
     setIsClient(true);
-    const storedBookmarks = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
-    const storedProgress = JSON.parse(localStorage.getItem(READING_PROGRESS_KEY) || '{}');
-    
-    const bookmarksArray: BookmarkedPost[] = Object.values(storedBookmarks);
-    bookmarksArray.sort((a, b) => new Date(b.bookmarkedAt).getTime() - new Date(a.bookmarkedAt).getTime());
-    
-    setBookmarks(bookmarksArray);
-    setReadingProgress(storedProgress);
   }, []);
+  
+  const bookmarksArray: BookmarkedPost[] = Object.entries(bookmarksFromAuth).map(([postId, data]) => ({
+      id: postId,
+      ...data,
+  // @ts-ignore
+  })).sort((a,b) => new Date(b.bookmarkedAt).getTime() - new Date(a.bookmarkedAt).getTime());
 
-  const removeBookmark = (slug: string) => {
-    // Update state first for immediate UI feedback
-    setBookmarks(bookmarks.filter(b => b.slug !== slug));
+  const handleRemoveBookmark = async (postId: string, postDetails: any) => {
+    if (!user) return;
     
-    // Then update localStorage
-    const storedBookmarks = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
-    delete storedBookmarks[slug];
-    localStorage.setItem(BOOKMARKED_POSTS_KEY, JSON.stringify(storedBookmarks));
+    // Optimistic update
+    const newBookmarks = {...bookmarksFromAuth};
+    delete newBookmarks[postId];
+    setBookmarks(newBookmarks);
+    
+    toast({ title: 'Bookmark Removed', variant: 'destructive' });
 
-    const storedProgress = JSON.parse(localStorage.getItem(READING_PROGRESS_KEY) || '{}');
-    delete storedProgress[slug];
-    localStorage.setItem(READING_PROGRESS_KEY, JSON.stringify(storedProgress));
+    const result = await toggleBookmark(user.id, postId, true, postDetails);
+    if (result.error) {
+        // Revert on error
+        setBookmarks(bookmarksFromAuth);
+        toast({ title: 'Error', description: result.error, variant: 'destructive'});
+    }
   };
 
-  if (!isClient) {
+  if (!isClient || authLoading) {
      return (
           <div className="flex h-screen items-center justify-center">
               <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
@@ -65,9 +67,17 @@ const BookmarksPage = () => {
         </p>
       </section>
 
-      {bookmarks.length > 0 ? (
+      {!user ? (
+         <div className="text-center py-16 glass-card">
+            <h2 className="text-2xl font-headline font-bold mb-4">Sign In to View Bookmarks</h2>
+            <p className="text-muted-foreground mb-6">
+                Log in to see your saved articles across all your devices.
+            </p>
+            <Button onClick={signIn}>Sign In</Button>
+        </div>
+      ) : bookmarksArray.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {bookmarks.map((bookmark) => (
+          {bookmarksArray.map((bookmark) => (
              <div key={bookmark.slug} className="glass-card group flex flex-col overflow-hidden transition-all duration-300 hover:border-primary/50 hover:-translate-y-1">
                  <Link href={`/posts/${bookmark.slug}`} className="block">
                     <div className="relative aspect-[16/9] overflow-hidden">
@@ -93,7 +103,7 @@ const BookmarksPage = () => {
                             <span>Bookmarked: {new Date(bookmark.bookmarkedAt).toLocaleDateString()}</span>
                         </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => removeBookmark(bookmark.slug)}>
+                    <Button variant="outline" size="sm" onClick={() => handleRemoveBookmark(bookmark.id, { slug: bookmark.slug, title: bookmark.title, description: bookmark.description, coverImage: bookmark.coverImage })}>
                         <BookmarkX className="mr-2 h-4 w-4" />
                         Remove Bookmark
                     </Button>

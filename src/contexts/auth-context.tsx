@@ -5,10 +5,11 @@
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, User as FirebaseUser, Auth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { db } from '@/lib/firebase-server';
-import type { Author } from '@/lib/data';
+import type { Author, UserData } from '@/lib/data';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getClientFirebaseConfig } from '@/app/actions/config-actions';
 import { initializeClientApp } from '@/lib/firebase-client';
+import { getUserData } from '@/app/actions/user-data-actions';
 
 interface AuthContextType {
   user: Author | null;
@@ -28,6 +29,14 @@ interface AuthContextType {
   updateFollowingCount: (change: number) => void;
   updateFollowerCount: (change: number) => void;
   loading: boolean;
+  // New user data states
+  likedPosts: { [postId: string]: boolean };
+  likedComments: { [commentId: string]: boolean };
+  bookmarks: { [postId: string]: { bookmarkedAt: string, scrollPosition?: number } };
+  setLikedPosts: React.Dispatch<React.SetStateAction<{ [postId: string]: boolean }>>;
+  setLikedComments: React.Dispatch<React.SetStateAction<{ [commentId: string]: boolean }>>;
+  setBookmarks: React.Dispatch<React.SetStateAction<{ [postId: string]: { bookmarkedAt: string, scrollPosition?: number } }>>;
+  refreshUserData: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -52,6 +61,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [auth, setAuth] = useState<Auth | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // New states for persistent user data
+  const [likedPosts, setLikedPosts] = useState<{ [postId: string]: boolean }>({});
+  const [likedComments, setLikedComments] = useState<{ [commentId: string]: boolean }>({});
+  const [bookmarks, setBookmarks] = useState<{ [postId: string]: { bookmarkedAt: string, scrollPosition?: number } }>({});
 
   const fetchUserFromFirestore = async (fbUser: FirebaseUser) => {
     const userRef = doc(db, 'users', fbUser.uid);
@@ -71,6 +85,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return newUser;
   };
 
+  const fetchAndSetUserData = useCallback(async (userId: string) => {
+      const data = await getUserData(userId);
+      setLikedPosts(data.likedPosts);
+      setLikedComments(data.likedComments);
+      setBookmarks(data.bookmarks);
+  }, []);
+
+  const refreshUserData = useCallback(() => {
+    if (firebaseUser) {
+        fetchAndSetUserData(firebaseUser.uid);
+    }
+  }, [firebaseUser, fetchAndSetUserData]);
+
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
     
@@ -84,22 +111,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           unsubscribe = onAuthStateChanged(authInstance, async (fbUser) => {
             if (fbUser) {
               setFirebaseUser(fbUser);
-              const firestoreData = await fetchUserFromFirestore(fbUser);
+              const [firestoreData, userData] = await Promise.all([
+                  fetchUserFromFirestore(fbUser),
+                  getUserData(fbUser.uid)
+              ]);
               setUser(formatUser(fbUser, firestoreData));
+              setLikedPosts(userData.likedPosts);
+              setLikedComments(userData.likedComments);
+              setBookmarks(userData.bookmarks);
             } else {
               setFirebaseUser(null);
               setUser(null);
+              setLikedPosts({});
+              setLikedComments({});
+              setBookmarks({});
             }
-            // This is the correct place to stop loading, after auth state is determined.
             setLoading(false);
           });
         } else {
-            // If no config, we are not in an auth-enabled state. Stop loading.
             setLoading(false);
         }
       } catch (error) {
         console.error("Auth initialization failed:", error);
-        // Ensure loading stops even if initialization fails.
         setLoading(false);
       }
     };
@@ -185,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = user?.email === 'yashrajverma916@gmail.com';
 
-  const value = { user, firebaseUser, auth, isAdmin, signIn, signOut, updateUserProfile, loading, updateFollowingCount, updateFollowerCount };
+  const value = { user, firebaseUser, auth, isAdmin, signIn, signOut, updateUserProfile, loading, updateFollowingCount, updateFollowerCount, likedPosts, likedComments, bookmarks, setLikedPosts, setLikedComments, setBookmarks, refreshUserData };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

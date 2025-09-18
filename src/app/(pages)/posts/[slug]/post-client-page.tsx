@@ -13,9 +13,9 @@ import BlogPostCard from '@/components/blog-post-card';
 import CommentSection from '@/components/comment-section';
 import AboutTheAuthor from '@/components/about-the-author';
 import PostActions from '@/components/post-actions';
-
-// Local storage keys
-const READING_PROGRESS_KEY = 'reading_progress';
+import { useAuth } from '@/hooks/use-auth';
+import { updateReadingProgress } from '@/app/actions/user-data-actions';
+import ReadingProgressBar from '@/components/reading-progress-bar';
 
 interface PostClientPageProps {
   post: Post;
@@ -24,41 +24,41 @@ interface PostClientPageProps {
 }
 
 export default function PostClientPage({ post, relatedPosts, initialComments }: PostClientPageProps) {
+  const { user, bookmarks } = useAuth();
   const contentRef = useRef<HTMLDivElement>(null);
+  const isBookmarked = bookmarks[post.id];
 
   // Restore reading progress
   useEffect(() => {
-    const readingProgress = JSON.parse(localStorage.getItem(READING_PROGRESS_KEY) || '{}');
-    const scrollPosition = readingProgress[post.slug];
-    if (typeof scrollPosition === 'number') {
-        setTimeout(() => window.scrollTo(0, scrollPosition), 100);
+    if (isBookmarked) {
+        const scrollPosition = bookmarks[post.id]?.scrollPosition;
+        if (typeof scrollPosition === 'number') {
+            setTimeout(() => window.scrollTo(0, scrollPosition), 100);
+        }
     }
-  }, [post.slug]);
+  }, [post.id, isBookmarked, bookmarks]);
 
   // Reading progress saving logic
   useEffect(() => {
     let timeout: NodeJS.Timeout;
+
     const handleScroll = () => {
-        if (contentRef.current) {
+        if (contentRef.current && user && isBookmarked) {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
-                const bookmarkedPosts = JSON.parse(localStorage.getItem('bookmarked_posts') || '{}');
-                // Only save progress for bookmarked posts
-                if (bookmarkedPosts[post.slug]) {
-                    const readingProgress = JSON.parse(localStorage.getItem(READING_PROGRESS_KEY) || '{}');
-                    readingProgress[post.slug] = window.scrollY;
-                    localStorage.setItem(READING_PROGRESS_KEY, JSON.stringify(readingProgress));
-                }
+                // Only save progress for bookmarked posts by logged-in users
+                updateReadingProgress(user.id, post.id, window.scrollY);
             }, 250); // Debounce scroll event
         }
     };
     
     window.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
         window.removeEventListener('scroll', handleScroll);
         clearTimeout(timeout);
     };
-  }, [post.slug]);
+  }, [post.id, user, isBookmarked]);
 
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -76,6 +76,11 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
       name: post.author.name,
     },
     datePublished: post.publishedAt,
+    aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: Math.max(5 * ( (post.likes || 0) / 100), 3.5).toFixed(1), // Mock rating based on likes
+        reviewCount: (post.likes || 0) + initialComments.length,
+    }
   };
 
   return (
@@ -84,6 +89,7 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <ReadingProgressBar />
       <div className="container mx-auto px-4 py-10 max-w-4xl" ref={contentRef}>
         <article>
           <header className="mb-8">

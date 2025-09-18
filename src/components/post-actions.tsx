@@ -26,61 +26,41 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Avatar, AvatarFallback } from "./ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
+import { togglePostLike, toggleBookmark } from "@/app/actions/user-data-actions";
 
-
-const LIKED_POSTS_KEY = 'likedPosts';
-const POST_LIKE_COUNTS_KEY = 'postLikeCounts';
-const BOOKMARKED_POSTS_KEY = 'bookmarked_posts';
-const READING_PROGRESS_KEY = 'reading_progress';
 
 const LikeButton = ({ post }: { post: Post }) => {
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const { user, likedPosts, setLikedPosts, signIn } = useAuth();
+  const { toast } = useToast();
+  const [likeCount, setLikeCount] = useState(post.likes || 0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  useEffect(() => {
-    // Like count
-    const likeCounts = JSON.parse(localStorage.getItem(POST_LIKE_COUNTS_KEY) || '{}');
-    if (likeCounts[post.slug]) {
-      setLikeCount(likeCounts[post.slug]);
-    } else {
-      // Use a more stable random seed based on slug
-      const seed = post.slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const initialLikes = (seed % 20) + 5;
-      setLikeCount(initialLikes);
-      likeCounts[post.slug] = initialLikes;
-      localStorage.setItem(POST_LIKE_COUNTS_KEY, JSON.stringify(likeCounts));
-    }
-     // Liked status
-    const likedPosts = JSON.parse(localStorage.getItem(LIKED_POSTS_KEY) || '{}');
-    if (likedPosts[post.slug]) {
-      setLiked(true);
-    }
-  }, [post.slug]);
+  const isLiked = user ? likedPosts[post.id] === true : false;
 
-  const handleLike = () => {
-    const newLikedState = !liked;
-    
-    if (newLikedState) {
+  const handleLike = async () => {
+    if (!user) {
+      toast({ title: 'Please sign in', description: 'You need to be logged in to like posts.', action: <Button onClick={signIn}>Sign In</Button> });
+      return;
+    }
+
+    if (!isLiked) {
       setIsAnimating(true);
     }
     
-    setLiked(newLikedState);
-    
-    const newLikeCount = newLikedState ? likeCount + 1 : likeCount - 1;
-    setLikeCount(newLikeCount);
+    // Optimistic UI updates
+    const newLikedState = !isLiked;
+    setLikedPosts(prev => ({ ...prev, [post.id]: newLikedState }));
+    setLikeCount(prev => prev + (newLikedState ? 1 : -1));
 
-    const likedPosts = JSON.parse(localStorage.getItem(LIKED_POSTS_KEY) || '{}');
-    if (newLikedState) {
-      likedPosts[post.slug] = true;
-    } else {
-      delete likedPosts[post.slug];
+    // Server action
+    const result = await togglePostLike(user.id, post.id, post.slug, isLiked);
+    if (result.error) {
+        // Revert optimistic updates on error
+        setLikedPosts(prev => ({ ...prev, [post.id]: isLiked }));
+        setLikeCount(prev => prev + (isLiked ? 1 : -1));
+        toast({ title: 'Error', description: result.error, variant: 'destructive'});
     }
-    localStorage.setItem(LIKED_POSTS_KEY, JSON.stringify(likedPosts));
-
-    const likeCounts = JSON.parse(localStorage.getItem(POST_LIKE_COUNTS_KEY) || '{}');
-    likeCounts[post.slug] = newLikeCount;
-    localStorage.setItem(POST_LIKE_COUNTS_KEY, JSON.stringify(likeCounts));
   };
   
   const particleColors = ["#FFC700", "#FF0000", "#2E3192", "#455E55"];
@@ -89,7 +69,7 @@ const LikeButton = ({ post }: { post: Post }) => {
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
         <Button variant="ghost" size="icon" onClick={handleLike} className="rounded-full h-11 w-11 relative">
-            <Heart className={cn("h-5 w-5 transition-colors duration-300", liked ? 'fill-red-500 text-red-500' : '', isAnimating && 'like-button-burst')} onAnimationEnd={() => setIsAnimating(false)} />
+            <Heart className={cn("h-5 w-5 transition-colors duration-300", isLiked ? 'fill-red-500 text-red-500' : '', isAnimating && 'like-button-burst')} onAnimationEnd={() => setIsAnimating(false)} />
             <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                 {likeCount}
             </span>
@@ -123,58 +103,61 @@ const LikeButton = ({ post }: { post: Post }) => {
 
 export default function PostActions({ post }: { post: Post }) {
   const { toast } = useToast();
+  const { user, bookmarks, setBookmarks, signIn, refreshUserData } = useAuth();
   const [currentUrl, setCurrentUrl] = useState('');
   const [isMounted, setIsMounted] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [isSummaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [summary, setSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
+  const isBookmarked = user ? bookmarks[post.id] !== undefined : false;
+
   useEffect(() => {
     setIsMounted(true);
     setPortalContainer(document.getElementById('post-actions-container'));
-
     if (typeof window !== 'undefined') {
       setCurrentUrl(window.location.href);
-
-      // Bookmark status
-      const bookmarkedPosts = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
-      if (bookmarkedPosts[post.slug]) {
-        setIsBookmarked(true);
-      }
     }
-  }, [post.slug]);
+  }, []);
 
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(currentUrl);
     toast({ title: 'Link copied to clipboard!' });
   };
 
-  const toggleBookmark = () => {
-    const bookmarkedPosts = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
-    const readingProgress = JSON.parse(localStorage.getItem(READING_PROGRESS_KEY) || '{}');
+  const handleToggleBookmark = async () => {
+    if (!user) {
+        toast({ title: 'Please sign in', description: 'You need to be logged in to bookmark posts.', action: <Button onClick={signIn}>Sign In</Button> });
+        return;
+    }
     const newIsBookmarked = !isBookmarked;
 
+    // Optimistic update
     if (newIsBookmarked) {
-        bookmarkedPosts[post.slug] = {
-            slug: post.slug,
-            title: post.title,
-            description: post.description,
-            coverImage: post.coverImage,
-            bookmarkedAt: new Date().toISOString()
-        };
+        setBookmarks(prev => ({...prev, [post.id]: { bookmarkedAt: new Date().toISOString() }}));
         toast({ title: 'Article Bookmarked!', description: 'You can find it in your bookmarks.' });
     } else {
-        delete bookmarkedPosts[post.slug];
-        delete readingProgress[post.slug]; // Also remove reading progress
-        localStorage.setItem(READING_PROGRESS_KEY, JSON.stringify(readingProgress));
+        const newBookmarks = {...bookmarks};
+        delete newBookmarks[post.id];
+        setBookmarks(newBookmarks);
         toast({ title: 'Bookmark Removed', variant: 'destructive' });
     }
 
-    localStorage.setItem(BOOKMARKED_POSTS_KEY, JSON.stringify(bookmarkedPosts));
-    setIsBookmarked(newIsBookmarked);
+    const postDetails = {
+        slug: post.slug,
+        title: post.title,
+        description: post.description,
+        coverImage: post.coverImage,
+    };
+    const result = await toggleBookmark(user.id, post.id, isBookmarked, postDetails);
+    
+    if (result.error) {
+        // Revert on failure
+        refreshUserData();
+        toast({ title: 'Error', description: result.error, variant: 'destructive' });
+    }
   };
   
   const handleSummarize = async () => {
@@ -217,7 +200,7 @@ export default function PostActions({ post }: { post: Post }) {
     {
       label: isBookmarked ? "Bookmarked" : "Bookmark",
       icon: <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-primary text-primary")} />,
-      onClick: toggleBookmark,
+      onClick: handleToggleBookmark,
     },
     {
       label: "Comments",
@@ -360,5 +343,3 @@ export default function PostActions({ post }: { post: Post }) {
 
   return ReactDOM.createPortal(actionBar, portalContainer);
 }
-
-    

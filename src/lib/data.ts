@@ -59,6 +59,7 @@ export type Post = {
   tags: string[];
   readTime: number; 
   featured?: boolean;
+  likes?: number;
 };
 
 export type Notification = {
@@ -95,6 +96,7 @@ const postConverter = {
             tags: data.tags,
             readTime: data.readTime,
             featured: data.featured,
+            likes: data.likes || 0,
         };
     },
     toFirestore: (post: Omit<Post, 'id'>) => {
@@ -345,4 +347,28 @@ export async function isFollowing(followerId: string, authorId: string): Promise
   const followDocRef = doc(db, 'users', followerId, 'following', authorId);
   const docSnap = await getDoc(followDocRef);
   return docSnap.exists();
+}
+
+// User-specific data (likes, bookmarks)
+export type UserData = {
+    likedPosts: { [postId: string]: boolean };
+    likedComments: { [commentId: string]: boolean };
+    bookmarks: { [postId: string]: { bookmarkedAt: string, scrollPosition?: number } };
+}
+
+export const getUserData = async (userId: string): Promise<UserData> => {
+    if (!userId) {
+        return { likedPosts: {}, likedComments: {}, bookmarks: {} };
+    }
+    const userRef = doc(db, 'users', userId);
+    const userDataCollection = collection(userRef, 'userData');
+    const likedPostsDoc = await getDoc(doc(userDataCollection, 'likedPosts'));
+    const likedCommentsDoc = await getDoc(doc(userDataCollection, 'likedComments'));
+    const bookmarksDoc = await getDoc(doc(userDataCollection, 'bookmarks'));
+
+    return {
+        likedPosts: likedPostsDoc.exists() ? likedPostsDoc.data() : {},
+        likedComments: likedCommentsDoc.exists() ? likedCommentsDoc.data() : {},
+        bookmarks: bookmarksDoc.exists() ? bookmarksDoc.data() : {},
+    };
 }

@@ -31,6 +31,11 @@ const seedCollection = async (collectionPath: string, data: any[], checkField: s
             firestoreData.createdAt = new Date(firestoreData.createdAt);
         }
 
+        // Add a default `likes` field to posts if it doesn't exist.
+        if (collectionPath === 'posts' && firestoreData.likes === undefined) {
+            firestoreData.likes = 0;
+        }
+
         const { comments, ...post } = firestoreData;
         batch.set(docRef, post);
 

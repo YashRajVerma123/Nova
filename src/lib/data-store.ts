@@ -25,6 +25,7 @@ export const initialPostsData: PostSeedData[] = [
         tags: ['AI', 'Technology', 'Future'],
         readTime: 10,
         featured: true,
+        likes: 25,
         comments: [
             { content: 'Great overview of the future of AI!', author: yashRaj, createdAt: '2024-07-28T12:00:00Z', likes: 15, parentId: null }
         ],
@@ -45,6 +46,7 @@ export const initialPostsData: PostSeedData[] = [
         tags: ['Sustainability', 'Lifestyle', 'Environment'],
         readTime: 8,
         featured: true,
+        likes: 42,
         comments: [],
     },
     {
@@ -63,6 +65,7 @@ export const initialPostsData: PostSeedData[] = [
         tags: ['Remote Work', 'Productivity', 'Wellness'],
         readTime: 5,
         featured: false,
+        likes: 18,
         comments: [],
     },
     {
@@ -80,6 +83,7 @@ export const initialPostsData: PostSeedData[] = [
         tags: ['Minimalism', 'Lifestyle', 'Philosophy'],
         readTime: 7,
         featured: true,
+        likes: 55,
         comments: [],
     },
     {
@@ -98,6 +102,7 @@ export const initialPostsData: PostSeedData[] = [
         tags: ['Ocean', 'Science', 'Exploration'],
         readTime: 9,
         featured: false,
+        likes: 30,
         comments: [],
     },
 ];

@@ -4,7 +4,8 @@
 import { useState, useEffect, useMemo, useRef, KeyboardEvent } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { addComment, toggleCommentLike, updateComment, deleteComment, toggleCommentHighlight, toggleCommentPin } from '@/app/actions/comment-actions';
+import { addComment, updateComment, deleteComment, toggleCommentHighlight, toggleCommentPin } from '@/app/actions/comment-actions';
+import { toggleCommentLike } from '@/app/actions/user-data-actions';
 import { Comment as CommentType, Author } from '@/lib/data';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
@@ -45,8 +46,6 @@ const getInitials = (name: string) => {
     const names = name.split(' ');
     return names.length > 1 ? `${names[0][0]}${names[1][0]}` : name.substring(0, 2);
 };
-
-const LIKED_COMMENTS_STORAGE_KEY = 'likedComments';
 
 const sortComments = (commentList: CommentType[]) => {
     return [...commentList].sort((a,b) => (b.pinned ? 1 : -1) - (a.pinned ? 1 : -1) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -163,22 +162,38 @@ const CommentForm = ({
 const LikeButton = ({ 
     comment,
     postId,
-    isLiked,
-    onLikeToggle,
 }: {
     comment: CommentType,
     postId: string,
-    isLiked: boolean,
-    onLikeToggle: (commentId: string, isLiked: boolean) => void,
 }) => {
+    const { user, likedComments, setLikedComments, signIn } = useAuth();
+    const { toast } = useToast();
+    const [likeCount, setLikeCount] = useState(comment.likes);
     const [isAnimating, setIsAnimating] = useState(false);
 
+    const isLiked = user ? likedComments[comment.id] === true : false;
+
     const handleLikeClick = async () => {
+        if (!user) {
+            toast({ title: 'Please sign in', description: 'You need to be logged in to like comments.', action: <Button onClick={signIn}>Sign In</Button> });
+            return;
+        }
+
         if (!isLiked) {
             setIsAnimating(true);
         }
-        onLikeToggle(comment.id, isLiked);
-        await toggleCommentLike(postId, comment.id, isLiked);
+        
+        const newLikedState = !isLiked;
+        setLikedComments(prev => ({...prev, [comment.id]: newLikedState}));
+        setLikeCount(prev => prev + (newLikedState ? 1 : -1));
+
+        const result = await toggleCommentLike(user.id, postId, comment.id, isLiked);
+        if (result.error) {
+            // Revert on error
+            setLikedComments(prev => ({...prev, [comment.id]: isLiked}));
+            setLikeCount(prev => prev + (isLiked ? 1 : -1));
+            toast({ title: 'Error', description: result.error, variant: 'destructive'});
+        }
     }
     
     const particleColors = ["#FFC700", "#FF0000", "#2E3192", "#455E55"];
@@ -186,7 +201,7 @@ const LikeButton = ({
     return (
         <button onClick={handleLikeClick} className={cn("flex items-center gap-1 hover:text-primary transition-colors relative", { 'text-red-500': isLiked })}>
             <Heart className={cn("h-4 w-4 transition-colors duration-300", isLiked ? 'fill-red-500' : '', isAnimating && 'like-button-burst')} onAnimationEnd={() => setIsAnimating(false)} />
-            <span>{comment.likes}</span>
+            <span>{likeCount}</span>
             {isAnimating && (
                 <div className="particle-burst animate">
                   {[...Array(6)].map((_, i) => (
@@ -216,8 +231,6 @@ const Comment = ({
     onUpdate,
     onDelete,
     onAdminAction,
-    likedComments,
-    onLikeToggle,
     replies = [],
     onReply,
 }: { 
@@ -226,8 +239,6 @@ const Comment = ({
     onUpdate: (updatedComment: CommentType) => void,
     onDelete: (commentId: string) => void,
     onAdminAction: (updatedComment: CommentType) => void,
-    likedComments: { [key: string]: boolean },
-    onLikeToggle: (commentId: string, isLiked: boolean) => void,
     replies: CommentType[],
     onReply: (newReply: CommentType, parentId: string) => void,
 }) => {
@@ -236,7 +247,6 @@ const Comment = ({
     const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const { user, isAdmin } = useAuth();
 
-    const isLiked = likedComments[comment.id] || false;
     const canModify = user && (user.id === comment.author.id || isAdmin);
     const isTopLevelComment = !comment.parentId;
 
@@ -319,7 +329,7 @@ const Comment = ({
                 </div>
                 <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{comment.content}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <LikeButton comment={comment} postId={postId} isLiked={isLiked} onLikeToggle={onLikeToggle} />
+                    <LikeButton comment={comment} postId={postId} />
                      {isTopLevelComment && (
                         <button onClick={() => setShowReplyForm(!showReplyForm)} className="flex items-center gap-1 hover:text-primary transition-colors">
                             <MessageSquare className="h-4 w-4"/>
@@ -422,8 +432,6 @@ const Comment = ({
                             onUpdate={onUpdate}
                             onDelete={onDelete}
                             onAdminAction={onAdminAction}
-                            likedComments={likedComments}
-                            onLikeToggle={onLikeToggle}
                             onReply={onReply}
                             replies={[]} // Nested replies not supported in this UI level
                         />
@@ -437,15 +445,8 @@ const Comment = ({
 
 export default function CommentSection({ postId, initialComments }: CommentSectionProps) {
   const [comments, setComments] = useState<CommentType[]>(sortComments(initialComments));
-  const [likedComments, setLikedComments] = useState<{ [key: string]: boolean }>({});
   const { user, signIn } = useAuth();
   
-  useEffect(() => {
-    const storedLikes = JSON.parse(localStorage.getItem(LIKED_COMMENTS_STORAGE_KEY) || '{}');
-    const postLikes = storedLikes[postId] || {};
-    setLikedComments(postLikes);
-  }, [postId]);
-
   const commentsWithReplies = useMemo(() => {
     const commentMap = new Map<string, CommentType & { replies: CommentType[] }>();
     const topLevelComments: (CommentType & { replies: CommentType[] })[] = [];
@@ -477,24 +478,6 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
   
   const deleteCommentFromState = (list: CommentType[], commentId: string): CommentType[] => {
     return list.filter(c => c.id !== commentId && c.parentId !== commentId);
-  }
-
-  const handleLikeToggle = (commentId: string, isLiked: boolean) => {
-    const newLikeCount = (comments.find(c => c.id === commentId)?.likes || 0) + (isLiked ? -1 : 1);
-    
-    setLikedComments(prev => {
-        const newLikes = { ...prev, [commentId]: !isLiked };
-        const allStoredLikes = JSON.parse(localStorage.getItem(LIKED_COMMENTS_STORAGE_KEY) || '{}');
-        allStoredLikes[postId] = newLikes;
-        localStorage.setItem(LIKED_COMMENTS_STORAGE_KEY, JSON.stringify(allStoredLikes));
-        return newLikes;
-    });
-
-    setComments(prevComments => 
-        prevComments.map(c => 
-            c.id === commentId ? { ...c, likes: newLikeCount < 0 ? 0 : newLikeCount } : c
-        )
-    );
   }
 
   const addCommentToState = (newComment: CommentType) => {
@@ -540,8 +523,6 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
                 onUpdate={handleUpdateComment}
                 onDelete={handleDeleteComment}
                 onAdminAction={handleAdminAction}
-                likedComments={likedComments}
-                onLikeToggle={handleLikeToggle}
                 replies={comment.replies}
                 onReply={handleReplyToComment}
             />
@@ -550,5 +531,3 @@ export default function CommentSection({ postId, initialComments }: CommentSecti
     </section>
   );
 }
-
-    
