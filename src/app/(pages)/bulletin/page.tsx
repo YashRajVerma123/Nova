@@ -44,17 +44,18 @@ const BulletinPage = () => {
     const [loadingMore, setLoadingMore] = useState(false);
     const [lastDocId, setLastDocId] = useState<string | undefined>(undefined);
     const [hasMore, setHasMore] = useState(true);
-
-    const loadInitialBulletins = async () => {
-        setLoading(true);
-        const { bulletins: initialBulletins, lastDocId: newLastDocId } = await getBulletins(3);
-        setBulletins(initialBulletins);
-        setLastDocId(newLastDocId);
-        setHasMore(!!newLastDocId);
-        setLoading(false);
-    };
+    const [clientLoaded, setClientLoaded] = useState(false);
 
     useEffect(() => {
+        setClientLoaded(true);
+        const loadInitialBulletins = async () => {
+            setLoading(true);
+            const { bulletins: initialBulletins, lastDocId: newLastDocId } = await getBulletins(3);
+            setBulletins(initialBulletins);
+            setLastDocId(newLastDocId);
+            setHasMore(!!newLastDocId);
+            setLoading(false);
+        };
         loadInitialBulletins();
     }, []);
 
@@ -68,7 +69,7 @@ const BulletinPage = () => {
         setLoadingMore(false);
     };
 
-    if (loading) {
+    if (loading && clientLoaded) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
