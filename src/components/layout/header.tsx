@@ -51,7 +51,7 @@ const Header = () => {
                       <Menu className="h-6 w-6" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
+                  <DropdownMenuContent align="start" className="font-content">
                     {navLinks.map((link) => (
                       <DropdownMenuItem key={link.href} asChild>
                         <Link

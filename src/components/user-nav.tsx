@@ -247,7 +247,7 @@ const UserNav = () => {
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuContent className="w-56 font-content" align="end" forceMount>
           {user ? (
             <>
               <DropdownMenuLabel className="font-normal">
@@ -415,5 +415,3 @@ const UserNav = () => {
 };
 
 export default UserNav;
-
-    
