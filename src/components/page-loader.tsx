@@ -57,7 +57,11 @@ export default function PageLoader() {
         loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-        <div className="infinity-loader"></div>
+        <div className="loader-dots">
+            <div className="loader-dot"></div>
+            <div className="loader-dot"></div>
+            <div className="loader-dot"></div>
+        </div>
     </div>
   );
 }

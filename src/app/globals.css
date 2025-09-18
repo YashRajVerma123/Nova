@@ -157,46 +157,34 @@
    @apply bg-card/60 backdrop-blur-xl border border-white/5 rounded-xl shadow-lg;
 }
 
-.infinity-loader {
-  position: relative;
-  width: 120px;
-  height: 120px;
+.loader-dots {
+  display: flex;
+  gap: 8px;
 }
 
-.infinity-loader::before,
-.infinity-loader::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 60px;
-  height: 60px;
-  border: 6px solid hsl(var(--primary));
+.loader-dot {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  transform-origin: center center;
-  animation: infinity-rotate 2s linear infinite;
+  background-color: hsl(var(--primary));
+  animation: dot-pulse 1.4s infinite ease-in-out both;
 }
 
-.infinity-loader::before {
-  transform: translate(-50%, -50%) rotate(0deg);
-  border-right-color: transparent;
-  animation-direction: normal;
+.loader-dot:nth-child(1) {
+  animation-delay: -0.32s;
 }
 
-.infinity-loader::after {
-  transform: translate(-50%, -50%) rotate(0deg);
-  border-left-color: transparent;
-  animation-direction: reverse;
+.loader-dot:nth-child(2) {
+  animation-delay: -0.16s;
 }
 
-@keyframes infinity-rotate {
-  0% {
-    transform: translate(-50%, -50%) rotate(0deg);
+@keyframes dot-pulse {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.8;
   }
-  50% {
-    transform: translate(-50%, -50%) rotate(-180deg);
-  }
-  100% {
-    transform: translate(-50%, -50%) rotate(-360deg);
+  40% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
