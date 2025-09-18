@@ -42,9 +42,9 @@ const Header = () => {
       )}
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
-        <div className="flex items-center">
+        <div className="flex items-center justify-start flex-1">
             {/* Mobile Left Section */}
-            <div className="flex items-center md:hidden">
+            <div className="flex items-center gap-0 md:hidden">
               <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -67,15 +67,13 @@ const Header = () => {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <div className="flex items-center gap-0">
-                    <SearchBar />
-                    <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
-                        <Link href="/bookmarks">
-                            <Bookmark className="h-5 w-5"/>
-                            <span className="sr-only">Bookmarks</span>
-                        </Link>
-                    </Button>
-                </div>
+                <SearchBar />
+                <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
+                    <Link href="/bookmarks">
+                        <Bookmark className="h-5 w-5"/>
+                        <span className="sr-only">Bookmarks</span>
+                    </Link>
+                </Button>
             </div>
             
             {/* Desktop Left Section */}
@@ -94,7 +92,7 @@ const Header = () => {
             <Logo />
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center justify-end flex-1 gap-1 sm:gap-2">
             <div className="hidden md:flex">
               <SearchBar />
               <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
