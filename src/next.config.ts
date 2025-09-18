@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
        {
-        protocol: 'https,',
+        protocol: 'https',
         hostname: 'www.hindustantimes.com',
         port: '',
         pathname: '/**',

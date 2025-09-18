@@ -1,3 +1,4 @@
+
 // THIS FILE IS FOR CLIENT-SIDE USE ONLY
 import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
