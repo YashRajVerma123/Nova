@@ -33,55 +33,38 @@ const POST_LIKE_COUNTS_KEY = 'postLikeCounts';
 const BOOKMARKED_POSTS_KEY = 'bookmarked_posts';
 const READING_PROGRESS_KEY = 'reading_progress';
 
-export default function PostActions({ post }: { post: Post }) {
-  const { toast } = useToast();
+const LikeButton = ({ post }: { post: Post }) => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [currentUrl, setCurrentUrl] = useState('');
-  const [isMounted, setIsMounted] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [isSummaryDialogOpen, setSummaryDialogOpen] = useState(false);
-  const [summary, setSummary] = useState('');
-  const [isSummarizing, setIsSummarizing] = useState(false);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
-  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    setPortalContainer(document.getElementById('post-actions-container'));
-
-    if (typeof window !== 'undefined') {
-      setCurrentUrl(window.location.href);
-
-      // Liked status
-      const likedPosts = JSON.parse(localStorage.getItem(LIKED_POSTS_KEY) || '{}');
-      if (likedPosts[post.slug]) {
-        setLiked(true);
-      }
-
-      // Like count
-      const likeCounts = JSON.parse(localStorage.getItem(POST_LIKE_COUNTS_KEY) || '{}');
-      if (likeCounts[post.slug]) {
-        setLikeCount(likeCounts[post.slug]);
-      } else {
-        // Use a more stable random seed based on slug
-        const seed = post.slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const initialLikes = (seed % 20) + 5;
-        setLikeCount(initialLikes);
-        likeCounts[post.slug] = initialLikes;
-        localStorage.setItem(POST_LIKE_COUNTS_KEY, JSON.stringify(likeCounts));
-      }
-
-      // Bookmark status
-      const bookmarkedPosts = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
-      if (bookmarkedPosts[post.slug]) {
-        setIsBookmarked(true);
-      }
+    // Like count
+    const likeCounts = JSON.parse(localStorage.getItem(POST_LIKE_COUNTS_KEY) || '{}');
+    if (likeCounts[post.slug]) {
+      setLikeCount(likeCounts[post.slug]);
+    } else {
+      // Use a more stable random seed based on slug
+      const seed = post.slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const initialLikes = (seed % 20) + 5;
+      setLikeCount(initialLikes);
+      likeCounts[post.slug] = initialLikes;
+      localStorage.setItem(POST_LIKE_COUNTS_KEY, JSON.stringify(likeCounts));
+    }
+     // Liked status
+    const likedPosts = JSON.parse(localStorage.getItem(LIKED_POSTS_KEY) || '{}');
+    if (likedPosts[post.slug]) {
+      setLiked(true);
     }
   }, [post.slug]);
 
   const handleLike = () => {
     const newLikedState = !liked;
+    
+    if (newLikedState) {
+      setIsAnimating(true);
+    }
+    
     setLiked(newLikedState);
     
     const newLikeCount = newLikedState ? likeCount + 1 : likeCount - 1;
@@ -99,6 +82,70 @@ export default function PostActions({ post }: { post: Post }) {
     likeCounts[post.slug] = newLikeCount;
     localStorage.setItem(POST_LIKE_COUNTS_KEY, JSON.stringify(likeCounts));
   };
+  
+  const particleColors = ["#FFC700", "#FF0000", "#2E3192", "#455E55"];
+
+  return (
+    <Tooltip delayDuration={100}>
+      <TooltipTrigger asChild>
+        <Button variant="ghost" size="icon" onClick={handleLike} className="rounded-full h-11 w-11 relative">
+            <Heart className={cn("h-5 w-5 transition-colors duration-300", liked ? 'fill-red-500 text-red-500' : '', isAnimating && 'like-button-burst')} onAnimationEnd={() => setIsAnimating(false)} />
+            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {likeCount}
+            </span>
+             {isAnimating && (
+                <div className="particle-burst animate">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="particle"
+                      style={
+                        {
+                          '--tx': `${Math.random() * 40 - 20}px`,
+                          '--ty': `${Math.random() * 40 - 20}px`,
+                          'background': particleColors[i % particleColors.length],
+                          'animationDelay': `${Math.random() * 0.1}s`,
+                        } as React.CSSProperties
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="right">
+        <p>Like</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
+
+export default function PostActions({ post }: { post: Post }) {
+  const { toast } = useToast();
+  const [currentUrl, setCurrentUrl] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isSummaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+    setPortalContainer(document.getElementById('post-actions-container'));
+
+    if (typeof window !== 'undefined') {
+      setCurrentUrl(window.location.href);
+
+      // Bookmark status
+      const bookmarkedPosts = JSON.parse(localStorage.getItem(BOOKMARKED_POSTS_KEY) || '{}');
+      if (bookmarkedPosts[post.slug]) {
+        setIsBookmarked(true);
+      }
+    }
+  }, [post.slug]);
 
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(currentUrl);
@@ -163,12 +210,6 @@ export default function PostActions({ post }: { post: Post }) {
   
   const actions = [
     {
-      label: "Like",
-      icon: <Heart className={cn("h-5 w-5 transition-all duration-300", liked ? 'fill-red-500 text-red-500' : '')} />,
-      onClick: handleLike,
-      content: likeCount,
-    },
-    {
       label: "Summarize",
       icon: <Newspaper className="h-5 w-5" />,
       onClick: handleSummarize,
@@ -196,6 +237,7 @@ export default function PostActions({ post }: { post: Post }) {
       {/* Mobile Bar */}
       <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <div className="flex items-center justify-center p-1.5 gap-1 rounded-full bg-background/60 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <LikeButton post={post} />
               {actions.map((action, index) => (
                  action.isShare ? (
                     <Dialog key={action.label}>
@@ -217,9 +259,8 @@ export default function PostActions({ post }: { post: Post }) {
                       </DialogContent>
                     </Dialog>
                   ) : (
-                    <Button key={action.label} variant="ghost" size={action.content !== undefined ? 'sm' : 'icon'} onClick={action.onClick} className="rounded-full text-foreground/80 hover:text-foreground hover:bg-white/10">
+                    <Button key={action.label} variant="ghost" size="icon" onClick={action.onClick} className="rounded-full text-foreground/80 hover:text-foreground hover:bg-white/10">
                       {action.icon}
-                      {action.content !== undefined && <span className="ml-1.5 text-xs">{action.content}</span>}
                     </Button>
                   )
               ))}
@@ -230,6 +271,7 @@ export default function PostActions({ post }: { post: Post }) {
       <div className="hidden md:block fixed left-4 top-1/2 -translate-y-1/2 z-50">
          <div className="p-2 glass-card flex flex-col gap-2 rounded-full">
             <TooltipProvider>
+              <LikeButton post={post} />
               {actions.map((action) => (
                 <Tooltip key={action.label} delayDuration={100}>
                   <TooltipTrigger asChild>
@@ -255,11 +297,6 @@ export default function PostActions({ post }: { post: Post }) {
                     ) : (
                       <Button variant="ghost" size="icon" onClick={action.onClick} className="rounded-full h-11 w-11 relative">
                         {action.icon}
-                        {action.content !== undefined && (
-                          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                            {action.content}
-                          </span>
-                        )}
                       </Button>
                     )}
                   </TooltipTrigger>

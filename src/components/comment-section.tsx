@@ -160,6 +160,55 @@ const CommentForm = ({
     )
 }
 
+const LikeButton = ({ 
+    comment,
+    postId,
+    isLiked,
+    onLikeToggle,
+}: {
+    comment: CommentType,
+    postId: string,
+    isLiked: boolean,
+    onLikeToggle: (commentId: string, isLiked: boolean) => void,
+}) => {
+    const [isAnimating, setIsAnimating] = useState(false);
+
+    const handleLikeClick = async () => {
+        if (!isLiked) {
+            setIsAnimating(true);
+        }
+        onLikeToggle(comment.id, isLiked);
+        await toggleCommentLike(postId, comment.id, isLiked);
+    }
+    
+    const particleColors = ["#FFC700", "#FF0000", "#2E3192", "#455E55"];
+
+    return (
+        <button onClick={handleLikeClick} className={cn("flex items-center gap-1 hover:text-primary transition-colors relative", { 'text-red-500': isLiked })}>
+            <Heart className={cn("h-4 w-4 transition-colors duration-300", isLiked ? 'fill-red-500' : '', isAnimating && 'like-button-burst')} onAnimationEnd={() => setIsAnimating(false)} />
+            <span>{comment.likes}</span>
+            {isAnimating && (
+                <div className="particle-burst animate">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="particle"
+                      style={
+                        {
+                          '--tx': `${Math.random() * 30 - 15}px`,
+                          '--ty': `${Math.random() * 30 - 15}px`,
+                          'background': particleColors[i % particleColors.length],
+                          'animationDelay': `${Math.random() * 0.1}s`,
+                        } as React.CSSProperties
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+        </button>
+    )
+}
+
 // Sub-component for rendering a single comment and its replies
 const Comment = ({ 
     comment, 
@@ -191,11 +240,6 @@ const Comment = ({
     const canModify = user && (user.id === comment.author.id || isAdmin);
     const isTopLevelComment = !comment.parentId;
 
-
-    const handleLikeClick = async () => {
-        onLikeToggle(comment.id, isLiked);
-        await toggleCommentLike(postId, comment.id, isLiked);
-    }
     
     const handleDelete = async () => {
         if (!canModify || !user) return;
@@ -275,10 +319,7 @@ const Comment = ({
                 </div>
                 <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{comment.content}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <button onClick={handleLikeClick} className={cn("flex items-center gap-1 hover:text-primary transition-colors", { 'text-red-500': isLiked })}>
-                        <Heart className={cn("h-4 w-4 transition-all transform", { 'fill-current scale-110': isLiked })} />
-                        <span>{comment.likes}</span>
-                    </button>
+                    <LikeButton comment={comment} postId={postId} isLiked={isLiked} onLikeToggle={onLikeToggle} />
                      {isTopLevelComment && (
                         <button onClick={() => setShowReplyForm(!showReplyForm)} className="flex items-center gap-1 hover:text-primary transition-colors">
                             <MessageSquare className="h-4 w-4"/>
