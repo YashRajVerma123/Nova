@@ -17,17 +17,12 @@ export default function PageLoader() {
 
   useEffect(() => {
     if (!isMounted) return;
-    // When the path changes, we can assume the loading is complete.
-    // The key here is that this useEffect hook runs *after* the new page component has mounted.
     setLoading(false);
   }, [pathname, searchParams, isMounted]);
 
   useEffect(() => {
     if (!isMounted) return;
-    // This effect is for handling link clicks to show the loader immediately.
     const handleLinkClick = (e: MouseEvent) => {
-      // Check if the click is on a Next.js Link component (an `<a>` tag)
-      // and not an external link or a link to an anchor on the same page.
       const target = e.target as HTMLElement;
       const anchor = target.closest('a');
       
@@ -35,7 +30,6 @@ export default function PageLoader() {
           anchor.target !== '_blank' && 
           new URL(anchor.href).origin === window.location.origin) {
         
-        // Prevent showing loader for same-page navigation
         const currentPath = window.location.pathname + window.location.search;
         const targetPath = new URL(anchor.href).pathname + new URL(anchor.href).search;
 
