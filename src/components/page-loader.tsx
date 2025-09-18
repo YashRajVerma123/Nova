@@ -57,10 +57,12 @@ export default function PageLoader() {
         loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-        <div className="loader-container">
-            <div className="loader-dot"></div>
-            <div className="loader-dot"></div>
-            <div className="loader-dot"></div>
+        <div className="loader-bars">
+            <div className="loader-bar"></div>
+            <div className="loader-bar"></div>
+            <div className="loader-bar"></div>
+            <div className="loader-bar"></div>
+            <div className="loader-bar"></div>
         </div>
     </div>
   );
