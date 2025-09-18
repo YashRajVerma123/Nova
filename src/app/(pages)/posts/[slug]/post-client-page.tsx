@@ -90,6 +90,19 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
       name: post.author.name,
     },
     datePublished: post.publishedAt,
+    dateModified: post.publishedAt,
+    mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': `https://theglare.netlify.app/posts/${post.slug}`,
+    },
+    publisher: {
+        '@type': 'Organization',
+        name: 'Glare',
+        logo: {
+            '@type': 'ImageObject',
+            url: 'https://theglare.netlify.app/logo.png', // Replace with your actual logo URL
+        },
+    },
     aggregateRating: {
         '@type': 'AggregateRating',
         ratingValue: Math.max(5 * ( (post.likes || 0) / 100), 3.5).toFixed(1), // Mock rating based on likes
@@ -147,7 +160,7 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
               fill
               priority
               className="object-cover"
-              data-ai-hint="blog cover"
+              data-ai-hint="blog post header"
             />
           </div>
 

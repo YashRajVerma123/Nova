@@ -35,7 +35,10 @@ const raleway = Raleway({
 
 
 export const metadata: Metadata = {
-  title: "Glare",
+  title: {
+    default: "Glare - Clarity in a Complex World",
+    template: "%s | Glare",
+  },
   description: "Your essential destination for making sense of today. We provide current affairs news for the modern reader.",
   manifest: "/manifest.json",
 };

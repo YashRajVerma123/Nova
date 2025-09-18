@@ -31,7 +31,7 @@ const BlogPostCard = ({ post, priority = false }: BlogPostCardProps) => {
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority={priority}
-            data-ai-hint="blog cover"
+            data-ai-hint="blog post cover"
           />
            <div className="absolute top-3 right-3 flex gap-2">
             {post.tags.slice(0, 2).map(tag => (

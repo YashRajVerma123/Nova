@@ -21,7 +21,7 @@ const RecentPostCard = ({ post }: RecentPostCardProps) => {
   
   return (
     <Link href={`/posts/${post.slug}`} className="group block">
-      <div className="glass-card h-full flex flex-row overflow-hidden transition-all duration-300 hover:border-primary/50 hover:-translate-y-1">
+      <div className="glass-card h-full flex flex-row overflow-hidden transition-all duration-300 hover:border-primary/50 hover-translate-y-1">
         <div className="relative w-2/5 md:w-1/3 aspect-square overflow-hidden">
           <Image
             src={post.coverImage}
@@ -29,7 +29,7 @@ const RecentPostCard = ({ post }: RecentPostCardProps) => {
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 40vw, 33vw"
-            data-ai-hint="blog cover"
+            data-ai-hint="article thumbnail"
           />
         </div>
         <div className="p-4 sm:p-6 flex flex-col flex-grow w-3/5 md:w-2/3">
