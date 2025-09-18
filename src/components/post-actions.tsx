@@ -233,7 +233,7 @@ export default function PostActions({ post }: { post: Post }) {
   ];
   
   const actionBar = (
-     <>
+     <TooltipProvider>
       {/* Mobile Bar */}
       <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <div className="flex items-center justify-center p-1.5 gap-1 rounded-full bg-background/60 backdrop-blur-xl border border-white/10 shadow-2xl">
@@ -270,42 +270,40 @@ export default function PostActions({ post }: { post: Post }) {
       {/* Desktop Vertical Bar */}
       <div className="hidden md:block fixed left-4 top-1/2 -translate-y-1/2 z-50">
          <div className="p-2 glass-card flex flex-col gap-2 rounded-full">
-            <TooltipProvider>
-              <LikeButton post={post} />
-              {actions.map((action) => (
-                <Tooltip key={action.label} delayDuration={100}>
-                  <TooltipTrigger asChild>
-                    {action.isShare ? (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                           <Button variant="ghost" size="icon" className="rounded-full h-11 w-11">
-                              {action.icon}
-                              <span className="sr-only">{action.label}</span>
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>Share this post</DialogTitle>
-                            <DialogDescription>Anyone with this link will be able to view this post.</DialogDescription>
-                          </DialogHeader>
-                          <div className="flex items-center space-x-2">
-                            <Input defaultValue={currentUrl} readOnly />
-                            <Button type="button" size="icon" onClick={handleCopyToClipboard}><Copy className="h-4 w-4" /></Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    ) : (
-                      <Button variant="ghost" size="icon" onClick={action.onClick} className="rounded-full h-11 w-11 relative">
-                        {action.icon}
-                      </Button>
-                    )}
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    <p>{action.label}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </TooltipProvider>
+            <LikeButton post={post} />
+            {actions.map((action) => (
+              <Tooltip key={action.label} delayDuration={100}>
+                <TooltipTrigger asChild>
+                  {action.isShare ? (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                         <Button variant="ghost" size="icon" className="rounded-full h-11 w-11">
+                            {action.icon}
+                            <span className="sr-only">{action.label}</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Share this post</DialogTitle>
+                          <DialogDescription>Anyone with this link will be able to view this post.</DialogDescription>
+                        </DialogHeader>
+                        <div className="flex items-center space-x-2">
+                          <Input defaultValue={currentUrl} readOnly />
+                          <Button type="button" size="icon" onClick={handleCopyToClipboard}><Copy className="h-4 w-4" /></Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  ) : (
+                    <Button variant="ghost" size="icon" onClick={action.onClick} className="rounded-full h-11 w-11 relative">
+                      {action.icon}
+                    </Button>
+                  )}
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{action.label}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </div>
       </div>
 
@@ -357,8 +355,10 @@ export default function PostActions({ post }: { post: Post }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </TooltipProvider>
   );
 
   return ReactDOM.createPortal(actionBar, portalContainer);
 }
+
+    
