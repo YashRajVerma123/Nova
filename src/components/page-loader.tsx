@@ -57,7 +57,7 @@ export default function PageLoader() {
         loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <div className="infinity-loader"></div>
     </div>
   );
 }

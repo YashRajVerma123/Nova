@@ -156,3 +156,47 @@
 .dark .glass-card {
    @apply bg-card/60 backdrop-blur-xl border border-white/5 rounded-xl shadow-lg;
 }
+
+.infinity-loader {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.infinity-loader::before,
+.infinity-loader::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  border: 6px solid hsl(var(--primary));
+  border-radius: 50%;
+  transform-origin: center center;
+  animation: infinity-rotate 2s linear infinite;
+}
+
+.infinity-loader::before {
+  transform: translate(-50%, -50%) rotate(0deg);
+  border-right-color: transparent;
+  animation-direction: normal;
+}
+
+.infinity-loader::after {
+  transform: translate(-50%, -50%) rotate(0deg);
+  border-left-color: transparent;
+  animation-direction: reverse;
+}
+
+@keyframes infinity-rotate {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(-180deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
