@@ -2,4 +2,5 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/summarize-blog-posts.ts';
+import '@/ai/genkit';
+import '@/ai/flows/summarize-blog-posts';
