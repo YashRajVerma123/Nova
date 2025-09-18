@@ -38,14 +38,12 @@ const SplashLoader = () => {
   return (
     <div
       className={cn(
-        'fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-1000',
-        loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        'fixed inset-0 z-[100] flex items-center justify-center bg-background',
+        loading ? 'animate-fade-in-slow' : 'opacity-0 pointer-events-none'
       )}
     >
       <div className={cn('transition-transform duration-1000', loading ? 'scale-100' : 'scale-125')}>
-        <div className="animate-fade-in-slow">
-            <Logo />
-        </div>
+        <Logo />
       </div>
     </div>
   );

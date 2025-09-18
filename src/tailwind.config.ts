@@ -97,6 +97,14 @@ export default {
             opacity: '1',
           },
         },
+        'fade-in-slow': {
+          '0%': {
+            opacity: '0',
+          },
+          '100%': {
+            opacity: '1',
+          },
+        },
         'pulse-dot': {
           '0%, 100%': {
             transform: 'scale(1)',
