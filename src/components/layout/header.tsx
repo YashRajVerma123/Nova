@@ -42,9 +42,9 @@ const Header = () => {
       )}
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
-        <div className="flex items-center gap-1 md:gap-2">
+        <div className="flex items-center">
             {/* Mobile Left Section */}
-            <div className="flex items-center gap-1 md:hidden">
+            <div className="flex items-center md:hidden">
               <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -67,13 +67,15 @@ const Header = () => {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <SearchBar />
-                <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
-                    <Link href="/bookmarks">
-                        <Bookmark className="h-5 w-5"/>
-                        <span className="sr-only">Bookmarks</span>
-                    </Link>
-                </Button>
+                <div className="flex items-center gap-0">
+                    <SearchBar />
+                    <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
+                        <Link href="/bookmarks">
+                            <Bookmark className="h-5 w-5"/>
+                            <span className="sr-only">Bookmarks</span>
+                        </Link>
+                    </Button>
+                </div>
             </div>
             
             {/* Desktop Left Section */}
