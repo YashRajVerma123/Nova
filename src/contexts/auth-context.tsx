@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -32,10 +31,10 @@ interface AuthContextType {
   // New user data states
   likedPosts: { [postId: string]: boolean };
   likedComments: { [commentId: string]: boolean };
-  bookmarks: { [postId: string]: { bookmarkedAt: string, scrollPosition?: number } };
+  bookmarks: { [postId: string]: any };
   setLikedPosts: React.Dispatch<React.SetStateAction<{ [postId: string]: boolean }>>;
   setLikedComments: React.Dispatch<React.SetStateAction<{ [commentId: string]: boolean }>>;
-  setBookmarks: React.Dispatch<React.SetStateAction<{ [postId: string]: { bookmarkedAt: string, scrollPosition?: number } }>>;
+  setBookmarks: React.Dispatch<React.SetStateAction<{ [postId: string]: any }>>;
   refreshUserData: () => void;
 }
 
@@ -65,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // New states for persistent user data
   const [likedPosts, setLikedPosts] = useState<{ [postId: string]: boolean }>({});
   const [likedComments, setLikedComments] = useState<{ [commentId: string]: boolean }>({});
-  const [bookmarks, setBookmarks] = useState<{ [postId: string]: { bookmarkedAt: string, scrollPosition?: number } }>({});
+  const [bookmarks, setBookmarks] = useState<{ [postId: string]: any }>({});
 
   const fetchUserFromFirestore = async (fbUser: FirebaseUser) => {
     const userRef = doc(db, 'users', fbUser.uid);

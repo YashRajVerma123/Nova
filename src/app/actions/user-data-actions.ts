@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase-server';
-import { collection, doc, getDoc, setDoc, runTransaction, increment } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, runTransaction, increment, updateDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 // Unified function to get user-specific data
@@ -36,7 +36,6 @@ export async function togglePostLike(userId: string, postId: string, postSlug: s
     if (!userId) return { error: 'User not authenticated' };
     
     const postRef = doc(db, 'posts', postId);
-    const userDataRef = doc(db, 'users', userId, 'userData', 'data');
 
     try {
         await runTransaction(db, async (transaction) => {
@@ -46,19 +45,10 @@ export async function togglePostLike(userId: string, postId: string, postSlug: s
             }
             // Update the post's like count
             transaction.update(postRef, { likes: increment(isLiked ? -1 : 1) });
-
-            // Update the user's personal like data
-            const userDataDoc = await transaction.get(userDataRef);
-            const userData = userDataDoc.exists() ? userDataDoc.data() : { likedPosts: {} };
-            
-            const newLikedPosts = { ...userData.likedPosts };
-            if (isLiked) {
-                delete newLikedPosts[postId];
-            } else {
-                newLikedPosts[postId] = true;
-            }
-            transaction.set(userDataRef, { likedPosts: newLikedPosts }, { merge: true });
         });
+        
+        const newLikedPosts = { [postId]: !isLiked };
+        await updateUserData(userId, { likedPosts: newLikedPosts });
 
         revalidatePath(`/posts/${postSlug}`);
         return { success: true };
@@ -74,7 +64,6 @@ export async function toggleCommentLike(userId: string, postId: string, commentI
     if (!userId) return { error: 'User not authenticated' };
 
     const commentRef = doc(db, 'posts', postId, 'comments', commentId);
-    const userDataRef = doc(db, 'users', userId, 'userData', 'data');
 
     try {
         await runTransaction(db, async (transaction) => {
@@ -83,18 +72,10 @@ export async function toggleCommentLike(userId: string, postId: string, commentI
                 throw "Comment does not exist!";
             }
             transaction.update(commentRef, { likes: increment(isLiked ? -1 : 1) });
-
-            const userDataDoc = await transaction.get(userDataRef);
-            const userData = userDataDoc.exists() ? userDataDoc.data() : { likedComments: {} };
-            
-            const newLikedComments = { ...userData.likedComments };
-            if (isLiked) {
-                delete newLikedComments[commentId];
-            } else {
-                newLikedComments[commentId] = true;
-            }
-            transaction.set(userDataRef, { likedComments: newLikedComments }, { merge: true });
         });
+        
+        const newLikedComments = { [commentId]: !isLiked };
+        await updateUserData(userId, { likedComments: newLikedComments });
         
         const postDoc = await getDoc(doc(db, 'posts', postId));
         const postSlug = postDoc.data()?.slug;

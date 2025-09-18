@@ -356,20 +356,3 @@ export type UserData = {
     likedComments: { [commentId: string]: boolean };
     bookmarks: { [postId: string]: { bookmarkedAt: string, scrollPosition?: number } };
 }
-
-export const getUserData = async (userId: string): Promise<UserData> => {
-    if (!userId) {
-        return { likedPosts: {}, likedComments: {}, bookmarks: {} };
-    }
-    const userRef = doc(db, 'users', userId);
-    const userDataCollection = collection(userRef, 'userData');
-    const likedPostsDoc = await getDoc(doc(userDataCollection, 'likedPosts'));
-    const likedCommentsDoc = await getDoc(doc(userDataCollection, 'likedComments'));
-    const bookmarksDoc = await getDoc(doc(userDataCollection, 'bookmarks'));
-
-    return {
-        likedPosts: likedPostsDoc.exists() ? likedPostsDoc.data() : {},
-        likedComments: likedCommentsDoc.exists() ? likedCommentsDoc.data() : {},
-        bookmarks: bookmarksDoc.exists() ? bookmarksDoc.data() : {},
-    };
-}
