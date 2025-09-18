@@ -1,3 +1,4 @@
+
 'use client'
 import { useSearchParams } from 'next/navigation';
 import { getPosts, Post } from '@/lib/data';
@@ -73,7 +74,7 @@ const PostsClient = () => {
           {searchQuery ? `Results for "${searchQuery}"` : "All Articles"}<span className="text-primary">.</span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-          {searchQuery ? `${filteredPosts.length} articles found.` : 'Explore our collection of stories, analyses, and insights from the team at Lunex.'}
+          {searchQuery ? `${filteredPosts.length} articles found.` : 'Explore our collection of stories, analyses, and insights from the team at Glare.'}
         </p>
       </section>
 

@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Dancing_Script, Source_Serif_4, Raleway } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,7 @@ const raleway = Raleway({
 
 
 export const metadata: Metadata = {
-  title: "Lunex",
+  title: "Glare",
   description: "Your essential destination for making sense of today. We provide current affairs news for the modern reader.",
   manifest: "/manifest.json",
 };

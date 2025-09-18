@@ -321,7 +321,7 @@ const UserNav = () => {
             <DialogHeader>
               <DialogTitle>Sign In</DialogTitle>
               <DialogDescription>
-                To continue to Lunex, sign in with your Google account.
+                To continue to Glare, sign in with your Google account.
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center space-x-2">

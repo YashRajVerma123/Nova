@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import Logo from '@/components/logo';
 import { Separator } from '@/components/ui/separator';
@@ -45,7 +46,7 @@ const Footer = () => {
         <Separator className="my-8 bg-border/20" />
 
         <div className="flex flex-col md:flex-row justify-between items-center text-center md:text-left space-y-4 md:space-y-0 text-xs text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Lunex. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Glare. All rights reserved.</p>
           <p>Made With ❤️ By Yash Raj</p>
           <p>Cutting through the noise, delivering clarity.</p>
         </div>
