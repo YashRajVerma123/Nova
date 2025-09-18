@@ -57,10 +57,7 @@ export default function PageLoader() {
         loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-        <div className="chasing-dots-loader">
-          <div className="dot dot1"></div>
-          <div className="dot dot2"></div>
-        </div>
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
     </div>
   );
 }
