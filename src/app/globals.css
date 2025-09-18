@@ -156,40 +156,34 @@
    @apply bg-card/60 backdrop-blur-xl border border-white/5 rounded-xl shadow-lg;
 }
 
-.loader-bars {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 40px;
+.loader-ring-container {
+    position: relative;
+    width: 60px;
+    height: 60px;
 }
 
-.loader-bar {
-    width: 6px;
+.loader-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 100%;
-    margin: 0 3px;
-    background-color: hsl(var(--primary));
-    animation: bar-wave 1s infinite cubic-bezier(0.62, 0.28, 0.23, 0.99);
-    border-radius: 4px;
+    border: 3px solid hsl(var(--primary));
+    border-radius: 50%;
+    animation: ring-pulse 1.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
-.loader-bar:nth-child(2) {
-    animation-delay: -0.1s;
-}
-.loader-bar:nth-child(3) {
-    animation-delay: -0.2s;
-}
-.loader-bar:nth-child(4) {
-    animation-delay: -0.3s;
-}
-.loader-bar:nth-child(5) {
-    animation-delay: -0.4s;
+.loader-ring:nth-child(2) {
+    animation-delay: -0.75s;
 }
 
-@keyframes bar-wave {
-  0%, 50%, 100% {
-    transform: scaleY(0.4);
+@keyframes ring-pulse {
+  0% {
+    transform: scale(0);
+    opacity: 1;
   }
-  25% {
-    transform: scaleY(1.0);
+  100% {
+    transform: scale(1);
+    opacity: 0;
   }
 }
