@@ -57,10 +57,17 @@ export default function PageLoader() {
         loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-        <div className="loader-flipper">
-            <div className="loader-plane"></div>
+        <div className="loader-grid">
+            <div className="loader-tile"></div>
+            <div className="loader-tile"></div>
+            <div className="loader-tile"></div>
+            <div className="loader-tile"></div>
+            <div className="loader-tile"></div>
+            <div className="loader-tile"></div>
+            <div className="loader-tile"></div>
+            <div className="loader-tile"></div>
+            <div className="loader-tile"></div>
         </div>
     </div>
   );
 }
-
