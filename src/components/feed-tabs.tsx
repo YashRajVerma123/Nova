@@ -64,7 +64,11 @@ const FeedTabs = ({ recentPosts }: FeedTabsProps) => {
             <TabsContent value="following">
                 {authLoading || loadingFollowing ? (
                     <div className="flex justify-center items-center h-40">
-                        <Loader2 className="h-8 w-8 animate-spin" />
+                       <div className="loader-dots">
+                          <div className="loader-dot"></div>
+                          <div className="loader-dot"></div>
+                          <div className="loader-dot"></div>
+                        </div>
                     </div>
                 ) : user ? (
                     followingPosts.length > 0 ? (
