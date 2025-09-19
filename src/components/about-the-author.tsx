@@ -91,7 +91,7 @@ const AboutTheAuthor = () => {
                 </div>
             </div>
              <div className="self-end mt-4 md:mt-0">
-                <p className="font-signature text-4xl bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{signature}</p>
+                <p className="font-signature text-4xl bg-gradient-to-r from-foreground/80 to-foreground/50 bg-clip-text text-transparent drop-shadow-sm">~{signature}</p>
              </div>
         </div>
     </section>
