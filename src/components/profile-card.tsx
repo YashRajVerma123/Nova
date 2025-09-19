@@ -131,8 +131,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
     
     if (isMainSiteAuthor) {
         return (
-            <div className="relative p-0.5 overflow-hidden rounded-lg">
-                <div className="absolute inset-[-1000%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+            <div className="aurora-border rounded-lg">
                 {cardContent}
             </div>
         );
