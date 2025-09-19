@@ -4,7 +4,7 @@
 import { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, User as FirebaseUser, Auth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { db } from '@/lib/firebase-server';
-import type { Author, UserData } from '@/lib/data';
+import { Author, UserData, getAuthorByEmail } from '@/lib/data';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getClientFirebaseConfig } from '@/app/actions/config-actions';
 import { initializeClientApp } from '@/lib/firebase-client';
@@ -12,6 +12,7 @@ import { getUserData } from '@/app/actions/user-data-actions';
 
 interface AuthContextType {
   user: Author | null;
+  mainAuthor: Author | null; // New state for the main site author
   firebaseUser: FirebaseUser | null;
   auth: Auth | null;
   isAdmin: boolean;
@@ -27,8 +28,8 @@ interface AuthContextType {
   }) => Promise<void>;
   updateFollowingCount: (change: number) => void;
   updateFollowerCount: (change: number) => void;
+  updateMainAuthorFollowerCount: (change: number) => void; // New updater
   loading: boolean;
-  // New user data states
   likedPosts: { [postId: string]: boolean };
   likedComments: { [commentId: string]: boolean };
   bookmarks: { [postId: string]: any };
@@ -57,11 +58,11 @@ const formatUser = (user: FirebaseUser, firestoreData?: any): Author => {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Author | null>(null);
+  const [mainAuthor, setMainAuthor] = useState<Author | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [auth, setAuth] = useState<Auth | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // New states for persistent user data
   const [likedPosts, setLikedPosts] = useState<{ [postId: string]: boolean }>({});
   const [likedComments, setLikedComments] = useState<{ [commentId: string]: boolean }>({});
   const [bookmarks, setBookmarks] = useState<{ [postId: string]: any }>({});
@@ -83,6 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await setDoc(userRef, newUser, { merge: true });
     return newUser;
   };
+  
+  const fetchMainAuthor = useCallback(async () => {
+    const author = await getAuthorByEmail("yashrajverma916@gmail.com");
+    setMainAuthor(author);
+  }, []);
+
+  useEffect(() => {
+    fetchMainAuthor();
+  }, [fetchMainAuthor]);
+
 
   const fetchAndSetUserData = useCallback(async (userId: string) => {
       const data = await getUserData(userId);
@@ -191,10 +202,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userRef = doc(db, 'users', auth.currentUser.uid);
         await setDoc(userRef, updateData, { merge: true });
     }
+    
+    if (mainAuthor && auth.currentUser.uid === mainAuthor.id) {
+        setMainAuthor(prev => prev ? {...prev, ...updateData} : null);
+    }
 
     const firestoreData = await fetchUserFromFirestore(auth.currentUser);
     setUser(formatUser(auth.currentUser, firestoreData));
-  }, [auth]);
+  }, [auth, mainAuthor]);
   
   const updateFollowingCount = (change: number) => {
       setUser(currentUser => {
@@ -214,10 +229,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
       })
   }
+  
+  const updateMainAuthorFollowerCount = (change: number) => {
+    setMainAuthor(currentAuthor => {
+        if (!currentAuthor) return null;
+        return {
+            ...currentAuthor,
+            followers: (currentAuthor.followers || 0) + change
+        }
+    })
+  }
 
   const isAdmin = user?.email === 'yashrajverma916@gmail.com';
 
-  const value = { user, firebaseUser, auth, isAdmin, signIn, signOut, updateUserProfile, loading, updateFollowingCount, updateFollowerCount, likedPosts, likedComments, bookmarks, setLikedPosts, setLikedComments, setBookmarks, refreshUserData };
+  const value = { user, mainAuthor, firebaseUser, auth, isAdmin, signIn, signOut, updateUserProfile, loading, updateFollowingCount, updateFollowerCount, updateMainAuthorFollowerCount, likedPosts, likedComments, bookmarks, setLikedPosts, setLikedComments, setBookmarks, refreshUserData };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -30,25 +30,26 @@ const gradientClasses = [
 ];
 
 const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
-    const { user: loggedInUser } = useAuth();
+    const { user: loggedInUser, mainAuthor, updateMainAuthorFollowerCount } = useAuth();
     const [isFollowingState, setIsFollowingState] = useState(false);
     const [isLoadingFollow, setIsLoadingFollow] = useState(true);
-    const [author, setAuthor] = useState(initialUser);
+    
+    // Determine if the user prop is the main author
+    const isMainSiteAuthor = initialUser.email === 'yashrajverma916@gmail.com';
+    
+    // Use mainAuthor from context if it's the main author, otherwise use the prop
+    const author = isMainSiteAuthor ? mainAuthor : initialUser;
 
     const randomGradient = useMemo(() => {
+        if (!author) return '';
         const nonBlackGradients = gradientClasses.filter(g => !g.includes('black'));
         const randomIndex = Math.floor(Math.random() * nonBlackGradients.length);
         return nonBlackGradients[randomIndex];
-    }, [author.id]);
-
-
-    useEffect(() => {
-        setAuthor(initialUser);
-    }, [initialUser]);
+    }, [author]);
 
     useEffect(() => {
         const checkFollowing = async () => {
-            if (loggedInUser && loggedInUser.id !== author.id) {
+            if (loggedInUser && author && loggedInUser.id !== author.id) {
                 setIsLoadingFollow(true);
                 const following = await isFollowing(loggedInUser.id, author.id);
                 setIsFollowingState(following);
@@ -58,30 +59,34 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
             }
         };
         checkFollowing();
-    }, [loggedInUser, author.id]);
+    }, [loggedInUser, author]);
 
     const handleFollowToggle = (newFollowState: boolean) => {
         setIsFollowingState(newFollowState);
-        setAuthor(prev => ({
-            ...prev,
-            followers: (prev.followers || 0) + (newFollowState ? 1 : -1)
-        }));
+        if (isMainSiteAuthor) {
+            updateMainAuthorFollowerCount(newFollowState ? 1 : -1);
+        }
+        // If not the main author, we can't easily update a global state,
+        // so for now we just show the button state change. A more complex app
+        // might have a global store for all users.
     };
 
-    const isMainAuthor = author.email === 'yashrajverma916@gmail.com';
+    if (!author) {
+        return null; // Or a loading skeleton
+    }
     
     const cardContent = (
          <div className="relative flex flex-col items-center p-6 bg-background rounded-lg w-full">
             <Avatar className={cn(
               "h-24 w-24 mb-4",
-              isMainAuthor && "border-2 border-blue-500"
+              isMainSiteAuthor && "border-2 border-blue-500"
             )}>
                 <AvatarImage src={author.avatar} alt={author.name} />
                 <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col items-center text-center gap-2">
                 <h2 className="text-2xl font-bold font-headline">{author.name}</h2>
-                {isMainAuthor && (
+                {isMainSiteAuthor && (
                      <Badge variant="default" className={cn("flex items-center gap-1.5 border-blue-500/50 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20", "badge-shine")}>
                         <BadgeCheck className="h-4 w-4" />
                         Verified Author
@@ -108,7 +113,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
                  </p>
             </div>
 
-            {isMainAuthor && author.signature && (
+            {isMainSiteAuthor && author.signature && (
                 <p className="font-signature text-3xl mt-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">~{author.signature}</p>
             )}
             
@@ -124,7 +129,7 @@ const ProfileCard = ({ user: initialUser }: ProfileCardProps) => {
         </div>
     );
     
-    if (isMainAuthor) {
+    if (isMainSiteAuthor) {
         return (
             <div className="relative p-0.5 overflow-hidden rounded-lg">
                 <div className="absolute inset-[-1000%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />

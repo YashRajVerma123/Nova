@@ -5,7 +5,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Link from 'next/link';
 import { Instagram, Users, BadgeCheck } from "lucide-react";
-import { getAuthorByEmail, isFollowing, getAuthorById } from "@/lib/data";
+import { isFollowing } from "@/lib/data";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 import FollowButton from "./follow-button";
@@ -13,51 +13,39 @@ import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
 
 const AboutTheAuthor = () => {
-  const [author, setAuthor] = useState<Awaited<ReturnType<typeof getAuthorById>>>(null);
-  const { user } = useAuth();
+  const { user, mainAuthor, updateMainAuthorFollowerCount } = useAuth();
   const [isFollowingState, setIsFollowingState] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Hardcoded email for the main author
-  const authorEmail = "yashrajverma916@gmail.com";
-
   useEffect(() => {
-    const fetchAuthorData = async () => {
-      setIsLoading(true);
-      const mainAuthor = await getAuthorByEmail(authorEmail);
-      if (mainAuthor) {
-        setAuthor(mainAuthor);
-        if (user) {
-          const following = await isFollowing(user.id, mainAuthor.id);
-          setIsFollowingState(following);
-        }
+    const checkFollowingStatus = async () => {
+      if (user && mainAuthor) {
+        setIsLoading(true);
+        const following = await isFollowing(user.id, mainAuthor.id);
+        setIsFollowingState(following);
+        setIsLoading(false);
+      } else {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    fetchAuthorData();
-  }, [user]);
+    checkFollowingStatus();
+  }, [user, mainAuthor]);
 
   const handleFollowToggle = (newFollowState: boolean) => {
     setIsFollowingState(newFollowState);
-    // Optimistically update follower count
-    setAuthor(prev => {
-        if (!prev) return null;
-        return {
-            ...prev,
-            followers: (prev.followers || 0) + (newFollowState ? 1 : -1)
-        }
-    })
+    // Optimistically update follower count using context
+    updateMainAuthorFollowerCount(newFollowState ? 1 : -1);
   }
 
   // Provide default fallback values in case the author data is not yet available
-  const authorAvatar = author?.avatar || "https://i.ibb.co/TChNTL8/pfp.png";
-  const authorName = author?.name || "Yash Raj Verma";
-  const authorBio = author?.bio || "Hi, I'm Yash Raj Verma. Welcome to Glare, my personal blog where I explore the rapidly evolving worlds of technology, AI, space, and breaking news. I break down complex topics into clear, engaging insights. Thanks for reading.";
-  const instagramUrl = author?.instagramUrl || "https://instagram.com/v.yash.raj";
-  const signature = author?.signature || "V.Yash.Raj";
-  const followerCount = author?.followers || 0;
-  const isMainAuthor = author?.email === 'yashrajverma916@gmail.com';
+  const authorAvatar = mainAuthor?.avatar || "https://i.ibb.co/TChNTL8/pfp.png";
+  const authorName = mainAuthor?.name || "Yash Raj Verma";
+  const authorBio = mainAuthor?.bio || "Hi, I'm Yash Raj Verma. Welcome to Glare, my personal blog where I explore the rapidly evolving worlds of technology, AI, space, and breaking news. I break down complex topics into clear, engaging insights. Thanks for reading.";
+  const instagramUrl = mainAuthor?.instagramUrl || "https://instagram.com/v.yash.raj";
+  const signature = mainAuthor?.signature || "V.Yash.Raj";
+  const followerCount = mainAuthor?.followers || 0;
+  const isMainAuthor = mainAuthor?.email === 'yashrajverma916@gmail.com';
   
   return (
     <section>
@@ -89,9 +77,9 @@ const AboutTheAuthor = () => {
                   {authorBio}
                 </p>
                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                    {author && user && user.id !== author.id && !isLoading && (
+                    {mainAuthor && user && user.id !== mainAuthor.id && !isLoading && (
                         <FollowButton
-                            authorId={author.id}
+                            authorId={mainAuthor.id}
                             isFollowing={isFollowingState}
                             onToggle={handleFollowToggle}
                         />
@@ -111,4 +99,3 @@ const AboutTheAuthor = () => {
 };
 
 export default AboutTheAuthor;
-
