@@ -42,9 +42,10 @@ const Header = () => {
       )}
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
-        <div className="flex items-center justify-start flex-1">
-            {/* Mobile Left Section */}
-            <div className="flex items-center gap-0 md:hidden">
+        {/* Left Section */}
+        <div className="flex items-center justify-start flex-1 gap-1">
+            {/* Mobile Left Icons */}
+            <div className="flex items-center md:hidden">
               <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -67,26 +68,33 @@ const Header = () => {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                 <SearchBar />
+                <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
+                    <Link href="/bookmarks">
+                        <Bookmark className="h-5 w-5"/>
+                        <span className="sr-only">Bookmarks</span>
+                    </Link>
+                </Button>
             </div>
             
-            {/* Desktop Left Section */}
-            <div className="hidden md:flex items-center gap-1">
-               <nav className="flex items-center gap-0 font-headline">
-                  {navLinks.map((link) => (
-                    <Button key={link.href} asChild variant="ghost" className={cn(pathname === link.href && 'text-primary')}>
-                      <Link href={link.href}>{link.label}</Link>
-                    </Button>
-                  ))}
-              </nav>
-            </div>
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-0 font-headline">
+                {navLinks.map((link) => (
+                <Button key={link.href} asChild variant="ghost" className={cn(pathname === link.href && 'text-primary')}>
+                    <Link href={link.href}>{link.label}</Link>
+                </Button>
+                ))}
+            </nav>
         </div>
 
+        {/* Center Section (Logo) */}
         <div className="absolute left-1/2 -translate-x-1/2">
             <Logo />
         </div>
 
+        {/* Right Section */}
         <div className="flex items-center justify-end flex-1 gap-1 sm:gap-2">
-            <div className="flex">
+            <div className="hidden md:flex">
               <SearchBar />
               <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
                   <Link href="/bookmarks">
