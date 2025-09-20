@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Post } from '@/lib/data';
 import { Eye, Users, MessageSquare } from 'lucide-react';
@@ -102,7 +102,7 @@ const AnalyticsDashboard = ({ posts }: AnalyticsDashboardProps) => {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={chartData}>
+            <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)"/>
                 <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value / 1000}k`} />
@@ -114,8 +114,8 @@ const AnalyticsDashboard = ({ posts }: AnalyticsDashboardProps) => {
                     }}
                  />
                 <Legend iconType="circle"/>
-                <Bar dataKey="views" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-            </BarChart>
+                <Line type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--primary))" }} activeDot={{ r: 6 }} />
+            </LineChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
@@ -158,3 +158,5 @@ const AnalyticsDashboard = ({ posts }: AnalyticsDashboardProps) => {
 };
 
 export default AnalyticsDashboard;
+
+    
