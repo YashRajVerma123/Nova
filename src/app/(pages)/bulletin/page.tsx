@@ -22,6 +22,7 @@ const BulletinCard = ({ bulletin, index }: { bulletin: Bulletin; index: number }
                             alt={bulletin.title}
                             fill
                             className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            data-ai-hint="bulletin cover"
                         />
                     </div>
                 )}
@@ -53,6 +54,10 @@ const BulletinPage = () => {
             setLastDocId(newLastDocId);
             setHasMore(!!newLastDocId);
             setLoading(false);
+            
+            if (initialBulletins.length > 0) {
+              document.title = `Daily Bulletin: ${initialBulletins[0].title} | Glare`;
+            }
         };
         loadInitialBulletins();
     }, []);
