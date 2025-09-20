@@ -43,7 +43,7 @@ const Header = () => {
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
         {/* Left Section */}
-        <div className="flex items-center gap-1 md:flex-1 md:justify-start">
+        <div className="flex items-center gap-0 md:flex-1">
             {/* Mobile Left Icons */}
             <div className="flex items-center md:hidden -ml-4">
               <DropdownMenu>
