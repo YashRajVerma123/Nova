@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
        {
-        protocol: 'https',
+        protocol: 'https"','
         hostname: 'www.hindustantimes.com',
         port: '',
         pathname: '/**',
@@ -59,6 +59,9 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+   env: {
+    NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+  }
 };
 
 export default nextConfig;

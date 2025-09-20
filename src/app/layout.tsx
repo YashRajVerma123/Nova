@@ -11,6 +11,7 @@ import BackgroundAnimation from "@/components/background-animation";
 import PageLoader from "@/components/page-loader";
 import { Suspense } from "react";
 import SplashScreen from "@/components/splash-screen";
+import Script from "next/script";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -38,6 +39,8 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
+const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -60,6 +63,28 @@ export default function RootLayout({
           dancingScript.variable
         )}
       >
+        {gaMeasurementId && (
+          <>
+            <Script
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+            />
+            <Script
+              id="google-analytics"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${gaMeasurementId}', {
+                    page_path: window.location.pathname,
+                  });
+                `,
+              }}
+            />
+          </>
+        )}
         <ClientProviders>
           <SplashScreen />
           <Suspense fallback={null}>
