@@ -12,11 +12,6 @@ import PageLoader from "@/components/page-loader";
 import { Suspense } from "react";
 import SplashScreen from "@/components/splash-screen";
 
-const sourceSerif = Source_Serif_4({ 
-  subsets: ["latin"], 
-  variable: "--font-source-serif",
-});
-
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-space-grotesk',
@@ -57,10 +52,9 @@ export default function RootLayout({
       <body
         className={cn(
           "min-h-screen bg-background font-body text-foreground antialiased",
-          sourceSerif.variable,
+          raleway.variable,
           spaceGrotesk.variable,
-          dancingScript.variable,
-          raleway.variable
+          dancingScript.variable
         )}
       >
         <ClientProviders>
@@ -71,7 +65,7 @@ export default function RootLayout({
           <BackgroundAnimation />
           <div className="relative z-10 flex flex-col min-h-screen">
             <Header />
-            <main className="flex-grow pt-20 animate-fade-in-up">{children}</main>
+            <main className="flex-grow pt-20">{children}</main>
             <Footer />
           </div>
           <Toaster />

@@ -119,7 +119,7 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
       <ReadingProgressBar />
       <div className="container mx-auto px-4 py-10 max-w-4xl" ref={contentRef}>
         <article>
-          <header className="mb-8">
+          <header className="mb-8 animate-fade-in-up">
             <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex flex-wrap gap-2 mb-4">
                 {post.tags.map(tag => (
@@ -152,7 +152,8 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
           </header>
           
           <div 
-            className="relative aspect-video rounded-xl overflow-hidden mb-8 shadow-lg"
+            className="relative aspect-video rounded-xl overflow-hidden mb-8 shadow-lg animate-fade-in-up"
+            style={{ animationDelay: '0.2s' }}
           >
             <Image
               src={post.coverImage}
@@ -165,7 +166,8 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
           </div>
 
           <div 
-            className="prose prose-invert prose-xl max-w-none prose-headings:font-headline prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg font-content"
+            className="prose prose-invert prose-xl max-w-none prose-headings:font-headline prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg font-content animate-fade-in-up"
+            style={{ animationDelay: '0.4s' }}
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
           
@@ -173,16 +175,20 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
           
         </article>
 
-        <AboutTheAuthor />
+        <div className="animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+          <AboutTheAuthor />
+        </div>
 
         <Separator className="my-12" />
 
-        <CommentSection postId={post.id} initialComments={initialComments} />
+        <div className="animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+          <CommentSection postId={post.id} initialComments={initialComments} />
+        </div>
 
         {relatedPosts.length > 0 && (
           <>
             <Separator className="my-12" />
-            <section>
+            <section className="animate-fade-in-up" style={{animationDelay: '1s'}}>
               <h2 className="text-3xl font-headline font-bold mb-8 text-center">Related Articles</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {relatedPosts.map(relatedPost => (

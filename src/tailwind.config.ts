@@ -18,7 +18,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['var(--font-source-serif)', 'serif'],
+        body: ['var(--font-raleway)', 'sans-serif'],
         headline: ['var(--font-space-grotesk)', 'sans-serif'],
         signature: ['var(--font-dancing-script)', 'cursive'],
         content: ['var(--font-raleway)', 'sans-serif'],
