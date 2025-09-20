@@ -67,13 +67,6 @@ const Header = () => {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <SearchBar />
-                <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
-                    <Link href="/bookmarks">
-                        <Bookmark className="h-5 w-5"/>
-                        <span className="sr-only">Bookmarks</span>
-                    </Link>
-                </Button>
             </div>
             
             {/* Desktop Left Section */}
@@ -93,7 +86,7 @@ const Header = () => {
         </div>
 
         <div className="flex items-center justify-end flex-1 gap-1 sm:gap-2">
-            <div className="hidden md:flex">
+            <div className="flex">
               <SearchBar />
               <Button asChild variant="ghost" size="icon" className={cn(pathname === '/bookmarks' && 'text-primary')}>
                   <Link href="/bookmarks">
