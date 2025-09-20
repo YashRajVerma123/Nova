@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -15,6 +16,7 @@ import PostActions from '@/components/post-actions';
 import { useAuth } from '@/hooks/use-auth';
 import { updateReadingProgress } from '@/app/actions/user-data-actions';
 import { useDynamicTheme } from '@/contexts/dynamic-theme-context';
+import parse, { domToReact, HTMLReactParserOptions } from 'html-react-parser';
 
 interface PostClientPageProps {
   post: Post;
@@ -108,6 +110,26 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
     }
   };
 
+  const parseOptions: HTMLReactParserOptions = {
+    replace: (domNode: any) => {
+      if (domNode.name === 'img' && domNode.attribs.src) {
+        return (
+          <div className="relative my-6 aspect-video w-full overflow-hidden rounded-lg">
+            <Image
+              src={domNode.attribs.src}
+              alt={domNode.attribs.alt || 'Blog post image'}
+              layout="fill"
+              objectFit="contain"
+              className="mx-auto"
+            />
+          </div>
+        );
+      }
+      // Return null to render the node as is
+      return null;
+    },
+  };
+
   return (
     <>
       <script
@@ -165,8 +187,9 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
           <div 
             className="prose prose-invert prose-xl max-w-none prose-headings:font-headline prose-a:text-primary hover:prose-a:underline prose-img:rounded-lg font-content animate-fade-in-up"
             style={{ animationDelay: '0.4s' }}
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
+          >
+             {parse(post.content, parseOptions)}
+          </div>
           
           <Separator className="my-12" />
           
