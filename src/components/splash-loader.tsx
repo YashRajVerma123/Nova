@@ -26,28 +26,30 @@ const SplashLoader = () => {
   useEffect(() => {
     if (!loading) return;
 
+    // Timer to fade in the logo
     const logoTimer = setTimeout(() => {
         setShowLogo(true);
-    }, 300);
+    }, 200);
 
-    const mainTimer = setTimeout(() => {
+    // Timer to start fading out the splash screen
+    const fadeOutTimer = setTimeout(() => {
       setLoading(false);
       setShown();
-    }, 1300); // Total splash screen duration (0.3s delay + 1s fade)
+    }, 1500); 
 
     return () => {
         clearTimeout(logoTimer);
-        clearTimeout(mainTimer);
+        clearTimeout(fadeOutTimer);
     };
   }, [loading]);
   
-  if (!loading) return null;
+  if (!loading && hasBeenShown()) return null;
 
   return (
     <div
       className={cn(
-        'fixed inset-0 z-[100] flex items-center justify-center bg-background',
-        !loading && 'opacity-0 pointer-events-none'
+        'fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500',
+        loading ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
       <div className={cn('transition-opacity duration-1000', showLogo ? 'opacity-100' : 'opacity-0')}>
