@@ -97,14 +97,6 @@ export default {
             opacity: '1',
           },
         },
-        'fade-in-slow': {
-          '0%': {
-            opacity: '0',
-          },
-          '100%': {
-            opacity: '1',
-          },
-        },
         'pulse-dot': {
           '0%, 100%': {
             transform: 'scale(1)',
@@ -125,7 +117,6 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in-up': 'fade-in-up 0.8s ease-out forwards',
         'fade-in': 'fade-in 0.8s ease-out forwards',
-        'fade-in-slow': 'fade-in 1.5s ease-out forwards',
         'pulse-dot': 'pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         spin: 'spin 1s linear infinite',
       },
