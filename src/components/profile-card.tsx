@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Author, isFollowing } from "@/lib/data";
