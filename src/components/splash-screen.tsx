@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,7 +7,7 @@ import { cn } from '@/lib/utils';
 const SplashScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
-  const [showLogo, setShowLogo] = useState(false); // New state for logo animation
+  const [showLogo, setShowLogo] = useState(false);
 
   useEffect(() => {
     const hasBeenShown = sessionStorage.getItem('splashShown') === 'true';
@@ -20,20 +19,17 @@ const SplashScreen = () => {
 
     sessionStorage.setItem('splashShown', 'true');
 
-    // Show logo after a short delay
     const logoTimer = setTimeout(() => {
       setShowLogo(true);
-    }, 200); 
+    }, 200);
 
-    // Start fade out after a longer delay
     const fadeOutTimer = setTimeout(() => {
       setIsFadingOut(true);
     }, 1200);
 
-    // Hide the component completely after the fade-out animation finishes
     const hideTimer = setTimeout(() => {
       setIsLoading(false);
-    }, 1700); 
+    }, 1700);
 
     return () => {
       clearTimeout(logoTimer);
