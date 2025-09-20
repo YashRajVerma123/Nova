@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 
 const SplashScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isFadingOut, setIsFadingOut] = useState(false);
   const [showLogo, setShowLogo] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   useEffect(() => {
     const hasBeenShown = sessionStorage.getItem('splashShown') === 'true';
@@ -19,17 +19,20 @@ const SplashScreen = () => {
 
     sessionStorage.setItem('splashShown', 'true');
 
+    // Timer to start showing the logo
     const logoTimer = setTimeout(() => {
       setShowLogo(true);
-    }, 200);
+    }, 200); // Short delay before logo starts fading in
 
+    // Timer to start fading out the entire splash screen
     const fadeOutTimer = setTimeout(() => {
       setIsFadingOut(true);
     }, 1200);
 
+    // Timer to remove the component from the DOM
     const hideTimer = setTimeout(() => {
       setIsLoading(false);
-    }, 1700);
+    }, 1700); // Should be fadeOut duration (500ms) + fadeOutTimer (1200ms)
 
     return () => {
       clearTimeout(logoTimer);
@@ -46,7 +49,7 @@ const SplashScreen = () => {
     <div
       className={cn(
         'fixed inset-0 z-[100] flex items-center justify-center bg-background',
-        'transition-opacity duration-500',
+        'transition-opacity duration-500 ease-out',
         isFadingOut ? 'opacity-0' : 'opacity-100'
       )}
     >
