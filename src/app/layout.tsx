@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Dancing_Script, Raleway } from "next/font/google";
 import { cn } from "@/lib/utils";
