@@ -37,6 +37,12 @@ export const metadata: Metadata = {
     template: "%s | Glare",
   },
   description: "Your essential destination for making sense of today. We provide current affairs news for the modern reader.",
+  keywords: [
+    "AI", "Artificial Intelligence", "Technology", "Future", "Science", "Exploration", 
+    "Sustainability", "Lifestyle", "Productivity", "Wellness", "Minimalism", 
+    "Philosophy", "Remote Work", "Environment", "Ocean", "Journalism", 
+    "News", "Current Affairs", "In-depth Analysis", "Modern Reader", "Glare Blog"
+  ],
   manifest: "/manifest.json",
 };
 
