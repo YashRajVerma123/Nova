@@ -67,31 +67,41 @@ const LikeButton = ({ post }: { post: Post }) => {
   return (
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon" onClick={handleLike} className="rounded-full h-auto w-auto p-2 flex flex-row items-center gap-2">
-            <div className="relative">
-              <Heart className={cn("h-6 w-6 transition-colors duration-300", isLiked ? 'fill-red-500 text-red-500' : '', isAnimating && 'like-button-burst')} onAnimationEnd={() => setIsAnimating(false)} />
-               {isAnimating && (
-                  <div className="particle-burst animate">
-                    {[...Array(6)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="particle"
-                        style={
-                          {
-                            '--tx': `${Math.random() * 40 - 20}px`,
-                            '--ty': `${Math.random() * 40 - 20}px`,
-                            'background': particleColors[i % particleColors.length],
-                            'animationDelay': `${Math.random() * 0.1}s`,
-                          } as React.CSSProperties
-                        }
-                      />
-                    ))}
-                  </div>
-                )}
-            </div>
-            <span className="text-sm font-bold pr-2">
-                {likeCount}
-            </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleLike}
+          className="rounded-full h-auto w-auto p-2 flex flex-row items-center gap-2 md:flex-col"
+        >
+          <div className="relative">
+            <Heart
+              className={cn(
+                "h-6 w-6 transition-colors duration-300",
+                isLiked ? 'fill-red-500 text-red-500' : '',
+                isAnimating && 'like-button-burst'
+              )}
+              onAnimationEnd={() => setIsAnimating(false)}
+            />
+            {isAnimating && (
+              <div className="particle-burst animate">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="particle"
+                    style={
+                      {
+                        '--tx': `${Math.random() * 40 - 20}px`,
+                        '--ty': `${Math.random() * 40 - 20}px`,
+                        'background': particleColors[i % particleColors.length],
+                        'animationDelay': `${Math.random() * 0.1}s`,
+                      } as React.CSSProperties
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          <span className="text-sm font-sans pr-2 md:pr-0">{likeCount}</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent side="right">
