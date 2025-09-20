@@ -15,7 +15,6 @@ import AboutTheAuthor from '@/components/about-the-author';
 import PostActions from '@/components/post-actions';
 import { useAuth } from '@/hooks/use-auth';
 import { updateReadingProgress } from '@/app/actions/user-data-actions';
-import ReadingProgressBar from '@/components/reading-progress-bar';
 import { useDynamicTheme } from '@/contexts/dynamic-theme-context';
 
 interface PostClientPageProps {
@@ -116,7 +115,6 @@ export default function PostClientPage({ post, relatedPosts, initialComments }: 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ReadingProgressBar />
       <div className="container mx-auto px-4 py-10 max-w-4xl" ref={contentRef}>
         <article>
           <header className="mb-8 animate-fade-in-up">

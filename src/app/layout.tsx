@@ -1,6 +1,6 @@
 
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, Dancing_Script, Source_Serif_4, Raleway } from "next/font/google";
+import { Inter, Space_Grotesk, Dancing_Script, Raleway } from "next/font/google";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import { ClientProviders } from "@/components/client-providers";
@@ -12,6 +12,7 @@ import PageLoader from "@/components/page-loader";
 import { Suspense } from "react";
 import SplashScreen from "@/components/splash-screen";
 import Script from "next/script";
+import ReadingProgressBar from "@/components/reading-progress-bar";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -90,6 +91,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <PageLoader />
           </Suspense>
+          <ReadingProgressBar />
           <BackgroundAnimation />
           <div className="relative z-10 flex flex-col min-h-screen">
             <Header />

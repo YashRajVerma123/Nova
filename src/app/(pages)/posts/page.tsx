@@ -1,8 +1,10 @@
 
 import { Suspense } from 'react';
 import PostsClient from './posts-client';
+import { getPosts } from '@/lib/data';
 
-const PostsPage = () => {
+const PostsPage = async () => {
+  const posts = await getPosts();
   return (
     <Suspense fallback={
         <div className="container mx-auto px-4 py-16">
@@ -24,7 +26,7 @@ const PostsPage = () => {
             </div>
         </div>
     }>
-      <PostsClient />
+      <PostsClient initialPosts={posts} />
     </Suspense>
   );
 };

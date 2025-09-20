@@ -1,34 +1,26 @@
 
 'use client'
 import { useSearchParams } from 'next/navigation';
-import { getPosts, Post } from '@/lib/data';
+import { Post } from '@/lib/data';
 import BlogPostCard from '@/components/blog-post-card';
 import { useEffect, useState } from 'react';
 
-const PostsClient = () => {
+interface PostsClientProps {
+  initialPosts: Post[];
+}
+
+const PostsClient = ({ initialPosts }: PostsClientProps) => {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>(initialPosts);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      const allPosts = await getPosts();
-      setPosts(allPosts);
-      setLoading(false);
-    }
-    fetchPosts();
-  }, []);
-
-  useEffect(() => {
-    let sortedPosts = [...posts].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    let sortedPosts = [...initialPosts].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
     if (!searchQuery) {
       setFilteredPosts(sortedPosts);
     } else {
       const lowercasedQuery = searchQuery.toLowerCase();
-      const isTagSearch = posts.some(post => post.tags.some(tag => tag.toLowerCase() === lowercasedQuery));
+      const isTagSearch = initialPosts.some(post => post.tags.some(tag => tag.toLowerCase() === lowercasedQuery));
 
       setFilteredPosts(sortedPosts.filter(post => {
         const titleMatch = post.title.toLowerCase().includes(lowercasedQuery);
@@ -42,31 +34,8 @@ const PostsClient = () => {
         return titleMatch || descriptionMatch || tagMatch;
       }));
     }
-  }, [searchQuery, posts]);
+  }, [searchQuery, initialPosts]);
   
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-16">
-           <div className="h-10 w-1/2 bg-muted rounded-md animate-pulse mx-auto mb-4"></div>
-           <div className="h-6 w-2/3 bg-muted rounded-md animate-pulse mx-auto"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[...Array(6)].map((_, i) => (
-             <div key={i} className="glass-card h-full flex flex-col overflow-hidden">
-                <div className="relative aspect-[16/9] bg-muted animate-pulse"></div>
-                <div className="p-6 flex flex-col flex-grow">
-                  <div className="h-6 w-full bg-muted animate-pulse rounded-md mb-2"></div>
-                  <div className="h-6 w-3/4 bg-muted animate-pulse rounded-md mb-4"></div>
-                  <div className="h-10 w-full bg-muted animate-pulse rounded-md mt-auto"></div>
-                </div>
-              </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="container mx-auto px-4 py-16">
       <section className="text-center mb-16 animate-fade-in-up">
