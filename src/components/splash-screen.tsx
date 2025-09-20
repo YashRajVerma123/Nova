@@ -49,7 +49,9 @@ const SplashScreen = () => {
         isFadingOut && 'animate-fade-out' // Conditional fade-out
       )}
     >
-      <Logo />
+      <div className="animate-fade-in-up">
+        <Logo />
+      </div>
     </div>
   );
 };
