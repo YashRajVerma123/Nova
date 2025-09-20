@@ -1,38 +1,47 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import Logo from './logo';
 import { cn } from '@/lib/utils';
 
-// This function checks sessionStorage to see if the splash screen has been shown.
-const hasBeenShown = () => {
-  // This will only be called on the client side
-  return sessionStorage.getItem('splashShown') === 'true';
-};
-
-const setShown = () => {
-  sessionStorage.setItem('splashShown', 'true');
-};
-
-const SplashLoaderInternal = () => {
-  const [visible, setVisible] = useState(true);
+const SplashLoader = () => {
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Fade out after a delay
-    const timer = setTimeout(() => {
-      setVisible(false);
-      setShown();
-    }, 1200); // Total time splash is visible
+    // This effect runs only on the client
+    if (sessionStorage.getItem('splashShown') !== 'true') {
+      setIsFirstVisit(true);
+      setIsVisible(true);
+      sessionStorage.setItem('splashShown', 'true');
 
-    return () => clearTimeout(timer);
+      // Set a timer to start the fade-out animation
+      const fadeOutTimer = setTimeout(() => {
+        setIsExiting(true);
+      }, 1200); // Time the logo is visible before fade-out starts
+
+      // Set a timer to remove the component from the DOM after animation
+      const removeTimer = setTimeout(() => {
+        setIsVisible(false);
+      }, 1700); // This should be fadeOutTimer delay + animation duration (500ms)
+      
+      return () => {
+        clearTimeout(fadeOutTimer);
+        clearTimeout(removeTimer);
+      };
+    }
   }, []);
+
+  if (!isFirstVisit || !isVisible) {
+    return null;
+  }
 
   return (
     <div
       className={cn(
         'fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 ease-out',
-        visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        isExiting ? 'opacity-0' : 'opacity-100'
       )}
     >
       <div className="animate-fade-in">
@@ -41,19 +50,5 @@ const SplashLoaderInternal = () => {
     </div>
   );
 };
-
-
-const SplashLoader = () => {
-  const [isFirstVisit, setIsFirstVisit] = useState(false);
-
-  useEffect(() => {
-    if (!hasBeenShown()) {
-      setIsFirstVisit(true);
-    }
-  }, []);
-
-  // Only render the internal splash loader component if it's the first visit
-  return isFirstVisit ? <SplashLoaderInternal /> : null;
-}
 
 export default SplashLoader;
