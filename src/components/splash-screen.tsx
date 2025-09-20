@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils';
 const SplashScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [showLogo, setShowLogo] = useState(false); // New state for logo animation
 
   useEffect(() => {
-    // This effect runs only on the client, where sessionStorage is available.
     const hasBeenShown = sessionStorage.getItem('splashShown') === 'true';
 
     if (hasBeenShown) {
@@ -18,10 +18,14 @@ const SplashScreen = () => {
       return;
     }
 
-    // It's the first visit this session.
     sessionStorage.setItem('splashShown', 'true');
 
-    // Start fade out after a delay
+    // Show logo after a short delay
+    const logoTimer = setTimeout(() => {
+      setShowLogo(true);
+    }, 200); 
+
+    // Start fade out after a longer delay
     const fadeOutTimer = setTimeout(() => {
       setIsFadingOut(true);
     }, 1200);
@@ -29,9 +33,10 @@ const SplashScreen = () => {
     // Hide the component completely after the fade-out animation finishes
     const hideTimer = setTimeout(() => {
       setIsLoading(false);
-    }, 1700); // This must be longer than the fade-out animation duration (500ms)
+    }, 1700); 
 
     return () => {
+      clearTimeout(logoTimer);
       clearTimeout(fadeOutTimer);
       clearTimeout(hideTimer);
     };
@@ -45,11 +50,14 @@ const SplashScreen = () => {
     <div
       className={cn(
         'fixed inset-0 z-[100] flex items-center justify-center bg-background',
-        'animate-fade-in', // Initial fade-in
-        isFadingOut && 'animate-fade-out' // Conditional fade-out
+        'transition-opacity duration-500',
+        isFadingOut ? 'opacity-0' : 'opacity-100'
       )}
     >
-      <div className="animate-fade-in-up">
+      <div className={cn(
+        'transition-all duration-700 ease-out',
+        showLogo ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+      )}>
         <Logo />
       </div>
     </div>
