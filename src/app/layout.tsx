@@ -9,8 +9,8 @@ import Footer from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
 import BackgroundAnimation from "@/components/background-animation";
 import PageLoader from "@/components/page-loader";
-import SplashLoader from "@/components/splash-loader";
 import { Suspense } from "react";
+import SplashScreen from "@/components/splash-screen";
 
 const sourceSerif = Source_Serif_4({ 
   subsets: ["latin"], 
@@ -64,7 +64,7 @@ export default function RootLayout({
         )}
       >
         <ClientProviders>
-          <SplashLoader />
+          <SplashScreen />
           <Suspense fallback={null}>
             <PageLoader />
           </Suspense>
